@@ -31,9 +31,9 @@ texture = ExtResource("2_vt6n5")
 shape = SubResource("RectangleShape2D_g4v7s")
 
 [node name="HPBar" type="ProgressBar" parent="."]
-offset_left = -12.0
+offset_left = -22.0
 offset_top = 10.0
-offset_right = 12.0
+offset_right = 22.0
 offset_bottom = 20.0
 theme_override_styles/background = SubResource("StyleBoxFlat_player_hp_bg")
 theme_override_styles/fill = SubResource("StyleBoxFlat_player_hp_fill")
