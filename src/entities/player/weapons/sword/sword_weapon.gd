@@ -6,7 +6,8 @@ extends Weapon
 @export var damage: int = 20
 @export var knockback_force: float = 32.0
 @export var stab_damage_multiplier: float = 1.5
-@export var slash_widen: float = 26.0
+@export var reach: float = 150.0
+@export var slash_widen: float = 40.0
 
 @onready var slash_area: Area2D = $SlashArea
 @onready var col_poly: CollisionPolygon2D = $SlashArea/CollisionPolygon2D
@@ -60,7 +61,10 @@ func fire() -> void:
 	col_poly.disabled = true
 
 ## Builds the visible + collision geometry for the current attack.
-## is_stab: thin thrust triangle (base shape). reversed: mirror X to swing back.
+## is_stab: thin thrust triangle (original behavior) — flat base at the player,
+##   tip reaching `reach` forward. Slashes are wide CONES whose TIP originates
+##   from the player, spreading out to the wide base `reach` away.
+## reversed: mirror the cone to swing backward (combo step 2).
 func _apply_combo_shape(is_stab: bool, _dir: int = 1, reversed: bool = false) -> void:
 	var area_mult: float = get_area_multiplier()
 	var pts: PackedVector2Array
@@ -68,15 +72,16 @@ func _apply_combo_shape(is_stab: bool, _dir: int = 1, reversed: bool = false) ->
 		pts = PackedVector2Array([
 			Vector2(0, -12 * area_mult),
 			Vector2(0, 12 * area_mult),
-			Vector2(50 * area_mult, 0)
+			Vector2(reach * area_mult, 0)
 		])
 		draw_poly.color = Color(1.0, 0.95, 0.55, 1)  # brighter for the finishing stab
 	else:
 		var w: float = slash_widen * area_mult
+		var base: Vector2 = Vector2(reach * area_mult, 0) if not reversed else Vector2(-reach * area_mult, 0)
 		pts = PackedVector2Array([
-			Vector2(0, -w),
-			Vector2(0, w),
-			Vector2(50 * area_mult, 0) if not reversed else Vector2(-50 * area_mult, 0)
+			Vector2.ZERO,                       # tip originates from the player
+			base + Vector2(0, -w),              # wide base top corner
+			base + Vector2(0, w),               # wide base bottom corner
 		])
 		draw_poly.color = Color.WHITE
 	col_poly.polygon = pts

@@ -30,7 +30,7 @@
 ## 🎭 Class System (3 classes, expandable)
 - **Class-selection menu** builds one button per class in the `GameState` roster automatically — new classes added to the roster appear in the menu with no extra UI work
 - Each class defines a **left-click (primary)** and **right-click (secondary)** ability; picked class is stored in `GameState` and its weapons are granted at run start
-- **Knight** — primary: *Knight Blade* (3-hit combo: slash → reversed slash → heavy stab at 1.5×); secondary: *Tower Shield* (blocks enemy projectiles + shoves enemies back; own HP/armor *lower* than the player's, thorns *equal* to the player's)
+- **Knight** — primary: *Knight Blade* (3-hit combo: wide cone slash → reversed cone slash → heavy forward stab at 1.5×; slashes emanate from player, ~3× longer reach); secondary: *Tower Shield* (appears only while RMB held, has its own HP bar, HP persists between raises and only repairs after a full break + recharge; blocks enemy projectiles + shoves enemies back, and enemies touching it drain its HP; own HP/armor *lower* than player's, thorns *equal*)
 - **Ranger** — primary: *Longbow* (piercing arrow, pierces 6 targets, slower than the gun but similar DPS); secondary: *Rain of Arrows* (area damage circle around the cursor, radius 150, knockback)
 - **Mage** — primary: *Arcane Bolts* (repurposed automatic Magic Missiles, now manual homing); secondary: *Mana Overload* (buffs to **halve all cooldowns** for 4s; the ability's own recharge only starts **after** the buff ends, unaffected by the buff)
 - Keyboard/gamepad friendly: first class auto-focused, Enter selects
