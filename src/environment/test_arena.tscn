@@ -1,0 +1,206 @@
+[gd_scene format=3 uid="uid://bfjumahohvif8"]
+
+[ext_resource type="PackedScene" uid="uid://ch71iywhtq2is" path="res://src/entities/player/player.tscn" id="1_u6xee"]
+[ext_resource type="PackedScene" path="res://src/entities/enemies/spawners/skeleton_spawner.tscn" id="2_skel_spawner"]
+[ext_resource type="PackedScene" path="res://src/managers/team_xp_manager.tscn" id="3_team_xp"]
+[ext_resource type="PackedScene" path="res://src/ui/hud.tscn" id="4_hud"]
+[ext_resource type="Script" uid="uid://dwd47lt1h3cpo" path="res://src/environment/grid_background.gd" id="5_grid"]
+[ext_resource type="Script" uid="uid://byx0vv2w1j4cr" path="res://src/managers/xp_orb_spatial_manager.gd" id="6_xp_orb_spatial"]
+[ext_resource type="PackedScene" path="res://src/entities/enemies/spawners/skeleton_brute_spawner.tscn" id="7_brute_spawner"]
+[ext_resource type="PackedScene" path="res://src/environment/chest_spawner.tscn" id="8_chest_spawner"]
+[ext_resource type="PackedScene" uid="uid://bdv04chmloo0k" path="res://src/ui/pointers/chest_pointer.tscn" id="9_chest_pointer"]
+[ext_resource type="PackedScene" uid="uid://cwydwctisc1um" path="res://src/entities/enemies/spawners/skeleton_archer_spawner.tscn" id="19_archer_spawner"]
+[ext_resource type="PackedScene" uid="uid://chmoaais0rcay" path="res://src/entities/enemies/spawners/boss_spawner.tscn" id="29_boss_spawner"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_horiz"]
+size = Vector2(2100, 32)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_vert"]
+size = Vector2(32, 1140)
+
+[node name="TestArena" type="Node2D" unique_id=543670752]
+unique_name_in_owner = false
+process_mode = 0
+process_priority = 0
+process_physics_priority = 0
+process_thread_group = 0
+physics_interpolation_mode = 0
+auto_translate_mode = 0
+editor_description = ""
+visible = true
+modulate = Color(1, 1, 1, 1)
+self_modulate = Color(1, 1, 1, 1)
+show_behind_parent = false
+top_level = false
+clip_children = 0
+oversampling_with_scale = 0
+light_mask = 1
+visibility_layer = 1
+z_index = 0
+z_as_relative = true
+y_sort_enabled = false
+texture_filter = 0
+texture_repeat = 0
+material = null
+use_parent_material = false
+position = Vector2(0, 0)
+rotation = 0.0
+scale = Vector2(1, 1)
+skew = 0.0
+script = null
+
+[node name="ChestSpawner" parent="." unique_id=876483506 instance=ExtResource("8_chest_spawner")]
+unique_name_in_owner = false
+process_mode = 0
+process_priority = 0
+process_physics_priority = 0
+process_thread_group = 0
+physics_interpolation_mode = 0
+auto_translate_mode = 0
+editor_description = ""
+visible = true
+modulate = Color(1, 1, 1, 1)
+self_modulate = Color(1, 1, 1, 1)
+show_behind_parent = false
+top_level = false
+clip_children = 0
+oversampling_with_scale = 0
+light_mask = 1
+visibility_layer = 1
+z_index = 0
+z_as_relative = true
+y_sort_enabled = false
+texture_filter = 0
+texture_repeat = 0
+material = null
+use_parent_material = false
+position = Vector2(0, 0)
+rotation = 0.0
+scale = Vector2(1, 1)
+skew = 0.0
+
+[node name="ChestPointer" parent="." unique_id=1400000001 instance=ExtResource("9_chest_pointer")]
+
+[node name="SkeletonArcherSpawner" parent="." unique_id=1500000002 instance=ExtResource("19_archer_spawner")]
+
+[node name="BossSpawner" parent="." unique_id=1600000001 instance=ExtResource("29_boss_spawner")]
+trigger_time = 300.0
+
+[node name="SkeletonBruteSpawner" parent="." unique_id=1110920454 instance=ExtResource("7_brute_spawner")]
+unique_name_in_owner = false
+process_mode = 0
+process_priority = 0
+process_physics_priority = 0
+process_thread_group = 0
+physics_interpolation_mode = 0
+auto_translate_mode = 0
+editor_description = ""
+visible = true
+modulate = Color(1, 1, 1, 1)
+self_modulate = Color(1, 1, 1, 1)
+show_behind_parent = false
+top_level = false
+clip_children = 0
+oversampling_with_scale = 0
+light_mask = 1
+visibility_layer = 1
+z_index = 0
+z_as_relative = true
+y_sort_enabled = false
+texture_filter = 0
+texture_repeat = 0
+material = null
+use_parent_material = false
+position = Vector2(0, 0)
+rotation = 0.0
+scale = Vector2(1, 1)
+skew = 0.0
+
+[node name="TeamXPManager" parent="." unique_id=1623051718 instance=ExtResource("3_team_xp")]
+
+[node name="XPOrbSpatialManager" type="Node" parent="." unique_id=1929542861]
+script = ExtResource("6_xp_orb_spatial")
+
+[node name="HUD" parent="." unique_id=1246096469 instance=ExtResource("4_hud")]
+
+[node name="Floor" type="Node2D" parent="." unique_id=84918118]
+unique_name_in_owner = false
+process_mode = 0
+process_priority = 0
+process_physics_priority = 0
+process_thread_group = 0
+physics_interpolation_mode = 0
+auto_translate_mode = 0
+editor_description = ""
+visible = true
+modulate = Color(1, 1, 1, 1)
+self_modulate = Color(1, 1, 1, 1)
+show_behind_parent = false
+top_level = false
+clip_children = 0
+oversampling_with_scale = 0
+light_mask = 1
+visibility_layer = 1
+z_index = -1
+z_as_relative = true
+y_sort_enabled = false
+texture_filter = 0
+texture_repeat = 0
+material = null
+use_parent_material = false
+position = Vector2(0, 0)
+rotation = 0.0
+scale = Vector2(1, 1)
+skew = 0.0
+script = ExtResource("5_grid")
+
+[node name="Walls" type="StaticBody2D" parent="." unique_id=1172629549]
+
+[node name="TopWall" type="CollisionShape2D" parent="Walls" unique_id=1499703622]
+position = Vector2(960, -16)
+shape = SubResource("RectangleShape2D_horiz")
+
+[node name="BottomWall" type="CollisionShape2D" parent="Walls" unique_id=1170593845]
+position = Vector2(960, 1096)
+shape = SubResource("RectangleShape2D_horiz")
+
+[node name="LeftWall" type="CollisionShape2D" parent="Walls" unique_id=1996623934]
+position = Vector2(-16, 540)
+shape = SubResource("RectangleShape2D_vert")
+
+[node name="RightWall" type="CollisionShape2D" parent="Walls" unique_id=215338129]
+position = Vector2(1936, 540)
+shape = SubResource("RectangleShape2D_vert")
+
+[node name="Player" parent="." unique_id=738018314 instance=ExtResource("1_u6xee")]
+position = Vector2(960, 540)
+
+[node name="SkeletonSpawner" parent="." unique_id=1211971611 instance=ExtResource("2_skel_spawner")]
+unique_name_in_owner = false
+process_mode = 0
+process_priority = 0
+process_physics_priority = 0
+process_thread_group = 0
+physics_interpolation_mode = 0
+auto_translate_mode = 0
+editor_description = ""
+visible = true
+modulate = Color(1, 1, 1, 1)
+self_modulate = Color(1, 1, 1, 1)
+show_behind_parent = false
+top_level = false
+clip_children = 0
+oversampling_with_scale = 0
+light_mask = 1
+visibility_layer = 1
+z_index = 0
+z_as_relative = true
+y_sort_enabled = false
+texture_filter = 0
+texture_repeat = 0
+material = null
+use_parent_material = false
+position = Vector2(0, 0)
+rotation = 0.0
+scale = Vector2(1, 1)
+skew = 0.0

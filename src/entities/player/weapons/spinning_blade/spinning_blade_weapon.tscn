@@ -1,0 +1,8 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://src/entities/player/weapons/spinning_blade/spinning_blade_weapon.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://src/entities/projectiles/spinning_blade_proj.tscn" id="2_blade"]
+
+[node name="spinning_blade_weapon" type="Node2D"]
+script = ExtResource("1_script")
+blade_scene = ExtResource("2_blade")

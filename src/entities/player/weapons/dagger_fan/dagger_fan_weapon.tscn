@@ -1,0 +1,8 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://src/entities/player/weapons/dagger_fan/dagger_fan_weapon.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://src/entities/projectiles/dagger_proj.tscn" id="2_dagger"]
+
+[node name="dagger_fan_weapon" type="Node2D"]
+script = ExtResource("1_script")
+dagger_scene = ExtResource("2_dagger")

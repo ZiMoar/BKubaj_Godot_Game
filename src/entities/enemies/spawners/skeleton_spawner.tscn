@@ -1,0 +1,12 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://src/entities/enemies/spawners/skeleton_spawner.gd" id="1_skel_spawner_script"]
+[ext_resource type="PackedScene" path="res://src/entities/enemies/skeleton/skeleton_enemy.tscn" id="2_skel_scene"]
+
+[node name="SkeletonSpawner" type="Node2D"]
+script = ExtResource("1_skel_spawner_script")
+enemy_scene = ExtResource("2_skel_scene")
+spawn_interval = 1.2
+
+[node name="Timer" type="Timer" parent="."]
+autostart = true

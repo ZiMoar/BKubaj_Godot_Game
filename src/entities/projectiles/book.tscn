@@ -1,0 +1,19 @@
+[gd_scene format=3 uid="uid://bksqtfapx1sfb"]
+
+[ext_resource type="Script" uid="uid://blsf6shcernvl" path="res://src/entities/projectiles/book.gd" id="1_ryjbx"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_g4v7s"]
+size = Vector2(16, 24)
+
+[node name="Book" type="Area2D" unique_id=192911838]
+physics_interpolation_mode = 2
+collision_layer = 8
+collision_mask = 4
+script = ExtResource("1_ryjbx")
+
+[node name="Polygon2D" type="Polygon2D" parent="." unique_id=820182258]
+color = Color(1, 0, 1, 1)
+polygon = PackedVector2Array(-8, -12, 8, -12, 8, 12, -8, 12)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=848303135]
+shape = SubResource("RectangleShape2D_g4v7s")

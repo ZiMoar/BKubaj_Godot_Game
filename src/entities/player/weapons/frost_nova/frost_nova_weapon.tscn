@@ -1,0 +1,8 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://src/entities/player/weapons/frost_nova/frost_nova_weapon.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://src/entities/projectiles/frost_ring.tscn" id="2_ring"]
+
+[node name="frost_nova_weapon" type="Node2D"]
+script = ExtResource("1_script")
+frost_scene = ExtResource("2_ring")

@@ -1,0 +1,40 @@
+[gd_scene format=3 uid="uid://cwydwctisc1um"]
+
+[ext_resource type="Script" uid="uid://c2ty0e4bg5hic" path="res://src/entities/enemies/spawners/skeleton_archer_spawner.gd" id="1_archer_spawner_script"]
+[ext_resource type="PackedScene" path="res://src/entities/enemies/skeleton_archer/skeleton_archer.tscn" id="2_archer_scene"]
+
+[node name="SkeletonArcherSpawner" type="Node2D" unique_id=1545904065]
+unique_name_in_owner = false
+process_mode = 0
+process_priority = 0
+process_physics_priority = 0
+process_thread_group = 0
+physics_interpolation_mode = 0
+auto_translate_mode = 0
+editor_description = ""
+visible = true
+modulate = Color(1, 1, 1, 1)
+self_modulate = Color(1, 1, 1, 1)
+show_behind_parent = false
+top_level = false
+clip_children = 0
+oversampling_with_scale = 0
+light_mask = 1
+visibility_layer = 1
+z_index = 0
+z_as_relative = true
+y_sort_enabled = false
+texture_filter = 0
+texture_repeat = 0
+material = null
+use_parent_material = false
+position = Vector2(0, 0)
+rotation = 0.0
+scale = Vector2(1, 1)
+skew = 0.0
+script = ExtResource("1_archer_spawner_script")
+enemy_scene = ExtResource("2_archer_scene")
+spawn_interval = 6.5
+
+[node name="Timer" type="Timer" parent="." unique_id=375108901]
+autostart = true

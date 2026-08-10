@@ -1,0 +1,18 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://src/entities/enemies/boss/boss_arrow.gd" id="1_arrow_script"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_boss_arrow"]
+radius = 7.0
+
+[node name="BossArrow" type="Area2D"]
+collision_layer = 0
+collision_mask = 2
+script = ExtResource("1_arrow_script")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_boss_arrow")
+
+[node name="ArrowShape" type="Polygon2D" parent="."]
+color = Color(1, 0.45, 0.2, 1)
+polygon = PackedVector2Array(-10, -3.5, 10, -3.5, 10, 3.5, -10, 3.5)

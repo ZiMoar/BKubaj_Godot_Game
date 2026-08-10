@@ -1,0 +1,72 @@
+[gd_scene format=3 uid="uid://cyd317qqtqld3"]
+
+[ext_resource type="Script" uid="uid://b3ahbkjft78yl" path="res://src/ui/level_up_menu.gd" id="1_script"]
+
+[node name="LevelUpMenu" type="Control" unique_id=2045527321]
+process_mode = 3
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+
+[node name="Dimmer" type="ColorRect" parent="." unique_id=344607712]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
+color = Color(0, 0, 0, 0.6)
+
+[node name="CenterContainer" type="CenterContainer" parent="." unique_id=418564676]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="PanelContainer" parent="CenterContainer" unique_id=1871073620]
+custom_minimum_size = Vector2(540, 300)
+layout_mode = 2
+mouse_filter = 1
+
+[node name="Vertical" type="VBoxContainer" parent="CenterContainer/Panel" unique_id=1564973098]
+layout_mode = 2
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="TitleLabel" type="Label" parent="CenterContainer/Panel/Vertical" unique_id=1158244064]
+layout_mode = 2
+text = "Level Up"
+horizontal_alignment = 1
+
+[node name="SubtitleLabel" type="Label" parent="CenterContainer/Panel/Vertical" unique_id=1952540319]
+layout_mode = 2
+text = "Choose one of three upgrades."
+horizontal_alignment = 1
+
+[node name="Choice1" type="Button" parent="CenterContainer/Panel/Vertical" unique_id=1476331583]
+custom_minimum_size = Vector2(0, 60)
+layout_mode = 2
+text = "Choice 1"
+
+[node name="Choice2" type="Button" parent="CenterContainer/Panel/Vertical" unique_id=1569029093]
+custom_minimum_size = Vector2(0, 60)
+layout_mode = 2
+text = "Choice 2"
+
+[node name="Choice3" type="Button" parent="CenterContainer/Panel/Vertical" unique_id=858966733]
+custom_minimum_size = Vector2(0, 60)
+layout_mode = 2
+text = "Choice 3"
+
+[node name="RerollButton" type="Button" parent="CenterContainer/Panel/Vertical"]
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+text = "Reroll (10g)"
