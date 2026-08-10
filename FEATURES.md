@@ -72,6 +72,7 @@
 - Bottom-right **vertical weapon hotbar** with full weapon names + badges (LMB/RMB/A1-A3) + cooldown bars
 - **Weapon choice menu** — compact, **bottom-right**
 - **Artefact choice menu** — **bottom-left** (kept larger)
+- **Main menu / title screen** — game now boots to a menu with PLAY + QUIT; layout has a designed slot for a future **class-selection** section (classes not yet implemented)
 - Enemy HP bars (clean colored bars; numeric garbling removed)
 - Boss health bar; gold counter; artefact slot counter
 
