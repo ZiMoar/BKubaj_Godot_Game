@@ -52,7 +52,12 @@ func get_effective_cooldown() -> float:
 	if player == null:
 		return maxf(0.05, base_cooldown)
 
-	return maxf(0.05, base_cooldown * player.get_attack_speed_multiplier())
+	# Mana Overload (mage secondary) can halve all cooldowns temporarily.
+	var mult: float = 1.0
+	if player.has_method("get_cooldown_multiplier"):
+		mult = maxf(0.05, float(player.get_cooldown_multiplier()))
+
+	return maxf(0.05, base_cooldown * player.get_attack_speed_multiplier() * mult)
 
 func get_attack_damage(base_damage: float) -> int:
 	var player = get_player()

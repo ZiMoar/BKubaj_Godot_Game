@@ -6,7 +6,7 @@ extends Control
 ## (a grid of class cards) can be inserted between the subtitle and the
 ## StartButton when classes are implemented.
 
-const ARENA_SCENE: String = "res://src/environment/test_arena.tscn"
+const CLASS_SELECT_SCENE: String = "res://src/ui/class_select_menu.tscn"
 
 @onready var start_button: Button = get_node_or_null("CenterContainer/Panel/Vertical/StartButton") as Button
 @onready var quit_button: Button = get_node_or_null("CenterContainer/Panel/Vertical/QuitButton") as Button
@@ -33,6 +33,7 @@ func _on_quit_pressed() -> void:
 
 
 func _start_game() -> void:
-	# change_scene_to_file replaces the current scene with a fresh arena,
-	# which naturally resets all run state (player stats, XP, gold, artefacts).
-	get_tree().change_scene_to_file(ARENA_SCENE)
+	# PLAY opens the class-selection screen, which then launches the arena.
+	# change_scene_to_file replaces the current scene with a fresh one, which
+	# naturally resets all run state (player stats, XP, gold, artefacts).
+	get_tree().change_scene_to_file(CLASS_SELECT_SCENE)

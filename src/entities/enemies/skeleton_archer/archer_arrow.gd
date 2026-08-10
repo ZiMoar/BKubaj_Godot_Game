@@ -9,6 +9,7 @@ var _lifetime: float = 4.0
 
 
 func _ready() -> void:
+	add_to_group("enemy_projectile")
 	body_entered.connect(_on_body_entered)
 	area_entered.connect(_on_area_entered)
 

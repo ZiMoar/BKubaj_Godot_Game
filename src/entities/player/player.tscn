@@ -2,8 +2,6 @@
 
 [ext_resource type="Script" uid="uid://b7ksmn7t7o5l1" path="res://src/entities/player/player.gd" id="1_4m8ck"]
 [ext_resource type="Texture2D" uid="uid://umo5mym72jl2" path="res://icon.svg" id="2_vt6n5"]
-[ext_resource type="PackedScene" uid="uid://cijtht3skeqrx" path="res://src/entities/player/weapons/gun/gun_weapon.tscn" id="3_ketdh"]
-[ext_resource type="PackedScene" uid="uid://ciocdl4tr2668" path="res://src/entities/player/weapons/sword/sword_weapon.tscn" id="5_0mfjg"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_g4v7s"]
 size = Vector2(16, 16)
@@ -55,7 +53,3 @@ position_smoothing_enabled = true
 position_smoothing_speed = 8.0
 
 [node name="Weapons" type="Node2D" parent="." unique_id=1959766874]
-
-[node name="gun_weapon" parent="Weapons" unique_id=2055522678 instance=ExtResource("3_ketdh")]
-
-[node name="sword_weapon" parent="Weapons" unique_id=912376488 instance=ExtResource("5_0mfjg")]

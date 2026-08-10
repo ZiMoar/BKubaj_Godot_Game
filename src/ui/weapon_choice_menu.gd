@@ -6,7 +6,6 @@ signal weapon_selected(weapon_scene: PackedScene)
 # Pool of automatic weapons the chest can offer
 const AUTO_WEAPON_POOL: Array[Dictionary] = [
 	{"scene": preload("res://src/entities/player/weapons/aura/aura_weapon.tscn"), "name": "Fire Aura",       "cooldown": 1.0, "desc": "Damages all enemies around you"},
-	{"scene": preload("res://src/entities/player/weapons/magic_bolts/magic_bolts_weapon.tscn"), "name": "Magic Bolts",    "cooldown": 2.0, "desc": "Homing bolts strike nearby enemies"},
 	{"scene": preload("res://src/entities/player/weapons/spinning_blade/spinning_blade_weapon.tscn"), "name": "Spin Blade",     "cooldown": 3.0, "desc": "A spinning blade orbits around you"},
 	{"scene": preload("res://src/entities/player/weapons/book/book_weapon.tscn"), "name": "Orbiting Books", "cooldown": 5.0, "desc": "Books spiral outward and orbit you"},
 	{"scene": preload("res://src/entities/player/weapons/dagger_fan/dagger_fan_weapon.tscn"), "name": "Dagger Fan",      "cooldown": 1.8, "desc": "A piercing ring of daggers around you"},

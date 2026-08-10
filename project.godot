@@ -18,6 +18,7 @@ config/icon="res://icon.svg"
 [autoload]
 
 _mcp_game_helper="*res://addons/godot_ai/runtime/game_helper.gd"
+GameState="*res://src/managers/game_state.gd"
 
 [display]
 
@@ -71,6 +72,7 @@ secondary_attack={
 2d_physics/layer_2="Player"
 2d_physics/layer_3="Enemies"
 2d_physics/layer_4="Player Attacks"
+2d_physics/layer_5="EnemyProjectiles"
 
 [physics]
 

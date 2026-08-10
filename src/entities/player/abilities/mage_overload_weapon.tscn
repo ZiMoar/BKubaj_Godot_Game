@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://bv5kqe2q45mir"]
+
+[ext_resource type="Script" uid="uid://6qlhs6il26c6" path="res://src/entities/player/abilities/mage_overload_weapon.gd" id="1_s"]
+
+[node name="mage_overload_weapon" type="Node2D" unique_id=2134091910]
+script = ExtResource("1_s")

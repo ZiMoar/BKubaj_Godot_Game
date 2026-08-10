@@ -1,0 +1,8 @@
+[gd_scene format=3 uid="uid://bjw4hwj81ittc"]
+
+[ext_resource type="Script" uid="uid://tab76aamu0md" path="res://src/entities/player/abilities/ranger_rain_weapon.gd" id="1_s"]
+[ext_resource type="PackedScene" uid="uid://bgpcd1d62kev0" path="res://src/entities/projectiles/rain_aoe.tscn" id="2_rain"]
+
+[node name="ranger_rain_weapon" type="Node2D" unique_id=1984719806]
+script = ExtResource("1_s")
+rain_visual_scene = ExtResource("2_rain")

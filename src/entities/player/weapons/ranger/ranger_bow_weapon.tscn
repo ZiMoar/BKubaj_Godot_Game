@@ -1,0 +1,8 @@
+[gd_scene format=3 uid="uid://ool00fhudedb"]
+
+[ext_resource type="Script" uid="uid://tc05emia3tv" path="res://src/entities/player/weapons/ranger/ranger_bow_weapon.gd" id="1_s"]
+[ext_resource type="PackedScene" uid="uid://cw0raobyovep4" path="res://src/entities/projectiles/arrow_proj.tscn" id="2_arrow"]
+
+[node name="ranger_bow_weapon" type="Node2D" unique_id=1140473335]
+script = ExtResource("1_s")
+arrow_scene = ExtResource("2_arrow")

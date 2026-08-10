@@ -14,7 +14,7 @@
 |---|---|---|
 | Pistol | Manual (LMB) | fast single-target, top-end DPS |
 | Sword Slash | Manual (RMB) | melee arc, top-end DPS |
-| Magic Bolts | Auto | 3 projectiles |
+| Magic Bolts | Auto → Reworked | now Mage **primary** (Arcane Bolts) |
 | Book | Auto | homing projectiles |
 | Spinning Blade | Auto | orbiting blade |
 | Dagger Fan | Auto | **360° ring of daggers**, **pierces up to 3 enemies**, damage 25 |
@@ -25,6 +25,14 @@
 - Auto weapons split into starting arsenal vs. **chest-earned** automatic weapons
 - Balance: AOE-heavy weapons ≈0.5x, single-target/manual ≈1.5x
 - **Dagger pierce** future-proofed via `pierce_count` + `player.get_extra_pierce()` hook (a future stat/upgrade can raise it)
+
+## 🎭 Class System (3 classes, expandable)
+- **Class-selection menu** builds one button per class in the `GameState` roster automatically — new classes added to the roster appear in the menu with no extra UI work
+- Each class defines a **left-click (primary)** and **right-click (secondary)** ability; picked class is stored in `GameState` and its weapons are granted at run start
+- **Knight** — primary: *Knight Blade* (3-hit combo: slash → reversed slash → heavy stab at 1.5×); secondary: *Tower Shield* (blocks enemy projectiles + shoves enemies back; own HP/armor *lower* than the player's, thorns *equal* to the player's)
+- **Ranger** — primary: *Longbow* (piercing arrow, pierces 6 targets, slower than the gun but similar DPS); secondary: *Rain of Arrows* (area damage circle around the cursor, radius 150, knockback)
+- **Mage** — primary: *Arcane Bolts* (repurposed automatic Magic Missiles, now manual homing); secondary: *Mana Overload* (buffs to **halve all cooldowns** for 4s; the ability's own recharge only starts **after** the buff ends, unaffected by the buff)
+- Keyboard/gamepad friendly: first class auto-focused, Enter selects
 
 ## 💰 Gold Economy
 - Gold drops from enemies; spent to **reroll** reward menus
@@ -72,7 +80,7 @@
 - Bottom-right **vertical weapon hotbar** with full weapon names + badges (LMB/RMB/A1-A3) + cooldown bars
 - **Weapon choice menu** — compact, **bottom-right**
 - **Artefact choice menu** — **bottom-left** (kept larger)
-- **Main menu / title screen** — game now boots to a menu with PLAY + QUIT; layout has a designed slot for a future **class-selection** section (classes not yet implemented)
+- **Main menu / title screen** — game boots to a menu with PLAY + QUIT; PLAY → **class-selection screen** → arena
 - Enemy HP bars (clean colored bars; numeric garbling removed)
 - Boss health bar; gold counter; artefact slot counter
 
@@ -87,4 +95,5 @@
 - **Luck stat has no HUD readout**; no rarity legend/tooltip
 - Repeated identical upgrades can be offered across level-ups
 - Floating damage numbers still overlap in dense crowds
-- Right-click **ability slot** is wired but no ability implemented yet
+- Rain of Arrows currently just applies area damage + a visual ring; the literal "arrows raining down" animation is planned for later
+- Knight shield recharge/HP tuning and Ranger/Mage cooldown/DPS numbers are initial passes (not yet balanced against the ~25 DPS target)

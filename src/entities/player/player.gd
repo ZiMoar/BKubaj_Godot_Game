@@ -114,6 +114,9 @@ func _ready() -> void:
 
 	_apply_magnet_settings()
 
+	# Give the player the Primary + Secondary weapons for the chosen class.
+	_setup_class_starting_weapons()
+
 func _emit_initial_health() -> void:
 	health_changed.emit(current_health, current_max_health())
 	_update_hp_value_label()
@@ -176,6 +179,17 @@ func advance_runtime_difficulty(amount: float) -> void:
 func get_extra_pierce() -> int:
 	return maxi(0, pierce_bonus)
 
+
+# Global cooldown multiplier (default 1.0). Mana Overload (mage) sets it to
+# 0.5 to halve every weapon's cooldown while its buff is active.
+var _cooldown_multiplier: float = 1.0
+
+func get_cooldown_multiplier() -> float:
+	return maxf(0.05, _cooldown_multiplier)
+
+func set_cooldown_multiplier(value: float) -> void:
+	_cooldown_multiplier = maxf(0.05, value)
+
 func apply_lifesteal() -> void:
 	if lifesteal_flat <= 0.0 or current_health <= 0:
 		return
@@ -200,6 +214,27 @@ func heal(amount: float) -> void:
 	_update_hp_value_label()
 
 const MAX_AUTO_WEAPONS: int = 3
+
+## Equips the class-defined Primary + Secondary weapons. Reads the class
+## chosen in the main menu's class-selection screen (GameState autoload).
+func _setup_class_starting_weapons() -> void:
+	if weapons_container == null:
+		return
+	var state: Node = get_node_or_null("/root/GameState")
+	if state == null:
+		return
+	var cls: Dictionary = state.get_selected_class()
+	var scenes: Array = [cls.get("primary", null), cls.get("secondary", null)]
+	for scene in scenes:
+		var ws: PackedScene = scene as PackedScene
+		if ws == null:
+			continue
+		var weapon: Node = ws.instantiate()
+		weapons_container.add_child(weapon)
+		if weapon is Weapon and weapon.trigger_type == Weapon.TriggerType.AUTOMATIC:
+			weapon.call_deferred("try_fire")
+	weapons_changed.emit()
+
 
 func count_automatic_weapons() -> int:
 	var count: int = 0

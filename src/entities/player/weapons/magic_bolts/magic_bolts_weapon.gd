@@ -1,17 +1,18 @@
 extends Weapon
 
+## Mage primary weapon: homing Arcane Bolts. Repurposed from the old
+## automatic "Magic Bolts" into the Mage's manual (left-click) weapon.
 @export var bolt_scene: PackedScene
 @export var bolt_count: int = 3
-@export var base_damage: int = 19
-@export var bolt_speed: float = 300.0
+@export var base_damage: int = 14
+@export var bolt_speed: float = 340.0
 
 
 func _ready() -> void:
-	weapon_name = "Magic Bolts"
-	trigger_type = TriggerType.AUTOMATIC
-	cooldown = 2.0
+	weapon_name = "Arcane Bolts"
+	trigger_type = TriggerType.PRIMARY
+	cooldown = 1.1
 	super._ready()
-	call_deferred("try_fire")
 
 
 func fire() -> void:
