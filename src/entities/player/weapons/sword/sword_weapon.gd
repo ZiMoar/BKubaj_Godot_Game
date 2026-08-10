@@ -7,7 +7,7 @@ extends Weapon
 @export var knockback_force: float = 32.0
 @export var stab_damage_multiplier: float = 1.5
 @export var reach: float = 150.0
-@export var slash_angle_deg: float = 100.0
+@export var slash_angle_deg: float = 66.67
 @export var slash_arc_segments: int = 16
 
 @onready var slash_area: Area2D = $SlashArea
