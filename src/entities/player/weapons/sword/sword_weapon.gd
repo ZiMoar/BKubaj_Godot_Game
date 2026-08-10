@@ -1,13 +1,14 @@
 extends Weapon
 
 ## Knight primary weapon: a broadsword with a 3-hit combo.
-## Hits 1 & 2 are WIDE slashes (the 2nd swings the opposite direction);
+## Hits 1 & 2 are WIDE 100-degree arc slashes that both swing forward;
 ## hit 3 is a STAB (the original thin triangle) dealing 1.5x damage.
-@export var damage: int = 20
+@export var damage: int = 30
 @export var knockback_force: float = 32.0
 @export var stab_damage_multiplier: float = 1.5
 @export var reach: float = 150.0
-@export var slash_widen: float = 40.0
+@export var slash_angle_deg: float = 100.0
+@export var slash_arc_segments: int = 16
 
 @onready var slash_area: Area2D = $SlashArea
 @onready var col_poly: CollisionPolygon2D = $SlashArea/CollisionPolygon2D
@@ -24,21 +25,20 @@ func _ready() -> void:
 	cooldown = 0.5
 	super._ready()
 
-	_apply_combo_shape(false, 1)
+	_apply_combo_shape(false)
 	slash_area.area_entered.connect(_on_slash_hit)
 	slash_area.body_entered.connect(_on_slash_hit)
 	slash_area.hide()
 	col_poly.disabled = true
 
 func fire() -> void:
-	# Advance the combo: 1 slash, 2 reverse-slash, 3 stab, then loop.
+	# Advance the combo: 1 slash, 2 slash, 3 stab, then loop.
 	combo_step += 1
 	if combo_step > 3:
 		combo_step = 1
 	var is_stab: bool = (combo_step == 3)
-	var reversed: bool = (combo_step == 2)
 
-	_apply_combo_shape(is_stab, 1 if reversed else 1, reversed)
+	_apply_combo_shape(is_stab)
 
 	hit_enemies_this_swing.clear()
 	current_attack_damage = get_attack_damage(damage)
@@ -62,10 +62,10 @@ func fire() -> void:
 
 ## Builds the visible + collision geometry for the current attack.
 ## is_stab: thin thrust triangle (original behavior) — flat base at the player,
-##   tip reaching `reach` forward. Slashes are wide CONES whose TIP originates
-##   from the player, spreading out to the wide base `reach` away.
-## reversed: mirror the cone to swing backward (combo step 2).
-func _apply_combo_shape(is_stab: bool, _dir: int = 1, reversed: bool = false) -> void:
+##   tip reaching `reach` forward. Slashes are a WIDE circular SECTOR (arc) of
+##   `slash_angle_deg` (~100 degrees) centered on the forward direction, with
+##   its tip at the player — both combo slashes swing forward.
+func _apply_combo_shape(is_stab: bool) -> void:
 	var area_mult: float = get_area_multiplier()
 	var pts: PackedVector2Array
 	if is_stab:
@@ -76,13 +76,14 @@ func _apply_combo_shape(is_stab: bool, _dir: int = 1, reversed: bool = false) ->
 		])
 		draw_poly.color = Color(1.0, 0.95, 0.55, 1)  # brighter for the finishing stab
 	else:
-		var w: float = slash_widen * area_mult
-		var base: Vector2 = Vector2(reach * area_mult, 0) if not reversed else Vector2(-reach * area_mult, 0)
-		pts = PackedVector2Array([
-			Vector2.ZERO,                       # tip originates from the player
-			base + Vector2(0, -w),              # wide base top corner
-			base + Vector2(0, w),               # wide base bottom corner
-		])
+		# A 100-degree pie-slice sector pointing forward (+X), tip at the player.
+		var r: float = reach * area_mult
+		var span: float = deg_to_rad(slash_angle_deg)
+		var half: float = span * 0.5
+		pts = PackedVector2Array([Vector2.ZERO])
+		for i in range(slash_arc_segments + 1):
+			var a: float = -half + span * float(i) / float(slash_arc_segments)
+			pts.append(Vector2(r * cos(a), r * sin(a)))
 		draw_poly.color = Color.WHITE
 	col_poly.polygon = pts
 	draw_poly.polygon = pts

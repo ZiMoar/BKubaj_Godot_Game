@@ -13,9 +13,9 @@ extends Weapon
 @export var offset: float = 54.0
 @export var shield_width: float = 30.0
 @export var shield_height: float = 66.0
-@export var shield_hp_ratio: float = 0.5
+@export var shield_hp_ratio: float = 0.75
 @export var armor_ratio: float = 0.6
-@export var recharge_time: float = 2.5
+@export var recharge_time: float = 4.0
 @export var push_force: float = 320.0
 
 var shield_hp: float = 0.0
@@ -119,8 +119,13 @@ func shield_is_broken() -> bool:
 
 ## Applies raw damage to the shield, mitigated by its armor. Breaks the shield
 ## (and starts the recharge) when HP reaches 0.
+## The shield shares the player's invulnerability frames: while the player is
+## invincible, the shield takes no HP damage (it still blocks the hit).
 func _damage_shield(raw: int) -> void:
 	if not active:
+		return
+	var p = get_player()
+	if p and p.get("is_invincible"):
 		return
 	var mitigated: float = float(maxi(0, raw)) * (100.0 / (100.0 + shield_armor))
 	shield_hp -= mitigated
