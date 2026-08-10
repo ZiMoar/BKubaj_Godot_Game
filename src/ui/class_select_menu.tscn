@@ -69,7 +69,7 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="Panel" type="PanelContainer" parent="Center" unique_id=736575086]
-custom_minimum_size = Vector2(500, 420)
+custom_minimum_size = Vector2(440, 340)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
 
@@ -95,7 +95,7 @@ text = "Each class has a unique left-click (primary) and right-click (secondary)
 horizontal_alignment = 1
 
 [node name="Scroll" type="ScrollContainer" parent="Center/Panel/Vertical" unique_id=1680441092]
-custom_minimum_size = Vector2(0, 260)
+custom_minimum_size = Vector2(0, 190)
 layout_mode = 2
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
