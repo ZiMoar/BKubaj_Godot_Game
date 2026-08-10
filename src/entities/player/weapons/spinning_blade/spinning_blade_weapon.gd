@@ -23,7 +23,8 @@ func _physics_process(delta: float) -> void:
 		if _current_angle >= TAU:
 			_current_angle -= TAU
 
-		var target_pos: Vector2 = global_position + Vector2(cos(_current_angle), sin(_current_angle)) * orbit_radius
+		var eff_radius: float = orbit_radius * get_area_multiplier()
+		var target_pos: Vector2 = global_position + Vector2(cos(_current_angle), sin(_current_angle)) * eff_radius
 		active_blade.global_position = target_pos
 		active_blade.rotation = _current_angle + PI / 2.0
 
@@ -47,3 +48,4 @@ func fire() -> void:
 
 	if active_blade.has_method("setup"):
 		active_blade.setup(attack_damage, is_crit, get_player())
+		active_blade.scale *= get_area_multiplier()

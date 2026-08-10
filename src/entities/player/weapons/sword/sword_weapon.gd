@@ -62,20 +62,21 @@ func fire() -> void:
 ## Builds the visible + collision geometry for the current attack.
 ## is_stab: thin thrust triangle (base shape). reversed: mirror X to swing back.
 func _apply_combo_shape(is_stab: bool, _dir: int = 1, reversed: bool = false) -> void:
+	var area_mult: float = get_area_multiplier()
 	var pts: PackedVector2Array
 	if is_stab:
 		pts = PackedVector2Array([
-			Vector2(0, -12),
-			Vector2(0, 12),
-			Vector2(50, 0)
+			Vector2(0, -12 * area_mult),
+			Vector2(0, 12 * area_mult),
+			Vector2(50 * area_mult, 0)
 		])
 		draw_poly.color = Color(1.0, 0.95, 0.55, 1)  # brighter for the finishing stab
 	else:
-		var w: float = slash_widen
+		var w: float = slash_widen * area_mult
 		pts = PackedVector2Array([
 			Vector2(0, -w),
 			Vector2(0, w),
-			Vector2(50, 0) if not reversed else Vector2(-50, 0)
+			Vector2(50 * area_mult, 0) if not reversed else Vector2(-50 * area_mult, 0)
 		])
 		draw_poly.color = Color.WHITE
 	col_poly.polygon = pts

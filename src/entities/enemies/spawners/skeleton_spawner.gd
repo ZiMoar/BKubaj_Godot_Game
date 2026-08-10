@@ -6,7 +6,7 @@ extends SpawnerBase
 func _ready() -> void:
 	if enemy_scene == null:
 		enemy_scene = preload("res://src/entities/enemies/skeleton/skeleton_enemy.tscn")
-	difficulty_spawn_ratio = 0.167  # Reduced difficulty scaling on spawn frequency (comp. for per-minute difficulty)
+	difficulty_spawn_ratio = 0.668  # Reduced difficulty scaling on spawn frequency (comp. for per-minute difficulty)
 	super._ready()
 
 func _spawn_pattern() -> void:

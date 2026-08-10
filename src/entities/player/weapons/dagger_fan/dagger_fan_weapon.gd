@@ -43,3 +43,4 @@ func fire() -> void:
 			continue
 		get_tree().current_scene.add_child(dagger)
 		dagger.setup(global_position, dir, dagger_speed, dmg, crit, get_player(), total_pierce)
+		dagger.scale *= get_area_multiplier()

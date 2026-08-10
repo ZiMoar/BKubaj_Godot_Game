@@ -4,7 +4,7 @@ extends SkeletonSpawner
 func _ready() -> void:
 	spawn_interval = 7.5
 	max_active_enemies = 9999
-	difficulty_spawn_ratio = 0.667
+	difficulty_spawn_ratio = 2.668
 	# Frequency is fixed (not scale by difficulty). Brutes scale via stats only.
 	elite_chance_per_difficulty = 0.0
 	elite_base_chance = 0.12

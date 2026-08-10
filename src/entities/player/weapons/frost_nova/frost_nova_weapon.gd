@@ -3,7 +3,7 @@ extends Weapon
 ## Frost Nova — automatic. Every cooldown, blasts everything in a radius around
 ## the player, damaging it and briefly slowing it. A drawn ring shows the effect.
 
-@export var nova_radius: float = 210.0
+@export var nova_radius: float = 105.0
 @export var base_damage: int = 42
 @export var slow_duration: float = 2.0
 @export var slow_factor: float = 0.45
@@ -20,6 +20,7 @@ func _ready() -> void:
 
 func fire() -> void:
 	var origin: Vector2 = global_position
+	var eff_radius: float = nova_radius * get_area_multiplier()
 	var dmg: int = get_attack_damage(base_damage)
 	var crit: bool = roll_critical_hit()
 	if crit:
@@ -29,7 +30,7 @@ func fire() -> void:
 		if not is_instance_valid(e):
 			continue
 		var en: Node2D = e as Node2D
-		if origin.distance_to(en.global_position) <= nova_radius:
+		if origin.distance_to(en.global_position) <= eff_radius:
 			en.take_damage(dmg)
 			apply_lifesteal()
 			if en.has_method("apply_slow"):
@@ -39,5 +40,5 @@ func fire() -> void:
 		var ring = frost_scene.instantiate()
 		if ring != null and ring.has_method("setup"):
 			ring.global_position = origin
-			ring.setup(nova_radius)
+			ring.setup(eff_radius)
 			get_tree().current_scene.add_child(ring)

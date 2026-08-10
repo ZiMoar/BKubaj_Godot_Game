@@ -17,6 +17,7 @@ func _ready() -> void:
 
 func fire() -> void:
 	var center: Vector2 = get_global_mouse_position()
+	var eff_radius: float = radius * get_area_multiplier()
 	var total: int = get_attack_damage(damage)
 	var is_critical: bool = roll_critical_hit()
 	if is_critical:
@@ -26,7 +27,7 @@ func fire() -> void:
 		if not is_instance_valid(node):
 			continue
 		var enemy: Node2D = node as Node2D
-		if enemy.global_position.distance_to(center) <= radius:
+		if enemy.global_position.distance_to(center) <= eff_radius:
 			enemy.take_damage(total)
 			apply_lifesteal()
 			if enemy.has_method("apply_knockback"):
@@ -36,5 +37,5 @@ func fire() -> void:
 		var visual = rain_visual_scene.instantiate()
 		visual.global_position = center
 		if visual.has_method("setup"):
-			visual.setup(radius)
+			visual.setup(eff_radius)
 		get_tree().current_scene.add_child(visual)

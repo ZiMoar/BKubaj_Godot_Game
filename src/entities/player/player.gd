@@ -54,7 +54,7 @@ const ARTEFACTS: Script = preload("res://src/systems/artefact.gd")
 @export var difficulty: float = 0.0
 # Difficulty grows ONCE PER MINUTE instead of per second, so the number ramps
 # slowly. Enemy stat scaling is boosted to compensate (see enemies' *_per_difficulty).
-@export var difficulty_runtime_per_minute: float = 0.25
+@export var difficulty_runtime_per_minute: float = 1.0
 @export var pierce_bonus: int = 0
 
 @export_category("Reserved")
@@ -169,6 +169,11 @@ func get_attack_damage(base_damage: float) -> int:
 
 func get_map_difficulty() -> float:
 	return maxf(0.0, difficulty + difficulty_runtime_bonus)
+
+# Area stat: scales the radius of AOE skills and the size of projectiles.
+# Linear multiplier (1.0 = base). "+50% area" means skills/projectiles are 50% bigger.
+func get_area_multiplier() -> float:
+	return maxf(0.25, 1.0 + area_bonus)
 
 func advance_runtime_difficulty(amount: float) -> void:
 	difficulty_runtime_bonus = maxf(0.0, difficulty_runtime_bonus + amount)
@@ -357,6 +362,8 @@ func apply_upgrade(upgrade_id: String, rarity: int = 0) -> void:
 			critical_hit_chance = clamp(critical_hit_chance + value, 0.0, 1.0)
 		"crit_damage":
 			critical_hit_damage_multiplier += value
+		"area":
+			area_bonus += value
 		"max_health":
 			var hp_val: int = int(round(value))
 			max_health_bonus += hp_val

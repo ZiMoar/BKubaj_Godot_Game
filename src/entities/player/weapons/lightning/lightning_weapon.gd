@@ -25,6 +25,7 @@ func fire() -> void:
 		return
 
 	var origin: Vector2 = global_position
+	var eff_chain_range: float = chain_range * get_area_multiplier()
 	var first: Node2D = null
 	var first_dist: float = INF
 	for e: Node in enemies:
@@ -48,7 +49,7 @@ func fire() -> void:
 			if not is_instance_valid(e) or hit_ids.has(e.get_instance_id()):
 				continue
 			var d: float = last_pos.distance_squared_to((e as Node2D).global_position)
-			if d <= chain_range * chain_range and d < nd:
+			if d <= eff_chain_range * eff_chain_range and d < nd:
 				nd = d
 				next = e as Node2D
 		if next == null:

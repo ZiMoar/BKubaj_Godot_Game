@@ -6,7 +6,7 @@ extends Node2D
 @export var is_spawning: bool = true
 @export var max_active_enemies: int = 9999
 @export var arena_bounds: Rect2 = Rect2(40, 40, 1840, 1000)
-@export var difficulty_spawn_ratio: float = 0.1
+@export var difficulty_spawn_ratio: float = 0.4
 @export var elite_chance_per_difficulty: float = 0.0
 @export var elite_base_chance: float = 0.0
 

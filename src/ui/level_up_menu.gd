@@ -48,6 +48,7 @@ const UPGRADE_POOL: Array[Dictionary] = [
 	{"id": "attack_speed",         "title": "Attack Speed",  "description": "+{value} attack speed.",               "min_rarity": Rarity.COMMON,    "base_value": 20.0,  "value_scaling": 10.0},
 	{"id": "crit_chance",          "title": "Crit Chance",   "description": "+{value}% crit chance.",                "min_rarity": Rarity.UNCOMMON,  "base_value": 0.05,  "value_scaling": 0.025},
 	{"id": "crit_damage",          "title": "Crit Damage",   "description": "+{value}x crit multiplier.",             "min_rarity": Rarity.UNCOMMON,  "base_value": 0.25,  "value_scaling": 0.15},
+	{"id": "area",                "title": "Area",          "description": "+{value}% skill & projectile size.",     "min_rarity": Rarity.UNCOMMON,  "base_value": 0.10,  "value_scaling": 0.05},
 	# --- Survival ---
 	{"id": "max_health",           "title": "Max Health",    "description": "+{value} max HP.",                      "min_rarity": Rarity.COMMON,    "base_value": 10.0,  "value_scaling": 5.0},
 	{"id": "armor",                "title": "Armor",         "description": "+{value} armor.",                           "min_rarity": Rarity.UNCOMMON,  "base_value": 20.0,  "value_scaling": 12.0},
@@ -240,7 +241,7 @@ func _update_buttons() -> void:
 		# Format the description, replacing {value} with the actual scaled value
 		var desc_template: String = choice.get("description", "") as String
 		var display_value: String
-		if choice["id"] in ["might_percent", "crit_chance", "evasion", "move_speed_percent", "growth", "greed"]:
+		if choice["id"] in ["might_percent", "crit_chance", "evasion", "move_speed_percent", "growth", "greed", "area"]:
 			display_value = "%d%%" % int(round(effective_value * 100.0))
 		elif effective_value < 1.0 and effective_value > 0.0:
 			display_value = "%.2f" % effective_value

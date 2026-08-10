@@ -18,7 +18,7 @@ func _ready() -> void:
 	weight = 4.0
 	max_knockback_speed = 200.0
 	knockback_decay = 14.0
-	stat_scale_per_difficulty = 1.2
+	stat_scale_per_difficulty = 0.3
 
 	super._ready()
 

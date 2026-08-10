@@ -46,5 +46,7 @@ func fire() -> void:
 			spawned_book.damage = attack_damage
 			spawned_book.is_critical = attack_is_critical
 			spawned_book.source_player = get_player()
-			
+			spawned_book.target_radius *= get_area_multiplier()
+			spawned_book.scale *= get_area_multiplier()
+
 		active_books.append(spawned_book)

@@ -31,4 +31,5 @@ func fire() -> void:
 
 	if arrow.has_method("setup"):
 		arrow.setup(global_position, dir, arrow_speed, arrow_damage, arrow_is_critical, get_player(), pierce_total)
+		arrow.scale *= get_area_multiplier()
 	get_tree().current_scene.add_child(arrow)

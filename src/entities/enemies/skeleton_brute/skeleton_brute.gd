@@ -11,6 +11,6 @@ func _ready() -> void:
 	weight = 28.0
 	max_knockback_speed = 180.0
 	knockback_decay = 12.0
-	stat_scale_per_difficulty = 3.6  # Strong stat scaling (brutes scale via stats; comp. for per-minute difficulty)
+	stat_scale_per_difficulty = 0.9  # Strong stat scaling (brutes scale via stats; comp. for per-minute difficulty)
 
 	super._ready()

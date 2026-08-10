@@ -59,6 +59,15 @@ func get_effective_cooldown() -> float:
 
 	return maxf(0.05, base_cooldown * player.get_attack_speed_multiplier() * mult)
 
+# Area stat: scales the radius of AOE skills and the size of projectiles.
+func get_area_multiplier() -> float:
+	var player = get_player()
+	if player == null:
+		return 1.0
+	if player.has_method("get_area_multiplier"):
+		return float(player.get_area_multiplier())
+	return 1.0
+
 func get_attack_damage(base_damage: float) -> int:
 	var player = get_player()
 	if player == null:

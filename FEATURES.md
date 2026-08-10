@@ -7,7 +7,7 @@
 - Right-click reserved as a future **ability button** (abilities inherit from the `Weapon` base class)
 - **Lifesteal** with a 0.1s internal cooldown
 - **Armor** is a flat stat applying `100/(100+armor)` damage reduction
-- **Difficulty stat** grows ~1× **per minute** (was per-second), with compensated mob scaling so real threat matches the old rate
+- **Difficulty stat** grows **1× per minute**, with compensated mob scaling so real threat matches the old rate; per-difficulty-point scaling is tuned low so leveling the "Difficulty" stat is gentle
 
 ## 🗡️ Weapons (9 total, balanced to ~25 average DPS, 0.5x-1.5x band by AOE)
 | Weapon | Class | Notes |
@@ -25,6 +25,7 @@
 - Auto weapons split into starting arsenal vs. **chest-earned** automatic weapons
 - Balance: AOE-heavy weapons ≈0.5x, single-target/manual ≈1.5x
 - **Dagger pierce** future-proofed via `pierce_count` + `player.get_extra_pierce()` hook (a future stat/upgrade can raise it)
+- **Area stat** — level-up upgrade that scales the radius of AOE skills *and* the visual/collision size of projectiles (frost nova, rain of arrows, aura, lightning chain, spinning blade orbit, sword slashes, arrow/bolt/dagger/book/blade projectiles)
 
 ## 🎭 Class System (3 classes, expandable)
 - **Class-selection menu** builds one button per class in the `GameState` roster automatically — new classes added to the roster appear in the menu with no extra UI work

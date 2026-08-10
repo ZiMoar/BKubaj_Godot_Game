@@ -39,6 +39,7 @@ func fire() -> void:
 
 		if bolt.has_method("setup"):
 			bolt.setup(global_position, target_enemy, bolt_speed, attack_damage, is_crit, get_player())
+			bolt.scale *= get_area_multiplier()
 
 
 func _sort_by_distance(a: Node, b: Node) -> bool:

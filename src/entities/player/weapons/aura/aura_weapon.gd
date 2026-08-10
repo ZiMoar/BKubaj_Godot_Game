@@ -17,24 +17,30 @@ func _ready() -> void:
 	cooldown = 1.0
 	super._ready()
 
-	if aura_shape and aura_shape.shape is CircleShape2D:
-		(aura_shape.shape as CircleShape2D).radius = aura_radius
-
-	if aura_visual:
-		aura_visual.set_radius(aura_radius)
-
 	aura_area.body_entered.connect(_on_body_entered)
 	aura_area.area_entered.connect(_on_area_entered)
+	_apply_area_radius()
 
 
 func _physics_process(delta: float) -> void:
 	# Keep aura centered on the player's world position
 	aura_area.global_position = global_position
 
+	# Area stat can change mid-run (upgrades), so refresh the radius each frame.
+	_apply_area_radius()
+
 	_pulse_timer -= delta
 	if _pulse_timer <= 0.0:
 		_pulse_timer = _pulse_interval
 		_apply_pulse_damage()
+
+
+func _apply_area_radius() -> void:
+	var eff_radius: float = aura_radius * get_area_multiplier()
+	if aura_shape and aura_shape.shape is CircleShape2D:
+		(aura_shape.shape as CircleShape2D).radius = eff_radius
+	if aura_visual and aura_visual.has_method("set_radius"):
+		aura_visual.set_radius(eff_radius)
 
 
 func _apply_pulse_damage() -> void:

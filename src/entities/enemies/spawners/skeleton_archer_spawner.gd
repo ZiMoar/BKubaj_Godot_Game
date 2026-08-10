@@ -9,7 +9,7 @@ func _ready() -> void:
 	# Barely more common than the brute (7.5s) — slightly shorter interval.
 	spawn_interval = 6.5
 	max_active_enemies = 9999
-	difficulty_spawn_ratio = 0.25
+	difficulty_spawn_ratio = 1.0
 	elite_chance_per_difficulty = 0.0
 	elite_base_chance = 0.0
 	if enemy_scene == null:
