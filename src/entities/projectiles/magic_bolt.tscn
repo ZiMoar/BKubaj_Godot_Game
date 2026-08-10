@@ -4,7 +4,7 @@
 [ext_resource type="Texture2D" uid="uid://umo5mym72jl2" path="res://icon.svg" id="2_icon"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_bolt"]
-radius = 6.0
+radius = 2.0
 
 [node name="MagicBolt" type="Area2D"]
 collision_layer = 64
@@ -16,5 +16,5 @@ shape = SubResource("CircleShape2D_bolt")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 modulate = Color(0.3, 0.7, 1, 1)
-scale = Vector2(0.25, 0.25)
+scale = Vector2(0.0833, 0.0833)
 texture = ExtResource("2_icon")
