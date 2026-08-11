@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://bniq7bqulw1dw"]
 
 [ext_resource type="Script" uid="uid://cgst75t2soyak" path="res://src/entities/player/weapons/book/book_weapon.gd" id="1_ufvmd"]
-[ext_resource type="PackedScene" uid="uid://bksqtfapx1sfb" path="res://src/entities/projectiles/book.tscn" id="2_xdiye"]
+[ext_resource type="PackedScene" path="res://src/entities/projectiles/book/book.tscn" id="2_xdiye"]
 
 [node name="book_weapon" type="Node2D" unique_id=152869064]
 script = ExtResource("1_ufvmd")

@@ -1,0 +1,35 @@
+[gd_scene format=3 uid="uid://c6li5aqoepo1m"]
+
+[ext_resource type="Script" path="res://src/entities/player/classes/knight/knight_shield.gd" id="1_s"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_shield"]
+size = Vector2(30, 66)
+
+[node name="knight_shield" type="Node2D" unique_id=1391872292]
+script = ExtResource("1_s")
+
+[node name="BlockZone" type="Area2D" parent="." unique_id=748156184]
+visible = false
+collision_layer = 0
+collision_mask = 20
+monitoring = false
+monitorable = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="BlockZone" unique_id=1912361715]
+shape = SubResource("RectangleShape2D_shield")
+
+[node name="ShieldFace" type="Polygon2D" parent="BlockZone" unique_id=875024746]
+color = Color(0.35, 0.5, 0.8, 0.85)
+polygon = PackedVector2Array(-15, -33, 15, -33, 15, 33, -15, 33)
+
+[node name="ShieldRim" type="Polygon2D" parent="BlockZone" unique_id=692435778]
+color = Color(0.15, 0.2, 0.35, 1)
+polygon = PackedVector2Array(-15, -33, 15, -33, 15, -31, -15, -31)
+
+[node name="ShieldHPBar" type="ProgressBar" parent="." unique_id=100000001]
+visible = false
+offset_left = -34.0
+offset_top = -50.0
+offset_right = 34.0
+offset_bottom = -44.0
+show_percentage = false

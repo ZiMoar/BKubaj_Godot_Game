@@ -1,0 +1,267 @@
+[gd_scene load_steps=11 format=3]
+
+[ext_resource type="Script" path="res://src/ui/hud/hud.gd" id="1_hud_script"]
+[ext_resource type="PackedScene" path="res://src/ui/weapon_slot_ui/weapon_slot_ui.tscn" id="2_slot_scene"]
+[ext_resource type="PackedScene" path="res://src/ui/level_up_menu/level_up_menu.tscn" id="3_level_up_menu"]
+[ext_resource type="PackedScene" path="res://src/ui/weapon_choice_menu/weapon_choice_menu.tscn" id="4_weapon_choice"]
+[ext_resource type="PackedScene" path="res://src/ui/artefact_choice_menu/artefact_choice_menu.tscn" id="5_artefact_choice"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_xp_bg"]
+bg_color = Color(0.06, 0.07, 0.1, 0.6)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_xp_fill"]
+bg_color = Color(0.2, 0.75, 1.0, 1.0)
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_boss_bg"]
+bg_color = Color(0.1, 0.05, 0.05, 0.7)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_boss_fill"]
+bg_color = Color(0.85, 0.2, 0.2, 1)
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_top_left = 2
+corner_radius_bottom_left = 2
+
+[node name="HUD" type="CanvasLayer"]
+script = ExtResource("1_hud_script")
+
+[node name="Control" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="TopBar" type="Control" parent="Control"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 26.0
+grow_horizontal = 2
+mouse_filter = 2
+
+[node name="Header" type="MarginContainer" parent="Control/TopBar"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 4
+
+[node name="Row" type="HBoxContainer" parent="Control/TopBar/Header"]
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="LevelLabel" type="Label" parent="Control/TopBar/Header/Row"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.3, 0.85, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 2
+theme_override_font_sizes/font_size = 11
+text = "Team Lv. 1"
+vertical_alignment = 1
+
+[node name="XPBar" type="ProgressBar" parent="Control/TopBar/Header/Row"]
+custom_minimum_size = Vector2(140, 14)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/background = SubResource("StyleBoxFlat_xp_bg")
+theme_override_styles/fill = SubResource("StyleBoxFlat_xp_fill")
+show_percentage = false
+
+[node name="XPTextLabel" type="Label" parent="Control/TopBar/Header/Row"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.85, 0.85, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 2
+theme_override_font_sizes/font_size = 10
+text = "0 / 10 XP"
+vertical_alignment = 1
+
+[node name="DifficultyLabel" type="Label" parent="Control/TopBar/Header/Row"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.85, 0.45, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 2
+theme_override_font_sizes/font_size = 9
+text = "Map Difficulty: 0"
+vertical_alignment = 1
+
+[node name="SessionTimerLabel" type="Label" parent="Control/TopBar/Header/Row"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.7, 0.95, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 2
+theme_override_font_sizes/font_size = 9
+text = "Session: 00:00"
+vertical_alignment = 1
+
+[node name="BossBar" type="ProgressBar" parent="Control"]
+visible = false
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -220.0
+offset_top = 32.0
+offset_right = 220.0
+offset_bottom = 46.0
+grow_horizontal = 2
+theme_override_styles/background = SubResource("StyleBoxFlat_boss_bg")
+theme_override_styles/fill = SubResource("StyleBoxFlat_boss_fill")
+show_percentage = false
+
+[node name="BossName" type="Label" parent="Control/BossBar"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.85, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 2
+theme_override_font_sizes/font_size = 10
+horizontal_alignment = 1
+text = "Boss"
+
+[node name="GoldLabel" type="Label" parent="Control"]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -200.0
+offset_top = 30.0
+offset_right = -12.0
+offset_bottom = 50.0
+grow_horizontal = 0
+theme_override_colors/font_color = Color(1, 0.82, 0.2, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 2
+theme_override_font_sizes/font_size = 14
+horizontal_alignment = 2
+text = "🪙 0"
+
+[node name="ArtefactCaption" type="Label" parent="Control"]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 52.0
+offset_right = 72.0
+offset_bottom = 66.0
+theme_override_colors/font_color = Color(0.9, 0.85, 0.6, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 2
+theme_override_font_sizes/font_size = 10
+text = "Artifacts"
+
+[node name="ArtefactBar" type="HBoxContainer" parent="Control"]
+layout_mode = 0
+offset_left = 76.0
+offset_top = 50.0
+offset_right = 226.0
+offset_bottom = 68.0
+theme_override_constants/separation = 3
+
+[node name="ArtSlot0" type="Label" parent="Control/ArtefactBar"]
+layout_mode = 2
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 2
+theme_override_font_sizes/font_size = 16
+text = "◇"
+
+[node name="ArtSlot1" type="Label" parent="Control/ArtefactBar"]
+layout_mode = 2
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 2
+theme_override_font_sizes/font_size = 16
+text = "◇"
+
+[node name="ArtSlot2" type="Label" parent="Control/ArtefactBar"]
+layout_mode = 2
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 2
+theme_override_font_sizes/font_size = 16
+text = "◇"
+
+[node name="ArtSlot3" type="Label" parent="Control/ArtefactBar"]
+layout_mode = 2
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 2
+theme_override_font_sizes/font_size = 16
+text = "◇"
+
+[node name="ArtSlot4" type="Label" parent="Control/ArtefactBar"]
+layout_mode = 2
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 2
+theme_override_font_sizes/font_size = 16
+text = "◇"
+
+[node name="RightBar" type="Control" parent="Control"]
+layout_mode = 1
+anchors_preset = 6
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = -185.0
+offset_top = -80.0
+offset_right = -14.0
+offset_bottom = 80.0
+grow_horizontal = 0
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Margin" type="MarginContainer" parent="Control/RightBar"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="WeaponContainer" type="VBoxContainer" parent="Control/RightBar/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 4
+alignment = 1
+
+[node name="PrimarySlot" parent="Control/RightBar/Margin/WeaponContainer" instance=ExtResource("2_slot_scene")]
+layout_mode = 2
+slot_badge = "LMB"
+
+[node name="SecondarySlot" parent="Control/RightBar/Margin/WeaponContainer" instance=ExtResource("2_slot_scene")]
+layout_mode = 2
+slot_badge = "RMB"
+
+[node name="AutoSlot1" parent="Control/RightBar/Margin/WeaponContainer" instance=ExtResource("2_slot_scene")]
+layout_mode = 2
+slot_badge = "A1"
+
+[node name="AutoSlot2" parent="Control/RightBar/Margin/WeaponContainer" instance=ExtResource("2_slot_scene")]
+layout_mode = 2
+slot_badge = "A2"
+
+[node name="AutoSlot3" parent="Control/RightBar/Margin/WeaponContainer" instance=ExtResource("2_slot_scene")]
+layout_mode = 2
+slot_badge = "A3"
+
+[node name="LevelUpMenu" parent="." instance=ExtResource("3_level_up_menu")]
+
+[node name="WeaponChoiceMenu" parent="." instance=ExtResource("4_weapon_choice")]
+
+[node name="ArtefactChoiceMenu" parent="." instance=ExtResource("5_artefact_choice")]
+
+[node name="SessionTimer" type="Timer" parent="."]
+process_mode = 3
+wait_time = 1.0
+autostart = true
+one_shot = false

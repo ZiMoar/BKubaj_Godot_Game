@@ -9,6 +9,8 @@ extends Node2D
 @export var difficulty_spawn_ratio: float = 0.4
 @export var elite_chance_per_difficulty: float = 0.0
 @export var elite_base_chance: float = 0.0
+# Minimum run difficulty required before this enemy type can spawn.
+@export var min_difficulty: int = 0
 
 @onready var timer: Timer = get_node_or_null("Timer") as Timer
 
@@ -54,7 +56,10 @@ func _on_timer_timeout() -> void:
 	var active_enemy_count = get_tree().get_nodes_in_group("enemies").size()
 	if active_enemy_count >= max_active_enemies:
 		return
-		
+
+	if get_run_difficulty() < min_difficulty:
+		return
+
 	_spawn_pattern()
 
 func get_run_difficulty() -> float:

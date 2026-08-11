@@ -1,7 +1,7 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://src/entities/player/weapons/lightning/lightning_weapon.gd" id="1_script"]
-[ext_resource type="PackedScene" path="res://src/entities/projectiles/lightning_strike.tscn" id="2_strike"]
+[ext_resource type="PackedScene" path="res://src/entities/projectiles/lightning_strike/lightning_strike.tscn" id="2_strike"]
 
 [node name="lightning_weapon" type="Node2D"]
 script = ExtResource("1_script")

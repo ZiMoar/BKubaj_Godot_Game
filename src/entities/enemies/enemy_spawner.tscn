@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://blappv5sysdr0"]
 
-[ext_resource type="Script" uid="uid://krbv0ikm6c6q" path="res://enemy_spawner.gd" id="1_geypa"]
+[ext_resource type="Script" path="res://enemy_spawner.gd" id="1_geypa"]
 [ext_resource type="PackedScene" uid="uid://7eug3lv115a4" path="res://src/entities/enemies/enemy.tscn" id="2_cgb11"]
 
 [node name="enemy_spawner" type="Node2D" unique_id=86040030]

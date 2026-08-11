@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://bgpcd1d62kev0"]
+
+[ext_resource type="Script" path="res://src/entities/projectiles/rain_aoe/rain_aoe.gd" id="1_s"]
+
+[node name="RainAoE" type="Node2D" unique_id=146940856]
+script = ExtResource("1_s")

@@ -1,6 +1,6 @@
-[gd_scene format=3 uid="uid://btx4iqf8dquh4"]
+[gd_scene format=3 uid="uid://bo38sn4al73e4"]
 
-[ext_resource type="Script" uid="uid://rwocrkukx4y6" path="res://src/ui/artefact_choice_menu.gd" id="1_script"]
+[ext_resource type="Script" path="res://src/ui/artefact_choice_menu.gd" id="1_script"]
 
 [node name="ArtefactChoiceMenu" type="Control" unique_id=2067477587]
 process_mode = 3

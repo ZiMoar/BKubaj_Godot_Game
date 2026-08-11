@@ -1,0 +1,18 @@
+[gd_scene format=3 uid="uid://bv5kqe2q45mir"]
+
+[ext_resource type="Script" path="res://src/entities/player/classes/mage/mage_overload_weapon.gd" id="1_s"]
+
+[node name="mage_overload_weapon" type="Node2D" unique_id=2134091910]
+script = ExtResource("1_s")
+
+[node name="OverloadAura" type="Node2D" parent="." unique_id=300000001]
+visible = false
+
+[node name="Fill" type="Polygon2D" parent="OverloadAura" unique_id=300000002]
+color = Color(0.55, 0.25, 1, 0.22)
+polygon = PackedVector2Array(0, -54, 51.4, -16.7, 51.4, 16.7, 0, 54, -51.4, 16.7, -51.4, -16.7)
+
+[node name="Ring" type="Line2D" parent="OverloadAura" unique_id=300000003]
+width = 3.0
+default_color = Color(0.85, 0.6, 1, 1)
+points = PackedVector2Array(0, -54, 51.4, -16.7, 51.4, 16.7, 0, 54, -51.4, 16.7, -51.4, -16.7, 0, -54)

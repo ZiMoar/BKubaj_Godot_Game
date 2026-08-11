@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://cijtht3skeqrx"]
 
 [ext_resource type="Script" uid="uid://vkddx8xve6xk" path="res://src/entities/player/weapons/gun/gun_weapon.gd" id="1_opcrl"]
-[ext_resource type="PackedScene" uid="uid://c4qajl7m80drp" path="res://src/entities/projectiles/test_proj.tscn" id="2_avu82"]
+[ext_resource type="PackedScene" path="res://src/entities/projectiles/test_proj/test_proj.tscn" id="2_avu82"]
 
 [node name="gun_weapon" type="Node2D" unique_id=2055522678]
 script = ExtResource("1_opcrl")

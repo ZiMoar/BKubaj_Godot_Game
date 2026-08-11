@@ -13,8 +13,8 @@ extends CharacterBody2D
 @export var knockback_decay: float = 160.0
 @export var stat_scale_per_difficulty: float = 0.0  # stat growth multiplier per difficulty point
 
-var xp_orb_scene: PackedScene = preload("res://src/pickups/xp_orb.tscn")
-var gold_pickup_scene: PackedScene = preload("res://src/pickups/gold_pickup.tscn")
+var xp_orb_scene: PackedScene = preload("res://src/pickups/xp_orb/xp_orb.tscn")
+var gold_pickup_scene: PackedScene = preload("res://src/pickups/gold_pickup/gold_pickup.tscn")
 
 var current_health: int
 var can_deal_damage: bool = true

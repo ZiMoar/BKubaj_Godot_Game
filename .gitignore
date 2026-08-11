@@ -21,3 +21,4 @@ mono_crash.*.json
 
 # Ziva editor agent (tooling binaries) — not part of the game
 addons/ziva_agent/
+addons/godot_ai/

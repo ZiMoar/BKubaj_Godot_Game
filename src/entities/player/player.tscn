@@ -1,19 +1,19 @@
-[gd_scene format=3 uid="uid://ch71iywhtq2is"]
+[gd_scene format=3 uid="uid://dnmrxqqrvwxut"]
 
-[ext_resource type="Script" uid="uid://b7ksmn7t7o5l1" path="res://src/entities/player/player.gd" id="1_4m8ck"]
+[ext_resource type="Script" path="res://src/entities/player/player.gd" id="1_4m8ck"]
 [ext_resource type="Texture2D" uid="uid://umo5mym72jl2" path="res://icon.svg" id="2_vt6n5"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_g4v7s"]
 size = Vector2(16, 16)
 
-[sub_resource type="CircleShape2D" id="CircleShape2D_magnet"]
-radius = 50.0
-
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_player_hp_bg"]
 bg_color = Color(0.1, 0.1, 0.1, 0.7)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_player_hp_fill"]
-bg_color = Color(0.2, 0.85, 0.3, 1.0)
+bg_color = Color(0.2, 0.85, 0.3, 1)
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_magnet"]
+radius = 50.0
 
 [node name="Player" type="CharacterBody2D" unique_id=738018314 groups=["player"]]
 light_mask = 5
@@ -30,7 +30,8 @@ texture = ExtResource("2_vt6n5")
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=623290788]
 shape = SubResource("RectangleShape2D_g4v7s")
 
-[node name="HPBar" type="ProgressBar" parent="."]
+[node name="HPBar" type="ProgressBar" parent="." unique_id=191598467]
+clip_contents = true
 offset_left = -22.0
 offset_top = 10.0
 offset_right = 22.0
@@ -39,16 +40,15 @@ theme_override_styles/background = SubResource("StyleBoxFlat_player_hp_bg")
 theme_override_styles/fill = SubResource("StyleBoxFlat_player_hp_fill")
 value = 100.0
 show_percentage = false
-clip_contents = true
 
-[node name="MagnetArea" type="Area2D" parent="."]
+[node name="MagnetArea" type="Area2D" parent="." unique_id=364405028]
 collision_layer = 0
 collision_mask = 8
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="MagnetArea"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="MagnetArea" unique_id=208338078]
 shape = SubResource("CircleShape2D_magnet")
 
-[node name="Camera2D" type="Camera2D" parent="."]
+[node name="Camera2D" type="Camera2D" parent="." unique_id=1990340232]
 position_smoothing_enabled = true
 position_smoothing_speed = 8.0
 

@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://src/entities/player/classes/mage/mage.gd" id="1_mage"]
+
+[node name="Mage" type="Node"]
+script = ExtResource("1_mage")

@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://src/entities/player/classes/ranger/ranger.gd" id="1_ranger"]
+
+[node name="Ranger" type="Node"]
+script = ExtResource("1_ranger")

@@ -1,0 +1,18 @@
+[gd_scene format=3 uid="uid://cw0raobyovep4"]
+
+[ext_resource type="Script" uid="uid://dkc7oas0ivn81" path="res://src/entities/projectiles/arrow_proj/arrow_proj.gd" id="1_s"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_arrow"]
+radius = 5.0
+
+[node name="ArrowProj" type="Area2D" unique_id=1412382339]
+collision_layer = 64
+collision_mask = 4
+script = ExtResource("1_s")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=438488970]
+shape = SubResource("CircleShape2D_arrow")
+
+[node name="Polygon2D" type="Polygon2D" parent="." unique_id=1583929052]
+color = Color(0.92, 0.94, 0.9, 1)
+polygon = PackedVector2Array(10, 0, 2, -3, 2, 3)

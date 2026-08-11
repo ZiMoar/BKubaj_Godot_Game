@@ -1,6 +1,6 @@
-[gd_scene format=3 uid="uid://cyd317qqtqld3"]
+[gd_scene format=3 uid="uid://dgb3o5lf8u7lk"]
 
-[ext_resource type="Script" uid="uid://b3ahbkjft78yl" path="res://src/ui/level_up_menu.gd" id="1_script"]
+[ext_resource type="Script" path="res://src/ui/level_up_menu.gd" id="1_script"]
 
 [node name="LevelUpMenu" type="Control" unique_id=2045527321]
 process_mode = 3
@@ -66,7 +66,7 @@ custom_minimum_size = Vector2(0, 60)
 layout_mode = 2
 text = "Choice 3"
 
-[node name="RerollButton" type="Button" parent="CenterContainer/Panel/Vertical"]
+[node name="RerollButton" type="Button" parent="CenterContainer/Panel/Vertical" unique_id=759778243]
 custom_minimum_size = Vector2(0, 36)
 layout_mode = 2
 text = "Reroll (10g)"
