@@ -14,14 +14,22 @@ const KNIGHT_SCENE: PackedScene = preload("res://src/entities/player/classes/kni
 const RANGER_SCENE: PackedScene = preload("res://src/entities/player/classes/ranger/ranger.tscn")
 const MAGE_SCENE: PackedScene = preload("res://src/entities/player/classes/mage/mage.tscn")
 
+const TEST_ARENA_MAP: PackedScene = preload("res://src/environment/maps/test_arena/test_arena.tscn")
+const NARROW_ARENA_MAP: PackedScene = preload("res://src/environment/maps/narrow_arena/narrow_arena.tscn")
+
 var _classes: Array[ClassBase] = []
 var selected_class_id: String = "knight"
+
+var _maps: Array[MapBase] = []
+var selected_map_id: String = "test_arena"
 
 
 func _ready() -> void:
 	register_class(KNIGHT_SCENE)
 	register_class(RANGER_SCENE)
 	register_class(MAGE_SCENE)
+	register_map(TEST_ARENA_MAP)
+	register_map(NARROW_ARENA_MAP)
 
 
 func register_class(scene: PackedScene) -> void:
@@ -49,3 +57,30 @@ func get_selected_class() -> ClassBase:
 func set_selected_class(id: String) -> void:
 	if get_class_by_id(id) != null:
 		selected_class_id = id
+
+
+func register_map(scene: PackedScene) -> void:
+	var map: MapBase = scene.instantiate()
+	add_child(map)
+	_maps.append(map)
+
+
+## All registered maps, in registration order (drives menu order).
+func get_map_list() -> Array[MapBase]:
+	return _maps
+
+
+func get_map_by_id(id: String) -> MapBase:
+	for map: MapBase in _maps:
+		if map.map_id == id:
+			return map
+	return null
+
+
+func get_selected_map() -> MapBase:
+	return get_map_by_id(selected_map_id)
+
+
+func set_selected_map(id: String) -> void:
+	if get_map_by_id(id) != null:
+		selected_map_id = id

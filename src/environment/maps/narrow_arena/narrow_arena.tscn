@@ -1,0 +1,11 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://src/environment/maps/narrow_arena/narrow_arena.gd" id="1_map_script"]
+[ext_resource type="PackedScene" path="res://src/environment/narrow_arena.tscn" id="2_arena"]
+
+[node name="NarrowArenaMap" type="Node"]
+script = ExtResource("1_map_script")
+map_id = "narrow_arena"
+display_name = "Narrow Arena"
+description = "A tall, narrow arena. Little room to dodge horizontally."
+arena_scene = ExtResource("2_arena")
