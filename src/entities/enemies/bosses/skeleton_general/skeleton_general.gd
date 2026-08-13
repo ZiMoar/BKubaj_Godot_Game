@@ -8,11 +8,11 @@ extends BossEnemy
 @export var summon_enemy_scene: PackedScene = preload("res://src/entities/enemies/swarmer/skeleton/skeleton_enemy.tscn")
 
 @export var slam_radius: float = 240.0
-@export var slam_damage: int = 40
+@export var slam_damage: int = 50
 @export var volley_count: int = 7
 @export var volley_speed: float = 300.0
 @export var volley_spread_deg: float = 45.0
-@export var volley_damage: int = 22
+@export var volley_damage: int = 28
 @export var summon_count: int = 4
 
 
@@ -22,7 +22,7 @@ func _ready() -> void:
 	# mark, so its base pool is high and difficulty scaling pushes it further.
 	max_health = 4200
 	speed = 72.0
-	contact_damage = 45
+	contact_damage = 55
 	xp_value = 100
 	xp_orb_tier = 5
 	weight = 500.0
@@ -70,7 +70,7 @@ func _execute_slam() -> void:
 	var dist: float = global_position.distance_to(target_player.global_position)
 	# Telegraph gave the player time to move out of the radius.
 	if dist <= slam_radius + 20.0 and target_player.has_method("take_damage"):
-		target_player.take_damage(slam_damage)
+		target_player.take_damage(slam_damage, self)
 
 
 func _execute_volley() -> void:

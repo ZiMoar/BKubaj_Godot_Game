@@ -1,0 +1,13 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://src/environment/obstacles/pillar/pillar.gd" id="1_pillar"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_pillar"]
+size = Vector2(30, 30)
+
+[node name="Pillar" type="StaticBody2D"]
+collision_layer = 1
+script = ExtResource("1_pillar")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_pillar")

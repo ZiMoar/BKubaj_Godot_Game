@@ -56,23 +56,31 @@ func _apply_pulse_damage() -> void:
 	var hit_this_pulse: Dictionary = {}  # enemy instance_id -> true
 
 	for body: Node2D in aura_area.get_overlapping_bodies():
-		if body.is_in_group("enemies") and body.has_method("take_damage"):
+		if body.is_in_group("enemies") or (body.is_in_group("destructibles") and body.has_method("take_damage")):
 			var body_id: int = body.get_instance_id()
 			if hit_this_pulse.has(body_id):
 				continue
 			hit_this_pulse[body_id] = true
 			body.take_damage(final_damage)
 			apply_lifesteal()
+			if body.is_in_group("enemies"):
+				apply_status_on_hit(body, final_damage)
+				if body.has_method("has_died") and body.has_died():
+					apply_explosion_on_kill(global_position, final_damage)
 
 	for area: Area2D in aura_area.get_overlapping_areas():
 		var parent: Node = area.get_parent()
-		if parent and parent.is_in_group("enemies") and parent.has_method("take_damage"):
+		if parent and (parent.is_in_group("enemies") or parent.is_in_group("destructibles")) and parent.has_method("take_damage"):
 			var parent_id: int = parent.get_instance_id()
 			if hit_this_pulse.has(parent_id):
 				continue
 			hit_this_pulse[parent_id] = true
 			parent.take_damage(final_damage)
 			apply_lifesteal()
+			if parent.is_in_group("enemies"):
+				apply_status_on_hit(parent, final_damage)
+				if parent.has_method("has_died") and parent.has_died():
+					apply_explosion_on_kill(global_position, final_damage)
 
 
 func _on_body_entered(_body: Node2D) -> void:
@@ -84,5 +92,8 @@ func _on_area_entered(_area: Area2D) -> void:
 
 
 func fire() -> void:
-	# Aura is always active via _physics_process; fire is a no-op pulse
-	pass
+	# Aura pulses continuously via _physics_process. Repeat works by firing an
+	# extra immediate burst here each time the weapon's volley triggers (one
+	# extra full-radius pulse per repeat), so a repeat-upgraded aura clearly
+	# dishes out more damage alongside its steady ticking.
+	_apply_pulse_damage()

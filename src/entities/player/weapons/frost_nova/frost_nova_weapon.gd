@@ -17,6 +17,9 @@ func _ready() -> void:
 	super._ready()
 	call_deferred("try_fire")
 
+func supports_range_damage() -> bool:
+	return true
+
 
 func fire() -> void:
 	var origin: Vector2 = global_position
@@ -26,7 +29,10 @@ func fire() -> void:
 	if crit:
 		dmg = int(round(float(dmg) * get_critical_multiplier()))
 
-	for e: Node in get_tree().get_nodes_in_group("enemies"):
+	var targets: Array[Node] = get_tree().get_nodes_in_group("enemies")
+	for d: Node in get_tree().get_nodes_in_group("destructibles"):
+		targets.append(d)
+	for e: Node in targets:
 		if not is_instance_valid(e):
 			continue
 		var en: Node2D = e as Node2D
@@ -35,6 +41,10 @@ func fire() -> void:
 			apply_lifesteal()
 			if en.has_method("apply_slow"):
 				en.apply_slow(slow_duration, slow_factor)
+			if en.is_in_group("enemies"):
+				apply_status_on_hit(en, dmg)
+				if en.has_method("has_died") and en.has_died():
+					apply_explosion_on_kill(origin, dmg)
 
 	if frost_scene:
 		var ring = frost_scene.instantiate()

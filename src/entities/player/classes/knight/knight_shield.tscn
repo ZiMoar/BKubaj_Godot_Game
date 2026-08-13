@@ -11,7 +11,7 @@ script = ExtResource("1_s")
 [node name="BlockZone" type="Area2D" parent="." unique_id=748156184]
 visible = false
 collision_layer = 0
-collision_mask = 20
+collision_mask = 52
 monitoring = false
 monitorable = false
 

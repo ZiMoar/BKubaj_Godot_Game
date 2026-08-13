@@ -23,13 +23,37 @@ func _ready() -> void:
 		timer = Timer.new()
 		timer.name = "Timer"
 		add_child(timer)
-		
+
+	_derive_arena_bounds()
+
 	timer.wait_time = spawn_interval
 	_base_interval = spawn_interval
 	add_to_group("regular_spawner")
 	timer.timeout.connect(_on_timer_timeout)
 	if is_spawning:
 		timer.start()
+
+# Derive the safe spawn region from the arena's Floor (GridBackground) so the
+# out-of-bounds protection matches whatever map this spawner runs in, instead of
+# being hardcoded to the test arena's wide layout. Falls back to the exported
+# arena_bounds if no Floor node is found.
+func _derive_arena_bounds() -> void:
+	var floor_node := _find_floor_node()
+	if floor_node == null:
+		return
+	# Inset from the floor edge by a margin so enemies never spawn inside walls.
+	var margin := 40.0
+	arena_bounds = Rect2(floor_node.arena_center - floor_node.arena_size * 0.5 + Vector2(margin, margin), floor_node.arena_size - Vector2(margin * 2.0, margin * 2.0))
+
+# Walk up from this spawner to the arena root and look for a "Floor" (GridBackground).
+func _find_floor_node() -> GridBackground:
+	var node: Node = self
+	while node != null:
+		var floor_node := node.get_node_or_null("Floor") as GridBackground
+		if floor_node != null:
+			return floor_node
+		node = node.get_parent()
+	return null
 
 # Boss fights call this to slow down regular spawners. Suppression is
 # multiplicative on the spawn interval and restored when the boss dies.

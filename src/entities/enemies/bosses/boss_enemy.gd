@@ -35,6 +35,7 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	_process_status_dots(delta)
 	if target_player == null:
 		target_player = get_tree().get_first_node_in_group("player") as Node2D
 		if target_player == null:

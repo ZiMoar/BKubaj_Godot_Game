@@ -14,6 +14,7 @@ var current_angle: float = 0.0
 var center_position: Vector2 = Vector2.ZERO
 var is_critical: bool = false
 var source_player: Player = null
+var source_weapon: Node = null
 
 # Dictionary to track per-enemy hit cooldowns
 var recently_hit: Dictionary = {}
@@ -68,7 +69,7 @@ func _on_touch(node: Node) -> void:
 func _process_hit(node: Node) -> void:
 	var target = node.get_parent() if node is Area2D else node
 	
-	if target and target.is_in_group("enemies") and target.has_method("take_damage"):
+	if target and (target.is_in_group("enemies") or target.is_in_group("destructibles")) and target.has_method("take_damage"):
 		# Ignore if this enemy was hit recently (prevents 60 hits/sec instakill)
 		if recently_hit.has(target):
 			return
@@ -79,3 +80,7 @@ func _process_hit(node: Node) -> void:
 			target.apply_knockback(global_position, knockback_force)
 		if source_player and source_player.has_method("apply_lifesteal"):
 			source_player.apply_lifesteal()
+		if source_weapon and target.is_in_group("enemies"):
+			source_weapon.apply_status_on_hit(target, damage)
+			if target.has_method("has_died") and target.has_died():
+				source_weapon.apply_explosion_on_kill(global_position, damage)

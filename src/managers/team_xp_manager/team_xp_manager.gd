@@ -34,3 +34,20 @@ func add_xp(amount: int) -> void:
 		team_leveled_up.emit(team_level)
 		
 	team_xp_changed.emit(current_xp, xp_to_next_level)
+
+
+func capture_xp_state() -> Dictionary:
+	return {
+		"team_level": team_level,
+		"current_xp": current_xp,
+		"xp_to_next_level": xp_to_next_level,
+		"xp_growth_factor": xp_growth_factor,
+	}
+
+
+func restore_xp_state(snap: Dictionary) -> void:
+	team_level = int(snap.get("team_level", 0))
+	current_xp = int(snap.get("current_xp", 0))
+	xp_to_next_level = int(snap.get("xp_to_next_level", 10))
+	xp_growth_factor = float(snap.get("xp_growth_factor", 1.3))
+	team_xp_changed.emit(current_xp, xp_to_next_level)

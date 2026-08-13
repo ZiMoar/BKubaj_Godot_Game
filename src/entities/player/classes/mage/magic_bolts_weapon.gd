@@ -14,6 +14,15 @@ func _ready() -> void:
 	cooldown = 1.1
 	super._ready()
 
+func supports_projectile_count() -> bool:
+	return true
+
+func supports_projectile_speed() -> bool:
+	return true
+
+func supports_range_damage() -> bool:
+	return true
+
 
 func fire() -> void:
 	if bolt_scene == null:
@@ -26,7 +35,8 @@ func fire() -> void:
 	# Sort enemies by distance, target the nearest ones
 	enemies.sort_custom(_sort_by_distance)
 
-	var bolts_to_fire: int = mini(bolt_count, enemies.size())
+	var bolts_to_fire: int = mini(get_effective_projectile_count(bolt_count), enemies.size())
+	var eff_speed: float = get_effective_projectile_speed(bolt_speed)
 	for i: int in range(bolts_to_fire):
 		var bolt: Area2D = bolt_scene.instantiate() as Area2D
 		get_tree().current_scene.add_child(bolt)
@@ -38,7 +48,7 @@ func fire() -> void:
 			attack_damage = int(round(float(attack_damage) * get_critical_multiplier()))
 
 		if bolt.has_method("setup"):
-			bolt.setup(global_position, target_enemy, bolt_speed, attack_damage, is_crit, get_player())
+			bolt.setup(global_position, target_enemy, eff_speed, attack_damage, is_crit, get_player(), self)
 			bolt.scale *= get_area_multiplier()
 
 

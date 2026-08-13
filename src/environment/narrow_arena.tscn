@@ -7,8 +7,20 @@
 [ext_resource type="Script" uid="uid://byx0vv2w1j4cr" path="res://src/managers/xp_orb_spatial_manager.gd" id="6_xp_orb_spatial"]
 [ext_resource type="PackedScene" path="res://src/entities/enemies/spawners/skeleton_brute_spawner/skeleton_brute_spawner.tscn" id="7_brute_spawner"]
 [ext_resource type="PackedScene" uid="uid://bdv04chmloo0k" path="res://src/ui/pointers/chest_pointer/chest_pointer.tscn" id="9_chest_pointer"]
+[ext_resource type="PackedScene" path="res://src/ui/pointers/anvil_pointer/anvil_pointer.tscn" id="41_anvil_pointer"]
 [ext_resource type="PackedScene" uid="uid://cwydwctisc1um" path="res://src/entities/enemies/spawners/skeleton_archer_spawner/skeleton_archer_spawner.tscn" id="19_archer_spawner"]
 [ext_resource type="PackedScene" uid="uid://chmoaais0rcay" path="res://src/entities/enemies/spawners/boss_spawner/boss_spawner.tscn" id="29_boss_spawner"]
+[ext_resource type="PackedScene" path="res://src/entities/enemies/spawners/bomber_skeleton_spawner/bomber_skeleton_spawner.tscn" id="30_bomber_spawner"]
+[ext_resource type="PackedScene" path="res://src/entities/enemies/spawners/skeleton_necromancer_spawner/skeleton_necromancer_spawner.tscn" id="31_necromancer_spawner"]
+[ext_resource type="PackedScene" path="res://src/entities/enemies/spawners/bat_spawner/bat_spawner.tscn" id="32_bat_spawner"]
+[ext_resource type="PackedScene" path="res://src/managers/team_xp_manager/team_xp_manager.tscn" id="33_team_xp"]
+[ext_resource type="PackedScene" path="res://src/environment/chest_spawner/chest_spawner.tscn" id="34_chest_spawner"]
+[ext_resource type="PackedScene" path="res://src/environment/anvil_spawner/anvil_spawner.tscn" id="38_anvil_spawner"]
+[ext_resource type="PackedScene" path="res://src/environment/obstacles/pillar/pillar.tscn" id="35_pillar"]
+[ext_resource type="PackedScene" path="res://src/environment/obstacles/crumbling_pillar/crumbling_pillar.tscn" id="36_crumble"]
+[ext_resource type="PackedScene" path="res://src/environment/obstacles/spikes/spikes.tscn" id="37_spikes"]
+[ext_resource type="PackedScene" path="res://src/environment/stage_door/stage_door.tscn" id="39_stage_door"]
+[ext_resource type="PackedScene" path="res://src/environment/stage_controller/stage_controller.tscn" id="40_stage_ctrl"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_horiz"]
 size = Vector2(1080, 32)
@@ -19,6 +31,8 @@ size = Vector2(32, 1920)
 [node name="NarrowArena" type="Node2D"]
 
 [node name="ChestPointer" parent="." instance=ExtResource("9_chest_pointer")]
+
+[node name="AnvilPointer" parent="." instance=ExtResource("41_anvil_pointer")]
 
 [node name="SkeletonArcherSpawner" parent="." instance=ExtResource("19_archer_spawner")]
 enemy_scene = null
@@ -31,8 +45,20 @@ trigger_time = 300.0
 enemy_scene = null
 spawn_interval = 1.5
 
+[node name="BomberSkeletonSpawner" parent="." instance=ExtResource("30_bomber_spawner")]
+
+[node name="SkeletonNecromancerSpawner" parent="." instance=ExtResource("31_necromancer_spawner")]
+
+[node name="BatSpawner" parent="." instance=ExtResource("32_bat_spawner")]
+
 [node name="XPOrbSpatialManager" type="Node" parent="."]
 script = ExtResource("6_xp_orb_spatial")
+
+[node name="TeamXPManager" parent="." instance=ExtResource("33_team_xp")]
+
+[node name="ChestSpawner" parent="." instance=ExtResource("34_chest_spawner")]
+
+[node name="AnvilSpawner" parent="." instance=ExtResource("38_anvil_spawner")]
 
 [node name="HUD" parent="." instance=ExtResource("4_hud")]
 
@@ -58,6 +84,24 @@ shape = SubResource("RectangleShape2D_vert")
 [node name="RightWall" type="CollisionShape2D" parent="Walls"]
 position = Vector2(1516, 540)
 shape = SubResource("RectangleShape2D_vert")
+
+[node name="Pillar" parent="." instance=ExtResource("35_pillar")]
+position = Vector2(560, 200)
+
+[node name="Pillar2" parent="." instance=ExtResource("35_pillar")]
+position = Vector2(1380, 100)
+
+[node name="CrumblingPillar" parent="." instance=ExtResource("36_crumble")]
+position = Vector2(720, 800)
+
+[node name="Spikes" parent="." instance=ExtResource("37_spikes")]
+position = Vector2(1220, 900)
+
+[node name="StageDoor" parent="." instance=ExtResource("39_stage_door")]
+position = Vector2(960, -385)
+
+[node name="StageController" parent="." instance=ExtResource("40_stage_ctrl")]
+door_path = NodePath("../StageDoor")
 
 [node name="Player" parent="." instance=ExtResource("1_u6xee")]
 position = Vector2(960, 540)

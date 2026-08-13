@@ -1,8 +1,3 @@
 [gd_scene format=3 uid="uid://bp40c4n1pfyev"]
 
-[ext_resource type="Script" path="res://src/entities/enemies/spawners/boss_spawner.gd" id="1_boss_spawner_script"]
-[ext_resource type="PackedScene" path="res://src/entities/enemies/bosses/skeleton_general/skeleton_general.tscn" id="2_boss_scene"]
-
 [node name="BossSpawner" type="Node2D" unique_id=309774476]
-script = ExtResource("1_boss_spawner_script")
-boss_scene = ExtResource("2_boss_scene")

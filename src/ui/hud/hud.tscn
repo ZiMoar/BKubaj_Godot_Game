@@ -1,10 +1,11 @@
-[gd_scene load_steps=11 format=3]
+[gd_scene load_steps=12 format=3]
 
 [ext_resource type="Script" path="res://src/ui/hud/hud.gd" id="1_hud_script"]
 [ext_resource type="PackedScene" path="res://src/ui/weapon_slot_ui/weapon_slot_ui.tscn" id="2_slot_scene"]
 [ext_resource type="PackedScene" path="res://src/ui/level_up_menu/level_up_menu.tscn" id="3_level_up_menu"]
 [ext_resource type="PackedScene" path="res://src/ui/weapon_choice_menu/weapon_choice_menu.tscn" id="4_weapon_choice"]
 [ext_resource type="PackedScene" path="res://src/ui/artefact_choice_menu/artefact_choice_menu.tscn" id="5_artefact_choice"]
+[ext_resource type="PackedScene" path="res://src/ui/anvil_upgrade_menu/anvil_upgrade_menu.tscn" id="6_anvil_menu"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_xp_bg"]
 bg_color = Color(0.06, 0.07, 0.1, 0.6)
@@ -257,6 +258,8 @@ slot_badge = "A3"
 [node name="LevelUpMenu" parent="." instance=ExtResource("3_level_up_menu")]
 
 [node name="WeaponChoiceMenu" parent="." instance=ExtResource("4_weapon_choice")]
+
+[node name="AnvilUpgradeMenu" parent="." instance=ExtResource("6_anvil_menu")]
 
 [node name="ArtefactChoiceMenu" parent="." instance=ExtResource("5_artefact_choice")]
 

@@ -1,32 +1,63 @@
 class_name ChestSpawner
 extends Node2D
 
+signal chest_spawned
+
+## Weapon boxes spawn exactly once per room, 10 seconds into the fight.
 @export var chest_scene: PackedScene
-@export var spawn_interval: float = 45.0
+@export var spawn_delay: float = 10.0
 @export var arena_bounds: Rect2 = Rect2(80, 80, 1760, 920)
 
-var _timer: float = 10.0  # First chest spawns quickly for testing
+var _timer: float = 10.0
 var _player: Node2D = null
 var _active_chests: Array[Node] = []
+var _spawned_once: bool = false
 
 
 func _ready() -> void:
 	add_to_group("chest_spawner")
 	if chest_scene == null:
 		chest_scene = preload("res://src/environment/treasure_chest/treasure_chest.tscn")
+	_timer = spawn_delay
+	_derive_arena_bounds()
+
+
+# Derive the chest placement region from the arena's Floor so chests spawn inside
+# the walls on any map (narrow arena included), not just the wide test arena.
+func _derive_arena_bounds() -> void:
+	var floor_node := _find_floor_node()
+	if floor_node == null:
+		return
+	var margin := 80.0
+	arena_bounds = Rect2(
+		floor_node.arena_center - floor_node.arena_size * 0.5 + Vector2(margin, margin),
+		floor_node.arena_size - Vector2(margin * 2.0, margin * 2.0)
+	)
+
+# Walk up from this node to the arena root and look for a "Floor" (GridBackground).
+func _find_floor_node() -> GridBackground:
+	var node: Node = self
+	while node != null:
+		var floor_node := node.get_node_or_null("Floor") as GridBackground
+		if floor_node != null:
+			return floor_node
+		node = node.get_parent()
+	return null
 
 
 func _physics_process(delta: float) -> void:
-	if _active_chests.size() > 0:
-		return  # Only one chest at a time
+	if _spawned_once:
+		return  # Weapon boxes spawn once per room.
 
 	_timer -= delta
 	if _timer <= 0.0:
-		_timer = spawn_interval
+		_spawned_once = true
 		# Don't waste a chest if the player already has max weapons
 		if _player_at_weapon_cap():
+			chest_spawned.emit()
 			return
 		_spawn_chest()
+		chest_spawned.emit()
 
 
 func _player_at_weapon_cap() -> bool:

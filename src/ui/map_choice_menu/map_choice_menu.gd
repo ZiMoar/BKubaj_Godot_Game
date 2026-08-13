@@ -55,6 +55,9 @@ func _on_map_pressed(map_id: String) -> void:
 	var selected: MapBase = state.get_selected_map() if state else null
 	if selected == null or selected.arena_scene == null:
 		return
+	var run_state: Node = get_node_or_null("/root/GameState")
+	if run_state and run_state.has_method("begin_run"):
+		run_state.begin_run(selected.arena_scene.resource_path)
 	get_tree().change_scene_to_file(selected.arena_scene.resource_path)
 
 

@@ -41,7 +41,7 @@ const ARTEFACTS: Script = preload("res://src/systems/artefact.gd")
 @export_range(0.0, 2000.0, 1.0) var magnet_range: float = 50.0
 @export var dash_charges: int = 1
 @export var dash_cooldown: float = 0.0
-@export var invincibility_duration: float = 0.5
+@export var invincibility_duration: float = 0.05
 @export var invincibility_frame_bonus: float = 0.0
 
 @export_category("Progression & Meta")
@@ -97,6 +97,13 @@ var artefact_ids: Array[String] = []
 func _ready() -> void:
 	# Apply the chosen class's starting stat overrides BEFORE computing HP.
 	_apply_class_starting_stats()
+	# Continuing a run? Restore the carried-over progression (stats, weapons,
+	# artefacts, gold) captured from the previous stage's player.
+	var run_state: Node = get_node_or_null("/root/GameState")
+	var xp_mgr: Node = null
+	if run_state and run_state.run_active:
+		xp_mgr = get_tree().get_first_node_in_group("team_xp_manager") as Node
+		run_state.apply_continue(self, xp_mgr)
 	revive_remaining = revive_count
 	current_health = max_health + max_health_bonus
 	if hp_bar:
@@ -245,6 +252,11 @@ func _apply_class_starting_stats() -> void:
 ## Equips the class-defined Primary + Secondary weapons from the selected class.
 func _setup_class_starting_weapons() -> void:
 	if weapons_container == null:
+		return
+	# When continuing a run, the captured weapon list was already restored —
+	# adding the class starting weapons now would duplicate them.
+	var run_state: Node = get_node_or_null("/root/GameState")
+	if run_state and run_state.run_active and run_state.stage > 1:
 		return
 	var cls: ClassBase = _get_selected_class()
 	if cls == null:
@@ -524,9 +536,26 @@ func handle_weapon_inputs() -> void:
 			weapon.try_fire()
 
 # --- Health & Damage System ---
-func take_damage(amount: int) -> void:
+# Minimum time between hits from the SAME source. Prevents a single enemy /
+# projectile from hitting the player repeatedly within a short window even
+# though the global invincibility flash alone is very short (0.05s).
+const SOURCE_HIT_COOLDOWN: float = 0.5
+# Tracks the last time each damage source hit the player (Node -> epoch seconds).
+var _source_last_hit: Dictionary = {}
+
+func take_damage(amount: int, source: Node = null) -> void:
 	if is_invincible:
 		return
+
+	# Global i-frames are intentionally short (0.05s). Most incoming damage is
+	# instead throttled per-source: a single source can't hit more than once per
+	# SOURCE_HIT_COOLDOWN, but different sources can still pile damage on.
+	if source != null and is_instance_valid(source):
+		var now: float = Time.get_ticks_msec() / 1000.0
+		var last: float = _source_last_hit.get(source, -INF)
+		if now - last < SOURCE_HIT_COOLDOWN:
+			return
+		_source_last_hit[source] = now
 
 	if randf() < clamp(evasion_chance, 0.0, 1.0):
 		trigger_evasion()
@@ -575,12 +604,126 @@ func die() -> void:
 		return
 
 	print("Player Died! Reloading scene...")
+	# Ending the run means a scene reload starts a fresh run, not a continuation.
+	var run_state: Node = get_node_or_null("/root/GameState")
+	if run_state and run_state.has_method("end_run"):
+		run_state.end_run()
 	call_deferred("_reload_current_scene_safe")
 
 func _reload_current_scene_safe() -> void:
 	var tree := get_tree()
 	if tree and tree.current_scene:
 		tree.reload_current_scene()
+
+# --- Run persistence (used to carry progression into the next stage) ---
+
+## Returns a snapshot of the player's full progression so the next stage's fresh
+## Player instance can be rebuilt identically.
+func capture_run_state() -> Dictionary:
+	var stats: Dictionary = {
+		"current_health": current_health,
+		"max_health_bonus": max_health_bonus,
+		"max_health": max_health,
+		"revive_remaining": revive_remaining,
+		"might_flat_bonus": might_flat_bonus,
+		"might_percent_bonus": might_percent_bonus,
+		"attack_speed_bonus": attack_speed_bonus,
+		"critical_hit_chance": critical_hit_chance,
+		"critical_hit_damage_multiplier": critical_hit_damage_multiplier,
+		"area_bonus": area_bonus,
+		"projectile_speed_bonus": projectile_speed_bonus,
+		"duration_bonus": duration_bonus,
+		"amount_bonus": amount_bonus,
+		"armor_penetration_flat_bonus": armor_penetration_flat_bonus,
+		"armor_penetration_percent_bonus": armor_penetration_percent_bonus,
+		"hp_regen_per_second": hp_regen_per_second,
+		"armor": armor,
+		"evasion_chance": evasion_chance,
+		"lifesteal_flat": lifesteal_flat,
+		"revive_count": revive_count,
+		"revive_health_percent": revive_health_percent,
+		"thorns_flat": thorns_flat,
+		"shield_capacity": shield_capacity,
+		"move_speed_percent_bonus": move_speed_percent_bonus,
+		"magnet_enabled": magnet_enabled,
+		"magnet_range": magnet_range,
+		"dash_charges": dash_charges,
+		"dash_cooldown": dash_cooldown,
+		"invincibility_duration": invincibility_duration,
+		"invincibility_frame_bonus": invincibility_frame_bonus,
+		"growth_percent_bonus": growth_percent_bonus,
+		"greed_percent_bonus": greed_percent_bonus,
+		"luck": luck,
+		"gold": gold,
+		"rerolls": rerolls,
+		"banish_count": banish_count,
+		"difficulty": difficulty,
+		"pierce_bonus": pierce_bonus,
+		"artefact_ids": artefact_ids.duplicate(),
+	}
+	# Capture each equipped weapon by its scene path + its anvil stat bonuses.
+	var weapons: Array[Dictionary] = []
+	if weapons_container:
+		for w: Node in weapons_container.get_children():
+			if not (w is Weapon):
+				continue
+			var path: String = w.scene_file_path
+			if path.is_empty():
+				continue
+			weapons.append({
+				"path": path,
+				"projectile_count_bonus": w.projectile_count_bonus,
+				"pierce_bonus": w.pierce_bonus,
+				"chain_count_bonus": w.chain_count_bonus,
+				"area_bonus": w.area_bonus,
+				"repeat_bonus": w.repeat_bonus,
+				"projectile_speed_bonus": w.projectile_speed_bonus,
+				"close_range_damage_bonus": w.close_range_damage_bonus,
+				"far_range_damage_bonus": w.far_range_damage_bonus,
+				"explosion_on_kill_chance": w.explosion_on_kill_chance,
+				"status_duration": w.status_duration,
+			})
+	stats["weapons"] = weapons
+	return stats
+
+
+## Rebuilds this (freshly-instantiated) player from a captured run snapshot.
+func restore_run_state(snap: Dictionary) -> void:
+	for key: String in snap.keys():
+		if key in self and key != "weapons":
+			set(key, snap[key])
+	# Restore the equipped weapon list (this player had no weapons yet).
+	if weapons_container and snap.has("weapons"):
+		var weapons: Array = snap["weapons"]
+		for wdata: Dictionary in weapons:
+			var path: String = wdata.get("path", "")
+			if path.is_empty():
+				continue
+			var ws: PackedScene = load(path) as PackedScene
+			if ws == null:
+				continue
+			if not can_add_weapon(ws):
+				continue
+			var weapon: Weapon = ws.instantiate() as Weapon
+			weapons_container.add_child(weapon)
+			weapon.projectile_count_bonus = wdata.get("projectile_count_bonus", 0)
+			weapon.pierce_bonus = wdata.get("pierce_bonus", 0)
+			weapon.chain_count_bonus = wdata.get("chain_count_bonus", 0)
+			weapon.area_bonus = wdata.get("area_bonus", 0.0)
+			weapon.repeat_bonus = wdata.get("repeat_bonus", 0)
+			weapon.projectile_speed_bonus = wdata.get("projectile_speed_bonus", 0.0)
+			weapon.close_range_damage_bonus = wdata.get("close_range_damage_bonus", 0.0)
+			weapon.far_range_damage_bonus = wdata.get("far_range_damage_bonus", 0.0)
+			weapon.explosion_on_kill_chance = wdata.get("explosion_on_kill_chance", 0.0)
+			weapon.status_duration = wdata.get("status_duration", 3.0)
+			if weapon.trigger_type == Weapon.TriggerType.AUTOMATIC:
+				weapon.call_deferred("try_fire")
+	weapons_changed.emit()
+
+## Raises the player's base difficulty to at least the given floor. This is how
+## each stage's minimum difficulty is enforced (enemies scale off this value).
+func set_min_difficulty(player_floor: float) -> void:
+	difficulty = maxf(difficulty, player_floor)
 
 func _ensure_hp_value_label() -> void:
 	if hp_bar == null or hp_value_label != null:

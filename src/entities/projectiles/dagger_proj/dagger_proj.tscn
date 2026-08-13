@@ -7,7 +7,7 @@ radius = 4.0
 
 [node name="DaggerProj" type="Area2D"]
 collision_layer = 64
-collision_mask = 4
+collision_mask = 36
 script = ExtResource("1_script")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]

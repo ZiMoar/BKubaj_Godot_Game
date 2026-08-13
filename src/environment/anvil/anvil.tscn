@@ -1,0 +1,18 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://src/environment/anvil/anvil.gd" id="1_anvil"]
+[ext_resource type="Script" path="res://src/environment/anvil/anvil_visual.gd" id="2_visual"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_anvil"]
+size = Vector2(28, 22)
+
+[node name="Anvil" type="Area2D"]
+collision_layer = 0
+collision_mask = 2
+script = ExtResource("1_anvil")
+
+[node name="Visual" type="Node2D" parent="."]
+script = ExtResource("2_visual")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_anvil")

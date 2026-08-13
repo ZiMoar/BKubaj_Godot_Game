@@ -7,6 +7,7 @@
 - Right-click reserved as a future **ability button** (abilities inherit from the `Weapon` base class)
 - **Lifesteal** with a 0.1s internal cooldown
 - **Armor** is a flat stat applying `100/(100+armor)` damage reduction
+- **Invincibility frames** are very short (0.05s global flash); instead, a **single damage source can't hit the player more than once per 0.5s** (per-source cooldown), while different sources can still stack damage
 - **Difficulty stat** grows **1× per minute**, with compensated mob scaling so real threat matches the old rate; per-difficulty-point scaling is tuned low so leveling the "Difficulty" stat is gentle
 
 ## 🗡️ Weapons (9 total, balanced to ~25 average DPS, 0.5x-1.5x band by AOE)
@@ -46,6 +47,9 @@
 - **Skeleton** — basic melee chaser
 - **Skeleton Archer** — ranged; **capped at 6 per batch**
 - **Skeleton Brute** — heavy melee; scales stats
+- **Bomber Skeleton** *(bomb)* — fast kamikaze (faster than the player), no contact damage; arms a 2s fuse when close and detonates for heavy AOE. Spawns **one at a time**, min difficulty 3
+- **Skeleton Necromancer** *(disruptor)* — caster that keeps distance and raises normal skeletons; medium HP; rare as a brute, min difficulty 5
+- **Bat** *(dasher)* — tiny flying enemy that dashes at the player (overshooting slightly behind) when close; spawns in **clustered swarms**; rare as a brute, min difficulty 3. Uses a **separate Flying Enemies physics layer** so bats collide with each other but not walking enemies
 - Enemies **scale stats with difficulty** (per-type multipliers); **spawn frequency scaled** separately
 - **Floating damage numbers** + colored HP bars
 - No hard enemy cap (effectively unlimited)

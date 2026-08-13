@@ -5,7 +5,7 @@ extends EnemyBase
 @export var attack_range: float = 300.0
 @export var attack_cooldown: float = 2.2
 @export var projectile_speed: float = 120.0
-@export var projectile_damage: int = 6
+@export var projectile_damage: int = 4
 
 var _attack_timer: float = 0.0
 
@@ -13,17 +13,19 @@ var _attack_timer: float = 0.0
 func _ready() -> void:
 	speed = 55.0  # Slower than regular skeletons (80)
 	max_health = 45
-	contact_damage = 8
+	contact_damage = 6
 	xp_value = 4
 	weight = 4.0
 	max_knockback_speed = 200.0
 	knockback_decay = 14.0
 	stat_scale_per_difficulty = 0.3
+	damage_scale_ratio = 0.35
 
 	super._ready()
 
 
 func _physics_process(delta: float) -> void:
+	_process_status_dots(delta)
 	if target_player == null:
 		target_player = get_tree().get_first_node_in_group("player") as Node2D
 		if target_player == null:

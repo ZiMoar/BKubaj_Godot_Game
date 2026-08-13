@@ -5,11 +5,13 @@ var speed: float = 300.0
 var damage: int = 12
 var is_critical: bool = false
 var source_player: Player = null
+var source_weapon: Node = null
 var target: Node2D = null
 var _homing_strength: float = 9.0
 var _retarget_range_sq: float = 999999.0  # squared; effectively unlimited by default
 
 var _lifetime: float = 3.0
+var _hit_enemy: bool = false  # guards against body+area double-hit on the same overlap
 
 
 func _ready() -> void:
@@ -17,13 +19,14 @@ func _ready() -> void:
 	area_entered.connect(_on_area_entered)
 
 
-func setup(start_pos: Vector2, target_enemy: Node2D, bolt_speed: float, bolt_damage: int, crit: bool, player: Player) -> void:
+func setup(start_pos: Vector2, target_enemy: Node2D, bolt_speed: float, bolt_damage: int, crit: bool, player: Player, weapon: Node = null) -> void:
 	global_position = start_pos
 	target = target_enemy
 	speed = bolt_speed
 	damage = bolt_damage
 	is_critical = crit
 	source_player = player
+	source_weapon = weapon
 	# Face the target immediately so the bolt doesn't drift out of the player's
 	# right side before homing kicks in — it flies toward its mark from frame 1.
 	if is_instance_valid(target_enemy):
@@ -82,10 +85,20 @@ func _on_area_entered(area: Area2D) -> void:
 
 
 func _hit(node: Node) -> void:
-	if node and node.is_in_group("enemies") and node.has_method("take_damage"):
-		node.take_damage(damage)
+	if _hit_enemy:
+		return
+	if node and (node.is_in_group("enemies") or node.is_in_group("destructibles")) and node.has_method("take_damage"):
+		_hit_enemy = true
+		var dealt: int = damage
+		if source_weapon and (source_weapon.close_range_damage_bonus > 0.0 or source_weapon.far_range_damage_bonus > 0.0) and node is Node2D:
+			dealt = maxi(1, int(round(float(dealt) * source_weapon.get_range_damage_multiplier((source_weapon.global_position - (node as Node2D).global_position).length()))))
+		node.take_damage(dealt)
 		if source_player and source_player.has_method("apply_lifesteal"):
 			source_player.apply_lifesteal()
 		if node.has_method("apply_knockback"):
 			node.apply_knockback(global_position, 120.0)
+		if source_weapon and node.is_in_group("enemies"):
+			source_weapon.apply_status_on_hit(node, dealt)
+			if node.has_method("has_died") and node.has_died():
+				source_weapon.apply_explosion_on_kill(global_position, dealt)
 	queue_free()

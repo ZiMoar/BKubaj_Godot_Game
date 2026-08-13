@@ -1,6 +1,9 @@
 class_name BossSpawner
 extends Event
 
+func _ready() -> void:
+	add_to_group("boss_spawner")
+
 ## Spawns a boss once at trigger_time, and suppresses regular spawner rates
 ## while the boss is alive. Extends Event so it fires exactly one time per stage.
 
@@ -16,6 +19,8 @@ var _suppress_active: bool = false
 func _trigger() -> void:
 	if boss_scene == null:
 		return
+
+	_derive_arena_bounds()
 
 	_active_boss = boss_scene.instantiate() as Node2D
 	if _active_boss == null:
@@ -60,3 +65,25 @@ func clamp_position_to_arena(pos: Vector2) -> Vector2:
 		clamp(pos.x, arena_bounds.position.x, arena_bounds.position.x + arena_bounds.size.x),
 		clamp(pos.y, arena_bounds.position.y, arena_bounds.position.y + arena_bounds.size.y)
 	)
+
+# Derive the safe clamp region from the arena's Floor so the boss stays inside
+# the walls on any map (narrow arena included), not just the wide test arena.
+func _derive_arena_bounds() -> void:
+	var floor_node := _find_floor_node()
+	if floor_node == null:
+		return
+	var margin := 40.0
+	arena_bounds = Rect2(
+		floor_node.arena_center - floor_node.arena_size * 0.5 + Vector2(margin, margin),
+		floor_node.arena_size - Vector2(margin * 2.0, margin * 2.0)
+	)
+
+# Walk up from this spawner to the arena root and look for a "Floor" (GridBackground).
+func _find_floor_node() -> GridBackground:
+	var node: Node = self
+	while node != null:
+		var floor_node := node.get_node_or_null("Floor") as GridBackground
+		if floor_node != null:
+			return floor_node
+		node = node.get_parent()
+	return null

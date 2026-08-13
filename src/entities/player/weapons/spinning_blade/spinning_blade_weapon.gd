@@ -47,5 +47,5 @@ func fire() -> void:
 	get_tree().current_scene.add_child(active_blade)
 
 	if active_blade.has_method("setup"):
-		active_blade.setup(attack_damage, is_crit, get_player())
+		active_blade.setup(attack_damage, is_crit, get_player(), self)
 		active_blade.scale *= get_area_multiplier()

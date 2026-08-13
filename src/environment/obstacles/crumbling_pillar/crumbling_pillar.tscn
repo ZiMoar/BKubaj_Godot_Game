@@ -1,0 +1,13 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://src/environment/obstacles/crumbling_pillar/crumbling_pillar.gd" id="1_crumble"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_crumble"]
+size = Vector2(30, 30)
+
+[node name="CrumblingPillar" type="StaticBody2D"]
+collision_layer = 1
+script = ExtResource("1_crumble")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_crumble")

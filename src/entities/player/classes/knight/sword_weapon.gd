@@ -90,10 +90,14 @@ func _apply_combo_shape(is_stab: bool) -> void:
 
 func _on_slash_hit(node: Node) -> void:
 	var target = node.get_parent() if node is Area2D else node
-	if target and target.is_in_group("enemies") and target.has_method("take_damage"):
+	if target and (target.is_in_group("enemies") or target.is_in_group("destructibles")) and target.has_method("take_damage"):
 		if not hit_enemies_this_swing.has(target):
 			hit_enemies_this_swing.append(target)
 			target.take_damage(current_attack_damage, current_attack_is_critical)
 			if target.has_method("apply_knockback"):
 				target.apply_knockback(global_position, knockback_force)
 			apply_lifesteal()
+			if target.is_in_group("enemies"):
+				apply_status_on_hit(target, current_attack_damage)
+				if target.has_method("has_died") and target.has_died():
+					apply_explosion_on_kill(slash_area.global_position, current_attack_damage)

@@ -16,16 +16,28 @@ func _ready() -> void:
 	super._ready()
 	call_deferred("try_fire")
 
+func supports_chain() -> bool:
+	return true
+
+func supports_projectile_speed() -> bool:
+	return false
+
+func supports_range_damage() -> bool:
+	return true
+
 
 func fire() -> void:
 	if lightning_scene == null:
 		return
 	var enemies: Array[Node] = get_tree().get_nodes_in_group("enemies")
+	for d: Node in get_tree().get_nodes_in_group("destructibles"):
+		enemies.append(d)
 	if enemies.is_empty():
 		return
 
 	var origin: Vector2 = global_position
 	var eff_chain_range: float = chain_range * get_area_multiplier()
+	var eff_max_targets: int = get_effective_chain_count(max_targets)
 	var first: Node2D = null
 	var first_dist: float = INF
 	for e: Node in enemies:
@@ -42,7 +54,7 @@ func fire() -> void:
 	var seq: Array[Node2D] = [first]
 	var hit_ids: Dictionary = { first.get_instance_id(): true }
 	var last_pos: Vector2 = first.global_position
-	for i in range(max_targets - 1):
+	for i in range(eff_max_targets - 1):
 		var next: Node2D = null
 		var nd: float = INF
 		for e: Node in enemies:
@@ -69,10 +81,17 @@ func fire() -> void:
 	for e: Node2D in seq:
 		if not is_instance_valid(e):
 			continue
-		e.take_damage(dmg)
+		var dealt: int = dmg
+		if close_range_damage_bonus > 0.0 or far_range_damage_bonus > 0.0:
+			dealt = maxi(1, int(round(float(dealt) * get_range_damage_multiplier(e.global_position.distance_to(origin)))))
+		e.take_damage(dealt)
 		apply_lifesteal()
+		if e.is_in_group("enemies"):
+			apply_status_on_hit(e, dealt)
 		if e.has_method("apply_knockback"):
 			e.apply_knockback(prev, 90.0)
+		if e.is_in_group("enemies") and e.has_method("has_died") and e.has_died():
+			apply_explosion_on_kill(origin, dealt)
 		prev = e.global_position
 		local_points.append(e.global_position - origin)
 

@@ -7,7 +7,7 @@ radius = 5.0
 
 [node name="ArrowProj" type="Area2D" unique_id=1412382339]
 collision_layer = 64
-collision_mask = 4
+collision_mask = 36
 script = ExtResource("1_s")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=438488970]

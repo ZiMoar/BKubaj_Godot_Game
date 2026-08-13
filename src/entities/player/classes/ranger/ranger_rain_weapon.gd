@@ -32,6 +32,10 @@ func fire() -> void:
 			apply_lifesteal()
 			if enemy.has_method("apply_knockback"):
 				enemy.apply_knockback(center, 220.0)
+			if enemy.is_in_group("enemies"):
+				apply_status_on_hit(enemy, total)
+				if enemy.has_method("has_died") and enemy.has_died():
+					apply_explosion_on_kill(center, total)
 
 	if rain_visual_scene:
 		var visual = rain_visual_scene.instantiate()

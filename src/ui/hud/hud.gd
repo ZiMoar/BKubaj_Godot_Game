@@ -8,6 +8,7 @@ extends CanvasLayer
 @onready var xp_text_label: Label = get_node_or_null("Control/TopBar/Header/Row/XPTextLabel") as Label
 @onready var level_up_menu: LevelUpMenu = get_node_or_null("LevelUpMenu") as LevelUpMenu
 @onready var weapon_choice_menu: WeaponChoiceMenu = get_node_or_null("WeaponChoiceMenu") as WeaponChoiceMenu
+@onready var anvil_upgrade_menu: AnvilUpgradeMenu = get_node_or_null("AnvilUpgradeMenu") as AnvilUpgradeMenu
 @onready var artefact_choice_menu: ArtefactChoiceMenu = get_node_or_null("ArtefactChoiceMenu") as ArtefactChoiceMenu
 @onready var session_timer: Timer = get_node_or_null("SessionTimer") as Timer
 @onready var boss_bar: ProgressBar = get_node_or_null("Control/BossBar") as ProgressBar
@@ -78,6 +79,8 @@ func _connect_to_level_up_menu() -> void:
 		level_up_menu.upgrade_selected.connect(_on_upgrade_selected)
 	if weapon_choice_menu and not weapon_choice_menu.weapon_selected.is_connected(_on_weapon_choice_selected):
 		weapon_choice_menu.weapon_selected.connect(_on_weapon_choice_selected)
+	if anvil_upgrade_menu and not anvil_upgrade_menu.upgrade_applied.is_connected(_on_anvil_upgrade_applied):
+		anvil_upgrade_menu.upgrade_applied.connect(_on_anvil_upgrade_applied)
 	if artefact_choice_menu and not artefact_choice_menu.artefact_selected.is_connected(_on_artefact_choice_selected):
 		artefact_choice_menu.artefact_selected.connect(_on_artefact_choice_selected)
 
@@ -221,6 +224,20 @@ func _on_weapon_choice_selected(weapon_scene: PackedScene) -> void:
 	if current_player and current_player.has_method("add_weapon"):
 		current_player.add_weapon(weapon_scene)
 	weapon_choice_menu.close_menu()
+	get_tree().paused = false
+
+
+# --- Anvil Upgrade (upgrade a specific weapon's stats) ---
+
+func show_anvil_upgrade() -> void:
+	if anvil_upgrade_menu == null or current_player == null:
+		return
+	get_tree().paused = true
+	anvil_upgrade_menu.open_menu()
+
+
+func _on_anvil_upgrade_applied(_weapon: Weapon, _stat_id: String) -> void:
+	anvil_upgrade_menu.close_menu()
 	get_tree().paused = false
 
 

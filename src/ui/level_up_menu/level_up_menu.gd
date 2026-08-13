@@ -48,7 +48,6 @@ const UPGRADE_POOL: Array[Dictionary] = [
 	{"id": "attack_speed",         "title": "Attack Speed",  "description": "+{value} attack speed.",               "min_rarity": Rarity.COMMON,    "base_value": 20.0,  "value_scaling": 10.0},
 	{"id": "crit_chance",          "title": "Crit Chance",   "description": "+{value}% crit chance.",                "min_rarity": Rarity.UNCOMMON,  "base_value": 0.05,  "value_scaling": 0.025},
 	{"id": "crit_damage",          "title": "Crit Damage",   "description": "+{value}x crit multiplier.",             "min_rarity": Rarity.UNCOMMON,  "base_value": 0.25,  "value_scaling": 0.15},
-	{"id": "area",                "title": "Area",          "description": "+{value}% skill & projectile size.",     "min_rarity": Rarity.UNCOMMON,  "base_value": 0.10,  "value_scaling": 0.05},
 	# --- Survival ---
 	{"id": "max_health",           "title": "Max Health",    "description": "+{value} max HP.",                      "min_rarity": Rarity.COMMON,    "base_value": 10.0,  "value_scaling": 5.0},
 	{"id": "armor",                "title": "Armor",         "description": "+{value} armor.",                           "min_rarity": Rarity.UNCOMMON,  "base_value": 20.0,  "value_scaling": 12.0},
@@ -57,7 +56,6 @@ const UPGRADE_POOL: Array[Dictionary] = [
 	{"id": "lifesteal",            "title": "Life Steal",    "description": "+{value} heal on hit.",                 "min_rarity": Rarity.UNCOMMON,  "base_value": 1.0,   "value_scaling": 0.5},
 	{"id": "thorns",               "title": "Thorns",        "description": "+{value} reflected damage.",            "min_rarity": Rarity.COMMON,    "base_value": 5.0,   "value_scaling": 3.0},
 	{"id": "revive",               "title": "Revive",        "description": "+{value} revive charge(s).",            "min_rarity": Rarity.EPIC,      "base_value": 1.0,   "value_scaling": 1.0},
-	{"id": "invincibility_frames", "title": "Invincibility", "description": "+{value}s i-frames.",                   "min_rarity": Rarity.UNCOMMON,  "base_value": 0.15,  "value_scaling": 0.08},
 	# --- Utility ---
 	{"id": "move_speed_percent",   "title": "Move Speed %",  "description": "+{value}% walk speed.",                 "min_rarity": Rarity.COMMON,    "base_value": 0.05,  "value_scaling": 0.03},
 	{"id": "magnet",               "title": "Magnet",        "description": "+{value} pickup range.",                "min_rarity": Rarity.UNCOMMON,  "base_value": 25.0,  "value_scaling": 15.0},
@@ -241,7 +239,7 @@ func _update_buttons() -> void:
 		# Format the description, replacing {value} with the actual scaled value
 		var desc_template: String = choice.get("description", "") as String
 		var display_value: String
-		if choice["id"] in ["might_percent", "crit_chance", "evasion", "move_speed_percent", "growth", "greed", "area"]:
+		if choice["id"] in ["might_percent", "crit_chance", "evasion", "move_speed_percent", "growth", "greed"]:
 			display_value = "%d%%" % int(round(effective_value * 100.0))
 		elif effective_value < 1.0 and effective_value > 0.0:
 			display_value = "%.2f" % effective_value

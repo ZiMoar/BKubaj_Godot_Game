@@ -32,12 +32,12 @@ func _physics_process(delta: float) -> void:
 
 func _on_body_entered(body: Node2D) -> void:
 	if body.is_in_group("player") and body.has_method("take_damage"):
-		body.take_damage(damage)
+		body.take_damage(damage, self)
 		queue_free()
 
 
 func _on_area_entered(area: Area2D) -> void:
 	var parent: Node = area.get_parent()
 	if parent and parent.is_in_group("player") and parent.has_method("take_damage"):
-		parent.take_damage(damage)
+		parent.take_damage(damage, self)
 		queue_free()
