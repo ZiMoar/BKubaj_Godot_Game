@@ -7,7 +7,6 @@
 [ext_resource type="Script" uid="uid://byx0vv2w1j4cr" path="res://src/managers/xp_orb_spatial_manager.gd" id="6_xp_orb_spatial"]
 [ext_resource type="PackedScene" path="res://src/entities/enemies/spawners/skeleton_brute_spawner/skeleton_brute_spawner.tscn" id="7_brute_spawner"]
 [ext_resource type="PackedScene" uid="uid://bdv04chmloo0k" path="res://src/ui/pointers/chest_pointer/chest_pointer.tscn" id="9_chest_pointer"]
-[ext_resource type="Script" uid="uid://byge6tlg5xxud" path="res://src/ui/hud/hud.gd" id="13_rk5g3"]
 [ext_resource type="PackedScene" uid="uid://cwydwctisc1um" path="res://src/entities/enemies/spawners/skeleton_archer_spawner/skeleton_archer_spawner.tscn" id="19_archer_spawner"]
 [ext_resource type="PackedScene" uid="uid://chmoaais0rcay" path="res://src/entities/enemies/spawners/boss_spawner/boss_spawner.tscn" id="29_boss_spawner"]
 [ext_resource type="PackedScene" path="res://src/entities/enemies/spawners/bomber_skeleton_spawner/bomber_skeleton_spawner.tscn" id="30_bomber_spawner"]
@@ -56,8 +55,7 @@ script = ExtResource("6_xp_orb_spatial")
 
 [node name="AnvilSpawner" parent="." unique_id=1891122328 instance=ExtResource("38_anvil_spawner")]
 
-[node name="HUD" type="CanvasLayer" parent="." unique_id=1246096469 instance=ExtResource("4_hud")]
-script = ExtResource("13_rk5g3")
+[node name="HUD" parent="." unique_id=1246096469 instance=ExtResource("4_hud")]
 
 [node name="Floor" type="Node2D" parent="." unique_id=84918118]
 z_index = -1

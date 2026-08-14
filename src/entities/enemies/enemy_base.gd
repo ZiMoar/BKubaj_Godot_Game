@@ -14,6 +14,8 @@ extends CharacterBody2D
 @export var stat_scale_per_difficulty: float = 0.0  # stat growth multiplier per difficulty point
 @export var damage_scale_ratio: float = 1.0  # damage grows at this fraction of stat_scale_per_difficulty (1.0 = same as health)
 @export var speed_scale_per_difficulty: float = 0.2  # movement speed grows at this rate per difficulty (nerfed, and can be 0 to disable)
+@export var separation_radius: float = 42.0  # how close to another enemy before we push apart
+@export var separation_strength: float = 240.0  # how hard enemies push each other apart
 
 var xp_orb_scene: PackedScene = preload("res://src/pickups/xp_orb/xp_orb.tscn")
 var gold_pickup_scene: PackedScene = preload("res://src/pickups/gold_pickup/gold_pickup.tscn")
@@ -31,6 +33,10 @@ var knockback_velocity: Vector2 = Vector2.ZERO
 var hp_value_label: Label = null
 var slow_timer: float = 0.0
 var slow_factor: float = 1.0
+
+# Reused across physics frames to avoid per-frame allocations.
+var _sep_shape: CircleShape2D = CircleShape2D.new()
+var _sep_params: PhysicsShapeQueryParameters2D = PhysicsShapeQueryParameters2D.new()
 
 # Set the moment the enemy dies (before queue_free takes effect at end of frame).
 # Lets kill-triggered effects (e.g. explosion-on-kill) detect death immediately.
@@ -78,6 +84,38 @@ func _ready() -> void:
 
 	_setup_status_icon_overlay()
 
+	# Configure the reused separation query shape (radius is final after scaling).
+	_sep_shape.radius = separation_radius
+	_sep_params.shape = _sep_shape
+	_sep_params.collision_mask = collision_layer
+	_sep_params.collide_with_bodies = true
+	_sep_params.collide_with_areas = false
+
+
+## Simple enemy-enemy separation so a swarm fans out around the player instead
+## of stacking into a single point on top of them ("stick like glue"). Applies
+## a gentle repulsion force away from any other enemy that gets too close.
+func _compute_separation() -> Vector2:
+	if separation_radius <= 0.0 or separation_strength <= 0.0:
+		return Vector2.ZERO
+	_sep_params.transform = Transform2D(0.0, global_position)
+	_sep_params.exclude = [get_rid()]
+	var hits: Array[Dictionary] = get_world_2d().direct_space_state.intersect_shape(_sep_params, 8) as Array[Dictionary]
+	var push := Vector2.ZERO
+	for hit in hits:
+		var other: Object = hit.get("collider")
+		if other == null or not is_instance_valid(other) or other == self:
+			continue
+		if not other.is_in_group("enemies"):
+			continue
+		var to_other: Vector2 = global_position - other.global_position
+		var dist: float = to_other.length()
+		if dist <= 0.001:
+			continue
+		var influence: float = clampf(1.0 - dist / separation_radius, 0.0, 1.0)
+		push += to_other.normalized() * influence
+	return push * separation_strength
+
 
 ## Adds a small child node that draws badges above the enemy for whichever
 ## status effects (burn / bleed / poison / slow) are currently active.
@@ -97,7 +135,7 @@ func _physics_process(delta: float) -> void:
 		return
 		
 	var direction = (target_player.global_position - global_position).normalized()
-	velocity = (direction * get_effective_speed(delta)) + knockback_velocity
+	velocity = (direction * get_effective_speed(delta)) + knockback_velocity + _compute_separation()
 	move_and_slide()
 	knockback_velocity = knockback_velocity.move_toward(Vector2.ZERO, knockback_decay * delta)
 	_process_body_contacts()
