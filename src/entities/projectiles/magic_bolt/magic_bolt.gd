@@ -7,9 +7,16 @@ var is_critical: bool = false
 var source_player: Player = null
 var source_weapon: Node = null
 var dir: Vector2 = Vector2.RIGHT
-var _homing_strength: float = 1.8   # gentle curve toward nearby enemies, but not auto-aim
+var _homing_strength: float = 1.8   # base curve; scales up with age
 var _retarget_range_sq: float = 40000.0  # squared; only home within ~200px
 
+## Homing ramps up over time: multiply homing_strength up to `homing_ramp`
+## after `homing_ramp_time` seconds (so early flight is straight-ish, later
+## bolts curve harder toward a target).
+@export var homing_ramp: float = 3.5
+@export var homing_ramp_time: float = 1.2
+
+var _age: float = 0.0
 var _lifetime: float = 3.0
 var _hit_enemy: bool = false  # guards against body+area double-hit on the same overlap
 
@@ -34,22 +41,27 @@ func setup(start_pos: Vector2, aim_dir: Vector2, bolt_speed: float, bolt_damage:
 
 func _physics_process(delta: float) -> void:
 	_lifetime -= delta
+	_age += delta
 	if _lifetime <= 0.0:
 		queue_free()
 		return
 
 	var current_dir: Vector2 = dir
 
-	# Weak homing: only gently curve toward a nearby enemy (within retarget range).
+	# Homing ramps up with age: weakest right after launch, strongest later.
+	var ramp_t: float = clampf(_age / homing_ramp_time, 0.0, 1.0)
+	var homing: float = _homing_strength * lerpf(1.0, homing_ramp, ramp_t)
+
+	# Gentle curve toward a nearby enemy (within retarget range), not auto-aim.
 	var target: Node2D = _find_nearest_enemy()
 	if is_instance_valid(target):
 		var to_target: Vector2 = target.global_position - global_position
 		var dist: float = to_target.length()
 		if dist > 1.0:
 			var desired_dir: Vector2 = to_target / dist
-			# Very low turn rate = gentle curve, not auto-aim. Slow further when
-			# already very close to stop any wobble.
-			var turn: float = _homing_strength * delta
+			# Turn rate grows with age + homing. Slow further when very close so
+			# the bolt doesn't wobble around an already-reached target.
+			var turn: float = homing * delta
 			if dist < 40.0:
 				turn *= 0.15
 			dir = current_dir.slerp(desired_dir, minf(1.0, turn)).normalized()
