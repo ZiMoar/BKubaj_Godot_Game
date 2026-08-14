@@ -12,6 +12,13 @@ var is_open: bool = false
 
 
 func _ready() -> void:
+	# The door is an Area2D that must DETECT the player body. The player is on
+	# physics layer 2. With the default collision_mask (1 = World) the area would
+	# never report the player, so body_entered would never fire and the door would
+	# open graphically but never transition. Set the mask to monitor the player.
+	collision_layer = 0
+	collision_mask = 2
+	monitoring = true
 	body_entered.connect(_on_body_entered)
 	_collision_enabled(false)
 	queue_redraw()
