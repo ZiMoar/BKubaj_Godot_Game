@@ -1,5 +1,10 @@
 extends Weapon
 
+## DEPRECATED. Spin Blade is not offered in the chest's weapon pool (it's been
+## set aside, like the gun). The class + scene are kept for future weapon ideas,
+## but no live gameplay path picks this weapon. Do not wire it back in without
+## a reason — its orbit-aoe design was removed as un-fun / weak by design.
+
 @export var blade_scene: PackedScene
 @export var base_damage: int = 22
 @export var orbit_speed: float = 3.6

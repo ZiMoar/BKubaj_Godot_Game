@@ -836,6 +836,7 @@ func capture_run_state() -> Dictionary:
 		"rerolls": rerolls,
 		"banish_count": banish_count,
 		"difficulty": difficulty,
+		"difficulty_runtime_bonus": difficulty_runtime_bonus,
 		"pierce_bonus": pierce_bonus,
 		"artefact_ids": artefact_ids.duplicate(),
 	}

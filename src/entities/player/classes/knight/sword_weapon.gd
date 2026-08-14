@@ -22,7 +22,7 @@ var combo_step: int = 0  # 0 = none, 1 = slash, 2 = reverse slash, 3 = stab
 func _ready() -> void:
 	weapon_name = "Knight Blade"
 	trigger_type = TriggerType.PRIMARY
-	cooldown = 0.5
+	cooldown = 0.7
 	super._ready()
 
 	_apply_combo_shape(false)

@@ -23,7 +23,7 @@ var combo_step: int = 0
 func _ready() -> void:
 	weapon_name = "Longbow"
 	trigger_type = TriggerType.PRIMARY
-	cooldown = 0.45
+	cooldown = 0.65
 	super._ready()
 
 func supports_pierce() -> bool:

@@ -21,7 +21,7 @@ func _ready() -> void:
 	weapon_name = "Arcane Bolts"
 	trigger_type = TriggerType.PRIMARY
 	damage_type = DamageType.Type.ARCANE
-	cooldown = 1.1
+	cooldown = 1.4
 	super._ready()
 
 func supports_projectile_count() -> bool:
