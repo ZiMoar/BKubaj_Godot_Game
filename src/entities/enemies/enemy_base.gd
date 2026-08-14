@@ -45,19 +45,30 @@ var _sep_params: PhysicsShapeQueryParameters2D = PhysicsShapeQueryParameters2D.n
 var _is_dead: bool = false
 
 # --- Damage over time / status effects ------------------------------------
-# Burn: DoT whose per-tick damage is derived from the hit that applied it.
-var burn_dps: float = 0.0
-var burn_timer: float = 0.0
+# Burn: discrete ticks every BURN_TICK_INTERVAL. Each tick deals a fixed
+# fraction (BURN_TICK_PCT) of the damage of the hit that applied it. A fresh
+# burn lasts BURN_TICKS ticks; re-applying adds more ticks (extends duration)
+# without raising per-tick damage. The first tick fires immediately (t=0).
+var burn_dps: float = 0.0          # per-tick damage (also the icon active flag)
+var burn_ticks_remaining: int = 0
+var burn_timer: float = 0.0        # time until next burn tick
+const BURN_TICK_INTERVAL: float = 0.5
+const BURN_TICKS: int = 5          # 5 ticks = 2.0 s total duration
+const BURN_TICK_PCT: float = 0.30  # each tick deals 30% of the inflicting hit
+const BURN_MAX_TICKS: int = 30
 
-# Bleed: flat DoT, stackable. Each stack adds its own flat DPS.
+# Bleed: flat DoT, stackable. Each stack adds its own flat DPS (continuous).
 var bleed_stacks: int = 0
 var bleed_dps_per_stack: float = 0.0
 var bleed_timer: float = 0.0
 
-# Poison: DoT equal to a fraction of the enemy's max health per second.
-var poison_dps: float = 0.0
-var poison_max_health_ref: int = 0
-var poison_timer: float = 0.0
+# Poison: discrete ticks every POISON_TICK_INTERVAL. Each tick deals the full
+# max-health fraction (POISON_TICK_COUNT ticks total), halved on bosses.
+var poison_dps: float = 0.0        # per-tick damage (also the icon active flag)
+var poison_ticks_remaining: int = 0
+var poison_timer: float = 0.0      # time until next poison tick
+const POISON_TICK_INTERVAL: float = 1.0
+const POISON_TICK_COUNT: int = 3   # 3 ticks over 3 seconds
 
 const MAX_BLEED_STACKS: int = 10
 
@@ -168,12 +179,17 @@ func apply_slow(duration: float, factor: float) -> void:
 
 
 # --- Reusable status effects -----------------------------------------------
-# Burn: tick damage is derived from the hit that applied it.
-#   hit_damage : the damage of the hit that triggered the burn.
-#   pct_per_sec: burn ticks deal this fraction of hit_damage per second.
-func apply_burn(hit_damage: float, duration: float, pct_per_sec: float) -> void:
-	burn_dps = maxf(burn_dps, hit_damage * pct_per_sec)
-	burn_timer = maxf(burn_timer, duration)
+# Burn: discrete ticks. Each tick deals BURN_TICK_PCT of the hit that applied
+# it. A fresh application starts BURN_TICKS ticks (first tick at t=0); further
+# applications add more ticks (extending duration) without raising the
+# per-tick damage, per design.
+func apply_burn(hit_damage: float, _duration: float, _pct_per_sec: float) -> void:
+	var tick_dmg: float = hit_damage * BURN_TICK_PCT
+	# Keep the strongest per-tick damage seen; extra applications extend duration.
+	burn_dps = maxf(burn_dps, tick_dmg)
+	burn_ticks_remaining = mini(burn_ticks_remaining + BURN_TICKS, BURN_MAX_TICKS)
+	if burn_timer <= 0.0:
+		burn_timer = 0.0  # fire the first tick immediately (t=0)
 
 
 # Bleed: flat DoT that stacks. Each stack adds bleed_dps for the duration.
@@ -183,11 +199,15 @@ func apply_bleed(flat_dps_per_stack: float, duration: float) -> void:
 	bleed_timer = maxf(bleed_timer, duration)
 
 
-# Poison: DoT equal to a fraction of the enemy's max health per second.
+# Poison: discrete ticks. Each tick deals the full max-health fraction
+# (POISON_TICK_COUNT ticks total); halved effectiveness on bosses.
 func apply_poison(pct_max_health_per_sec: float, duration: float) -> void:
-	poison_dps = maxf(poison_dps, pct_max_health_per_sec * float(max_health))
-	poison_max_health_ref = max_health
-	poison_timer = maxf(poison_timer, duration)
+	var boss_mult: float = 0.5 if is_in_group("bosses") else 1.0
+	# Base tick damage = full pct of max health on a tick, halved vs bosses.
+	poison_dps = maxf(poison_dps, pct_max_health_per_sec * float(max_health) * boss_mult)
+	poison_ticks_remaining = POISON_TICK_COUNT
+	# Ticks at 1s / 2s / 3s so the poison spans a full 3 seconds.
+	poison_timer = POISON_TICK_INTERVAL
 
 
 func get_effective_speed(delta: float) -> float:
@@ -200,31 +220,35 @@ func _process_status_dots(delta: float) -> void:
 	if not is_instance_valid(self) or current_health <= 0:
 		return
 
-	var total: float = 0.0
+	# Burn: discrete ticks. First tick fires immediately, then every interval.
+	if burn_ticks_remaining > 0 and burn_timer >= 0.0:
+		burn_timer -= delta
+		if burn_timer <= 0.0:
+			take_damage(maxi(1, int(round(burn_dps))))
+			burn_ticks_remaining -= 1
+			burn_timer = BURN_TICK_INTERVAL
 
-	if burn_timer > 0.0:
-		total += burn_dps
-		burn_timer = maxf(0.0, burn_timer - delta)
+	# Bleed: continuous flat DoT per frame (behaviour unchanged).
 	if bleed_timer > 0.0 and bleed_stacks > 0:
-		total += bleed_dps_per_stack * float(bleed_stacks)
+		take_damage(maxi(1, int(round(bleed_dps_per_stack * float(bleed_stacks) * delta))))
 		bleed_timer = maxf(0.0, bleed_timer - delta)
-	if poison_timer > 0.0 and poison_max_health_ref > 0:
-		# poison_dps was computed from the enemy's max health when applied.
-		total += poison_dps
-		poison_timer = maxf(0.0, poison_timer - delta)
 
-	if total > 0.0:
-		take_damage(maxi(1, int(round(total * delta))))
+	# Poison: discrete ticks once per second.
+	if poison_ticks_remaining > 0 and poison_timer >= 0.0:
+		poison_timer -= delta
+		if poison_timer <= 0.0:
+			take_damage(maxi(1, int(round(poison_dps))))
+			poison_ticks_remaining -= 1
+			poison_timer = POISON_TICK_INTERVAL
 
 	# Cleanup so statuses that expire also reset their (possibly stale) strengths.
-	if burn_timer <= 0.0:
+	if burn_timer <= 0.0 and burn_ticks_remaining <= 0:
 		burn_dps = 0.0
 	if bleed_timer <= 0.0:
 		bleed_stacks = 0
 		bleed_dps_per_stack = 0.0
-	if poison_timer <= 0.0:
+	if poison_timer <= 0.0 and poison_ticks_remaining <= 0:
 		poison_dps = 0.0
-		poison_max_health_ref = 0
 
 
 func take_damage(amount: int, is_critical: bool = false) -> void:
