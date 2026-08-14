@@ -16,6 +16,8 @@ extends CharacterBody2D
 @export var speed_scale_per_difficulty: float = 0.2  # movement speed grows at this rate per difficulty (nerfed, and can be 0 to disable)
 @export var separation_radius: float = 42.0  # how close to another enemy before we push apart
 @export var separation_strength: float = 240.0  # how hard enemies push each other apart
+@export var engage_radius: float = 22.0  # stop closing beyond this distance to the player; orbit instead of jamming into them
+@export var orbit_speed_ratio: float = 0.55  # fraction of normal speed used while orbiting the player
 
 var xp_orb_scene: PackedScene = preload("res://src/pickups/xp_orb/xp_orb.tscn")
 var gold_pickup_scene: PackedScene = preload("res://src/pickups/gold_pickup/gold_pickup.tscn")
@@ -134,8 +136,27 @@ func _physics_process(delta: float) -> void:
 		target_player = get_tree().get_first_node_in_group("player") as Node2D
 		return
 		
-	var direction = (target_player.global_position - global_position).normalized()
-	velocity = (direction * get_effective_speed(delta)) + knockback_velocity + _compute_separation()
+	var to_player: Vector2 = target_player.global_position - global_position
+	var dist: float = to_player.length()
+	var move_dir: Vector2
+	if dist > engage_radius:
+		# Chase the player directly.
+		move_dir = to_player.normalized()
+	else:
+		# Within strike range: stop closing and orbit sideways so the swarm forms
+		# a live ring around the player instead of pressing into the player body
+		# (which reads as enemies "sticking" / glued to the player).
+		if dist > 0.001:
+			var side: float = 1.0 if fmod(global_position.x + global_position.y, 2.0) < 1.0 else -1.0
+			var orbit: Vector2 = Vector2(-to_player.y, to_player.x).normalized() * side
+			# Push outward the closer they get, so the swarm settles into a clean
+			# ring right at engage_radius instead of hugging the player body.
+			var closeness: float = clampf(1.0 - dist / engage_radius, 0.0, 1.0)
+			var outward: Vector2 = -to_player.normalized() * closeness * 1.5
+			move_dir = (orbit * orbit_speed_ratio + outward).normalized()
+		else:
+			move_dir = Vector2.ZERO
+	velocity = (move_dir * get_effective_speed(delta)) + knockback_velocity + _compute_separation()
 	move_and_slide()
 	knockback_velocity = knockback_velocity.move_toward(Vector2.ZERO, knockback_decay * delta)
 	_process_body_contacts()
