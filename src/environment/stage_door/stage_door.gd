@@ -9,6 +9,7 @@ extends Area2D
 @export var door_height: float = 104.0
 
 var is_open: bool = false
+var _advancing: bool = false
 
 
 func _ready() -> void:
@@ -66,14 +67,19 @@ func _draw() -> void:
 
 
 func _on_body_entered(body: Node2D) -> void:
-	if not is_open:
+	if not is_open or _advancing:
 		return
 	if not body.is_in_group("player"):
 		return
-	_advance_stage()
+	# changing the scene inside a physics callback tears down this door (a
+	# CollisionObject) mid-step, which Godot forbids. Defer the transition.
+	_advancing = true
+	call_deferred("_advance_stage")
 
 
 func _advance_stage() -> void:
+	if not is_instance_valid(self):
+		return
 	var run_state: Node = get_node_or_null("/root/GameState")
 	if run_state == null:
 		return

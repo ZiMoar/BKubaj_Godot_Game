@@ -10,6 +10,7 @@ extends Area2D
 @export var door_height: float = 104.0
 
 var is_open: bool = true
+var _advancing: bool = false
 
 
 func _ready() -> void:
@@ -44,12 +45,19 @@ func _draw() -> void:
 
 
 func _on_body_entered(body: Node2D) -> void:
-	if not is_open:
+	if not is_open or _advancing:
 		return
 	if not body.is_in_group("player"):
 		return
 	if self_path.is_empty():
 		return
+	# Changing the scene inside a physics callback would tear down this door (a
+	# CollisionObject) mid-step, which Godot forbids. Defer the whole transition.
+	_advancing = true
+	call_deferred("_do_advance")
+
+
+func _do_advance() -> void:
 	# Carry over progression (level, weapons, gold, XP, artefacts) so the fresh
 	# instance of the map does NOT reset the character — same as real maps.
 	var run_state: Node = get_node_or_null("/root/GameState")
@@ -57,4 +65,5 @@ func _on_body_entered(body: Node2D) -> void:
 		var player: Node = get_tree().get_first_node_in_group("player")
 		var xp_mgr: Node = get_tree().get_first_node_in_group("team_xp_manager")
 		run_state.capture_loop_state(player, xp_mgr)
-	get_tree().change_scene_to_file(self_path)
+	if not self_path.is_empty():
+		get_tree().change_scene_to_file(self_path)
