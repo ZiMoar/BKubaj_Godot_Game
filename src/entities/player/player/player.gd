@@ -842,6 +842,9 @@ func capture_run_state() -> Dictionary:
 				"far_range_damage_bonus": w.far_range_damage_bonus,
 				"explosion_on_kill_chance": w.explosion_on_kill_chance,
 				"status_duration": w.status_duration,
+				"on_hit_burn_pct": w.on_hit_burn_pct,
+				"on_hit_bleed_dps": w.on_hit_bleed_dps,
+				"on_hit_poison_pct": w.on_hit_poison_pct,
 			})
 	stats["weapons"] = weapons
 	return stats
@@ -876,6 +879,9 @@ func restore_run_state(snap: Dictionary) -> void:
 			weapon.far_range_damage_bonus = wdata.get("far_range_damage_bonus", 0.0)
 			weapon.explosion_on_kill_chance = wdata.get("explosion_on_kill_chance", 0.0)
 			weapon.status_duration = wdata.get("status_duration", 3.0)
+			weapon.on_hit_burn_pct = wdata.get("on_hit_burn_pct", 0.0)
+			weapon.on_hit_bleed_dps = wdata.get("on_hit_bleed_dps", 0.0)
+			weapon.on_hit_poison_pct = wdata.get("on_hit_poison_pct", 0.0)
 			if weapon.trigger_type == Weapon.TriggerType.AUTOMATIC:
 				weapon.call_deferred("try_fire")
 	weapons_changed.emit()
