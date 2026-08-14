@@ -43,7 +43,7 @@ const LUCK_REDISTRIBUTION: Array[float] = [0.0, 0.35, 0.30, 0.20, 0.15]
 
 const UPGRADE_POOL: Array[Dictionary] = [
 	# --- Offense ---
-	{"id": "might_flat",           "title": "Power",         "description": "+{value} power.",                       "min_rarity": Rarity.COMMON,    "base_value": 1.0,   "value_scaling": 0.5},
+	{"id": "might_flat",           "title": "Power",         "description": "+{value} damage.",                     "min_rarity": Rarity.COMMON,    "base_value": 1.0,   "value_scaling": 0.5},
 	{"id": "might_percent",        "title": "Might %",       "description": "+{value}% total damage.",               "min_rarity": Rarity.COMMON,    "base_value": 0.10,  "value_scaling": 0.05},
 	{"id": "attack_speed",         "title": "Attack Speed",  "description": "+{value} attack speed.",               "min_rarity": Rarity.COMMON,    "base_value": 20.0,  "value_scaling": 10.0},
 	{"id": "crit_chance",          "title": "Crit Chance",   "description": "+{value}% crit chance.",                "min_rarity": Rarity.UNCOMMON,  "base_value": 0.05,  "value_scaling": 0.025},
@@ -64,7 +64,7 @@ const UPGRADE_POOL: Array[Dictionary] = [
 	{"id": "greed",                "title": "Greed",         "description": "+{value}% gold gained.",                 "min_rarity": Rarity.UNCOMMON,  "base_value": 0.20,  "value_scaling": 0.10},
 	{"id": "luck",                 "title": "Luck",          "description": "+{value} luck (better rarity rolls).",  "min_rarity": Rarity.UNCOMMON,  "base_value": 5.0,   "value_scaling": 3.0},
 	# --- Debug ---
-	{"id": "difficulty",           "title": "Difficulty",    "description": "+{value} difficulty.",                  "min_rarity": Rarity.COMMON,    "base_value": 1.0,   "value_scaling": 0.5},
+	{"id": "difficulty",           "title": "Difficulty",    "description": "+{value} difficulty.",                  "min_rarity": Rarity.RARE,      "base_value": 1.0,   "value_scaling": 0.5},
 ]
 
 @onready var title_label: Label = get_node_or_null("CenterContainer/Panel/Vertical/TitleLabel") as Label
