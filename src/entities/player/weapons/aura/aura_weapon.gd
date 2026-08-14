@@ -66,7 +66,7 @@ func _apply_pulse_damage() -> void:
 			if body.is_in_group("enemies"):
 				apply_status_on_hit(body, final_damage)
 				if body.has_method("has_died") and body.has_died():
-					apply_explosion_on_kill(global_position, final_damage)
+					apply_explosion_on_kill(body.global_position, final_damage)
 
 	for area: Area2D in aura_area.get_overlapping_areas():
 		var parent: Node = area.get_parent()
@@ -80,7 +80,7 @@ func _apply_pulse_damage() -> void:
 			if parent.is_in_group("enemies"):
 				apply_status_on_hit(parent, final_damage)
 				if parent.has_method("has_died") and parent.has_died():
-					apply_explosion_on_kill(global_position, final_damage)
+					apply_explosion_on_kill(parent.global_position, final_damage)
 
 
 func _on_body_entered(_body: Node2D) -> void:

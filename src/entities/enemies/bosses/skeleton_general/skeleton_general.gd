@@ -31,12 +31,13 @@ func _ready() -> void:
 	# Boss no longer scales with difficulty — it's tuned to its fixed 5-min HP pool.
 	stat_scale_per_difficulty = 0.0
 	move_time = 1.4
+	collide_with_player = true  # the boss body-blocks the player
+
+	super._ready()
 
 	register_attack(1.2, 0.3, 1.0, { "type": "slam" })
 	register_attack(1.0, 0.6, 1.2, { "type": "volley" })
 	register_attack(1.2, 0.5, 1.5, { "type": "summon" })
-
-	super._ready()
 
 
 func _begin_telegraph(attack: Dictionary) -> void:

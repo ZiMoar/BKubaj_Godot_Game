@@ -44,7 +44,7 @@ func fire() -> void:
 			if en.is_in_group("enemies"):
 				apply_status_on_hit(en, dmg)
 				if en.has_method("has_died") and en.has_died():
-					apply_explosion_on_kill(origin, dmg)
+					apply_explosion_on_kill(en.global_position, dmg)
 
 	if frost_scene:
 		var ring = frost_scene.instantiate()

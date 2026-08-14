@@ -150,6 +150,10 @@ func _get_player_weapons() -> Array[Weapon]:
 	if container:
 		for w: Node in container.get_children():
 			if w is Weapon:
+				# Exclude right-click (secondary) abilities from the anvil: they
+				# inherit their upgrades from the primary weapon instead.
+				if w.trigger_type == Weapon.TriggerType.SECONDARY:
+					continue
 				result.append(w as Weapon)
 	return result
 

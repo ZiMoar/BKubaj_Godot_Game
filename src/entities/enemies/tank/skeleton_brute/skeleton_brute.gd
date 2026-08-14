@@ -13,5 +13,6 @@ func _ready() -> void:
 	knockback_decay = 12.0
 	stat_scale_per_difficulty = 0.5  # Lower scaling so brute contact damage (and HP) don't oneshot late-game
 	damage_scale_ratio = 0.35
+	collide_with_player = true  # brute body-blocks the player
 
 	super._ready()

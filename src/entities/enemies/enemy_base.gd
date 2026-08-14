@@ -18,6 +18,10 @@ extends CharacterBody2D
 @export var separation_strength: float = 240.0  # how hard enemies push each other apart
 @export var engage_radius: float = 22.0  # stop closing beyond this distance to the player; orbit instead of jamming into them
 @export var orbit_speed_ratio: float = 0.55  # fraction of normal speed used while orbiting the player
+## Whether this enemy PHYSICALLY collides with the player. Most mobs are set to
+## false so the player walks through enemies (only the Hitbox deals contact
+## damage). Keep true for the few that should body-block (skeleton general, brute).
+@export var collide_with_player: bool = false
 
 var xp_orb_scene: PackedScene = preload("res://src/pickups/xp_orb/xp_orb.tscn")
 var gold_pickup_scene: PackedScene = preload("res://src/pickups/gold_pickup/gold_pickup.tscn")
@@ -92,6 +96,12 @@ func _ready() -> void:
 	if has_node("Hitbox"):
 		$Hitbox.body_entered.connect(_on_hitbox_touch)
 		$Hitbox.area_entered.connect(_on_hitbox_touch)
+
+	# Most mobs don't physically collide with the player (contact damage comes
+	# from the Hitbox area). Only body-blocked mobs (general, brute) keep the
+	# player bit (layer 2 = bit value 2) in their collision mask.
+	if not collide_with_player:
+		collision_mask &= ~2
 
 	_apply_difficulty_scaling()
 

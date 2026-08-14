@@ -13,8 +13,8 @@ extends Weapon
 @export var offset: float = 54.0
 @export var shield_width: float = 30.0
 @export var shield_height: float = 66.0
-@export var shield_hp_ratio: float = 0.75
-@export var armor_ratio: float = 0.6
+@export var shield_hp_ratio: float = 1.0
+@export var armor_ratio: float = 1.0
 @export var recharge_time: float = 4.0
 @export var push_force: float = 320.0
 

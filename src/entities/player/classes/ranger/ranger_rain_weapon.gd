@@ -15,13 +15,33 @@ func _ready() -> void:
 	super._ready()
 
 
+## The Longbow is this weapon's upgrade source: the rain inherits the bow's
+## anvil stats (damage, area, crit, status, explosion) so upgrading the primary
+## weapon also strengthens the secondary.
+func _bow_weapon() -> Weapon:
+	var p = get_player()
+	if p == null:
+		return null
+	var container: Node = p.get_node_or_null("Weapons")
+	if container == null:
+		return null
+	for w: Node in container.get_children():
+		if w is Weapon and w != self and w.weapon_name == "Longbow":
+			return w as Weapon
+	return null
+
+
 func fire() -> void:
 	var center: Vector2 = get_global_mouse_position()
-	var eff_radius: float = radius * get_area_multiplier()
-	var total: int = get_attack_damage(damage)
-	var is_critical: bool = roll_critical_hit()
+	var bow: Weapon = _bow_weapon()
+	# Delegate stat computation to the bow so its anvil upgrades apply here too.
+	var area_mult: float = bow.get_area_multiplier() if bow else get_area_multiplier()
+	var total: int = (bow.get_attack_damage(damage) if bow else get_attack_damage(damage))
+	var is_critical: bool = (bow.roll_critical_hit() if bow else roll_critical_hit())
 	if is_critical:
-		total = int(round(float(total) * get_critical_multiplier()))
+		var crit_mult: float = bow.get_critical_multiplier() if bow else get_critical_multiplier()
+		total = int(round(float(total) * crit_mult))
+	var eff_radius: float = radius * area_mult
 
 	for node in get_tree().get_nodes_in_group("enemies"):
 		if not is_instance_valid(node):
@@ -33,9 +53,9 @@ func fire() -> void:
 			if enemy.has_method("apply_knockback"):
 				enemy.apply_knockback(center, 220.0)
 			if enemy.is_in_group("enemies"):
-				apply_status_on_hit(enemy, total)
+				(bow.apply_status_on_hit(enemy, total) if bow else apply_status_on_hit(enemy, total))
 				if enemy.has_method("has_died") and enemy.has_died():
-					apply_explosion_on_kill(center, total)
+					(bow.apply_explosion_on_kill(enemy.global_position, total) if bow else apply_explosion_on_kill(enemy.global_position, total))
 
 	if rain_visual_scene:
 		var visual = rain_visual_scene.instantiate()

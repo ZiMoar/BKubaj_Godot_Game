@@ -91,7 +91,7 @@ func fire() -> void:
 		if e.has_method("apply_knockback"):
 			e.apply_knockback(prev, 90.0)
 		if e.is_in_group("enemies") and e.has_method("has_died") and e.has_died():
-			apply_explosion_on_kill(origin, dealt)
+			apply_explosion_on_kill(e.global_position, dealt)
 		prev = e.global_position
 		local_points.append(e.global_position - origin)
 
