@@ -98,6 +98,5 @@ func _on_slash_hit(node: Node) -> void:
 				target.apply_knockback(global_position, knockback_force)
 			apply_lifesteal()
 			if target.is_in_group("enemies"):
-				apply_status_on_hit(target, current_attack_damage)
 				if target.has_method("has_died") and target.has_died():
 					apply_explosion_on_kill(target.global_position, current_attack_damage)

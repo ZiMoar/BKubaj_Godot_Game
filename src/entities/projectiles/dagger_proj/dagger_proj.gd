@@ -68,10 +68,8 @@ func _hit(node: Node) -> void:
 		if source_player and source_player.has_method("apply_lifesteal"):
 			source_player.apply_lifesteal()
 
-		# On-hit status effects (burn / bleed / poison) from the source weapon.
+		# Possibly explode on kill.
 		if source_weapon and node.is_in_group("enemies"):
-			source_weapon.apply_status_on_hit(node, dealt)
-			# Possibly explode on kill.
 			if node.has_method("has_died") and node.has_died():
 				source_weapon.apply_explosion_on_kill(global_position, dealt)
 		# Pierce first, then chain-bounce once pierce is spent.

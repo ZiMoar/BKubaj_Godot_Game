@@ -9,9 +9,12 @@ extends Node2D
 ## The parent is expected to be an EnemyBase (or expose the same status vars).
 
 var burn_dps: float = 0.0
-var bleed_stacks: int = 0
-var poison_dps: float = 0.0
+var poison_stacks: int = 0
 var slow_active: bool = false
+var impale_active: bool = false
+var crit_vuln_active: bool = false
+var decay_active: bool = false
+var brand_active: bool = false
 
 const ICON_GAP: float = 12.0
 const ICON_RADIUS: float = 5.0
@@ -25,9 +28,12 @@ func _process(_delta: float) -> void:
 	if p == null:
 		return
 	burn_dps = p.get("burn_dps")
-	bleed_stacks = p.get("bleed_stacks")
-	poison_dps = p.get("poison_dps")
+	poison_stacks = p.get("poison_stacks")
 	slow_active = (p.get("slow_timer") as float) > 0.0
+	impale_active = (p.get("impale_pool") as float) > 0.0
+	crit_vuln_active = (p.get("crit_vuln_timer") as float) > 0.0
+	decay_active = (p.get("decay_timer") as float) > 0.0
+	brand_active = (p.get("brand_timer") as float) > 0.0
 	queue_redraw()
 
 
@@ -36,12 +42,18 @@ func _build_icons() -> Array:
 	var icons: Array = []
 	if burn_dps > 0.0:
 		icons.append([Color(1.0, 0.5, 0.15), "F"])  # fire / burn
-	if bleed_stacks > 0:
-		icons.append([Color(0.8, 0.15, 0.15), "B"])  # bleed
-	if poison_dps > 0.0:
+	if poison_stacks > 0:
 		icons.append([Color(0.35, 0.85, 0.2), "P"])  # poison
 	if slow_active:
 		icons.append([Color(0.3, 0.7, 1.0), "S"])  # slow
+	if impale_active:
+		icons.append([Color(0.8, 0.8, 0.85), "I"])  # impale
+	if crit_vuln_active:
+		icons.append([Color(0.9, 0.55, 0.9), "V"])  # crit vulnerability
+	if decay_active:
+		icons.append([Color(0.4, 0.55, 0.4), "D"])  # decay
+	if brand_active:
+		icons.append([Color(1.0, 0.95, 0.5), "B"])  # brand
 	return icons
 
 

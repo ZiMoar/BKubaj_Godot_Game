@@ -21,6 +21,10 @@ const ARTEFACTS: Script = preload("res://src/systems/artefact.gd")
 @export var amount_bonus: int = 0
 @export var armor_penetration_flat_bonus: float = 0.0
 @export var armor_penetration_percent_bonus: float = 0.0
+## Chance (0..1) that a damaging hit also inflicts the ailment matching the
+## damage type that dealt it (fire=burn, lightning=shock, cold=slow,
+## arcane=crit vuln, necrotic=decay, holy=brand, poison=stack, physical=impale).
+@export var ailment_chance: float = 0.0
 
 @export_category("Survival & Defense")
 @export var max_health: int = 100
@@ -203,6 +207,10 @@ func get_critical_multiplier() -> float:
 
 func roll_critical_hit() -> bool:
 	return randf() < clamp(critical_hit_chance, 0.0, 1.0)
+
+## Rolls whether a damaging hit also inflicts its damage-type's ailment.
+func roll_ailment() -> bool:
+	return randf() < clamp(ailment_chance, 0.0, 1.0)
 
 func get_attack_damage(base_damage: float) -> int:
 	var flat_applied = maxf(0.0, base_damage + might_flat_bonus)
@@ -434,6 +442,8 @@ func apply_upgrade(upgrade_id: String, rarity: int = 0) -> void:
 			attack_speed_bonus += value
 		"crit_chance":
 			critical_hit_chance = clamp(critical_hit_chance + value, 0.0, 1.0)
+		"ailment_chance":
+			ailment_chance = clamp(ailment_chance + value, 0.0, 1.0)
 		"crit_damage":
 			critical_hit_damage_multiplier += value
 		"area":
@@ -797,6 +807,7 @@ func capture_run_state() -> Dictionary:
 		"attack_speed_bonus": attack_speed_bonus,
 		"critical_hit_chance": critical_hit_chance,
 		"critical_hit_damage_multiplier": critical_hit_damage_multiplier,
+		"ailment_chance": ailment_chance,
 		"area_bonus": area_bonus,
 		"projectile_speed_bonus": projectile_speed_bonus,
 		"duration_bonus": duration_bonus,
@@ -848,10 +859,7 @@ func capture_run_state() -> Dictionary:
 				"close_range_damage_bonus": w.close_range_damage_bonus,
 				"far_range_damage_bonus": w.far_range_damage_bonus,
 				"explosion_on_kill_chance": w.explosion_on_kill_chance,
-				"status_duration": w.status_duration,
-				"on_hit_burn_pct": w.on_hit_burn_pct,
-				"on_hit_bleed_dps": w.on_hit_bleed_dps,
-				"on_hit_poison_pct": w.on_hit_poison_pct,
+				"damage_type": int(w.damage_type),
 			})
 	stats["weapons"] = weapons
 	return stats
@@ -885,10 +893,7 @@ func restore_run_state(snap: Dictionary) -> void:
 			weapon.close_range_damage_bonus = wdata.get("close_range_damage_bonus", 0.0)
 			weapon.far_range_damage_bonus = wdata.get("far_range_damage_bonus", 0.0)
 			weapon.explosion_on_kill_chance = wdata.get("explosion_on_kill_chance", 0.0)
-			weapon.status_duration = wdata.get("status_duration", 3.0)
-			weapon.on_hit_burn_pct = wdata.get("on_hit_burn_pct", 0.0)
-			weapon.on_hit_bleed_dps = wdata.get("on_hit_bleed_dps", 0.0)
-			weapon.on_hit_poison_pct = wdata.get("on_hit_poison_pct", 0.0)
+			weapon.damage_type = int(wdata.get("damage_type", int(weapon.damage_type))) as DamageType.Type
 			if weapon.trigger_type == Weapon.TriggerType.AUTOMATIC:
 				weapon.call_deferred("try_fire")
 	weapons_changed.emit()

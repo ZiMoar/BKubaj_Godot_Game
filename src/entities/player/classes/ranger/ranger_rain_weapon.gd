@@ -53,9 +53,11 @@ func fire() -> void:
 			if enemy.has_method("apply_knockback"):
 				enemy.apply_knockback(center, 220.0)
 			if enemy.is_in_group("enemies"):
-				(bow.apply_status_on_hit(enemy, total) if bow else apply_status_on_hit(enemy, total))
 				if enemy.has_method("has_died") and enemy.has_died():
-					(bow.apply_explosion_on_kill(enemy.global_position, total) if bow else apply_explosion_on_kill(enemy.global_position, total))
+					if bow:
+						bow.apply_explosion_on_kill(enemy.global_position, total)
+					else:
+						apply_explosion_on_kill(enemy.global_position, total)
 
 	if rain_visual_scene:
 		var visual = rain_visual_scene.instantiate()

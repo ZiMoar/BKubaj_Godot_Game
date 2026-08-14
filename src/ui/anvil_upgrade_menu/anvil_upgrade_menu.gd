@@ -75,25 +75,53 @@ var STAT_POOL: Array[Dictionary] = [
 		"apply": func(w: Weapon) -> void: w.explosion_on_kill_chance = minf(1.0, w.explosion_on_kill_chance + 0.25),
 	},
 	{
-		"id": "burn",
-		"title": "Burn",
-		"description": "Hits burn enemies for {value}% of the hit's damage over time.",
-		"value": 40,
-		"apply": func(w: Weapon) -> void: w.on_hit_burn_pct = minf(1.0, w.on_hit_burn_pct + 0.40),
+		"id": "element_fire",
+		"title": "Fire Damage",
+		"description": "Damage becomes FIRE — hits can burn enemies.",
+		"value": 0,
+		"apply": func(w: Weapon) -> void: w.damage_type = DamageType.Type.FIRE,
 	},
 	{
-		"id": "bleed",
-		"title": "Bleed",
-		"description": "Hits cause stacking bleed, {value} damage per stack over time.",
-		"value": 15,
-		"apply": func(w: Weapon) -> void: w.on_hit_bleed_dps = maxf(w.on_hit_bleed_dps, 15.0),
+		"id": "element_lightning",
+		"title": "Lightning Damage",
+		"description": "Damage becomes LIGHTNING — hits can shock nearby enemies.",
+		"value": 0,
+		"apply": func(w: Weapon) -> void: w.damage_type = DamageType.Type.LIGHTNING,
 	},
 	{
-		"id": "poison",
-		"title": "Poison",
-		"description": "Hits poison enemies for {value}% of their max HP over time.",
-		"value": 8,
-		"apply": func(w: Weapon) -> void: w.on_hit_poison_pct = minf(0.5, w.on_hit_poison_pct + 0.08),
+		"id": "element_cold",
+		"title": "Cold Damage",
+		"description": "Damage becomes COLD — hits can slow enemies.",
+		"value": 0,
+		"apply": func(w: Weapon) -> void: w.damage_type = DamageType.Type.COLD,
+	},
+	{
+		"id": "element_arcane",
+		"title": "Arcane Damage",
+		"description": "Damage becomes ARCANE — hits can make enemies crit-vulnerable.",
+		"value": 0,
+		"apply": func(w: Weapon) -> void: w.damage_type = DamageType.Type.ARCANE,
+	},
+	{
+		"id": "element_necrotic",
+		"title": "Necrotic Damage",
+		"description": "Damage becomes NECROTIC — hits can decay enemy damage dealt.",
+		"value": 0,
+		"apply": func(w: Weapon) -> void: w.damage_type = DamageType.Type.NECROTIC,
+	},
+	{
+		"id": "element_holy",
+		"title": "Holy Damage",
+		"description": "Damage becomes HOLY — hits can brand enemies (take more damage).",
+		"value": 0,
+		"apply": func(w: Weapon) -> void: w.damage_type = DamageType.Type.HOLY,
+	},
+	{
+		"id": "element_poison",
+		"title": "Poison Damage",
+		"description": "Damage becomes POISON — hits can stack poison.",
+		"value": 0,
+		"apply": func(w: Weapon) -> void: w.damage_type = DamageType.Type.POISON,
 	},
 ]
 
@@ -242,8 +270,8 @@ func _weapon_supports(weapon: Weapon, stat_id: String) -> bool:
 			return weapon.supports_range_damage()
 		"explosion_on_kill":
 			return weapon.supports_explosion_on_kill()
-		"burn", "bleed", "poison":
-			return weapon.supports_status_effects()
+		"element_fire", "element_lightning", "element_cold", "element_arcane", "element_necrotic", "element_holy", "element_poison":
+			return true  # any weapon can be re-forged to a different damage type
 	return false
 
 

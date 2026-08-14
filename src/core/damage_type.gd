@@ -1,18 +1,20 @@
 class_name DamageType
-## Central enum of elemental damage types. Each weapon/projectile reports the
-## type of damage it deals so a future ailment system can key off it (instead of
-## every weapon being able to apply every DoT).
+##########################################################################
+## Elemental damage types. Every weapon/projectile reports the type of
+## damage it deals; enemies roll "ailment chance" on each hit and inflict the
+## ailment matching that damage type (see EnemyBase._apply_ailment).
 ##
-## PHYSICAL is the default for any weapon that does not specify an element.
-## NECROTIC, LIGHT and POISON are reserved for content that does not exist yet,
-## but the enum is declared now so the framework is ready for them.
+## PHYSICAL is the default for weapons that do not specify an element.
+## NECROTIC / HOLY / POISON have no dedicated weapon yet but are declared so the
+## framework (and the anvil's damage-type upgrades) are ready for them.
+##########################################################################
 enum Type {
-	PHYSICAL,   # default — plain strikes (sword, dagger, arrows, spin blade, ...)
-	FIRE,       # Fire Aura
-	LIGHTNING,  # Lightning Bolt
-	COLD,       # Frost Nova / ice
-	ARCANE,     # Arcane Bolts (mage)
-	NECROTIC,   # reserved (not yet used)
-	LIGHT,      # reserved (not yet used)
-	POISON,     # reserved (not yet used)
+	PHYSICAL,   # default — impale (stores % of the hit, released on next hit)
+	FIRE,       # burn (DoT scaled off the hit)
+	LIGHTNING,  # shock (zap a nearby different enemy for 50% of the hit)
+	COLD,       # slow
+	ARCANE,     # crit vulnerability (more likely to be critically hit)
+	NECROTIC,   # decay (enemy deals 20% less damage)
+	HOLY,       # brand (enemy takes increased damage from all sources)
+	POISON,     # stackable DoT (long duration, slow ticks, < burn magnitude)
 }

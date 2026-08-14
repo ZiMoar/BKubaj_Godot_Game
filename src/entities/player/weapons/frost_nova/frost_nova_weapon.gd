@@ -43,7 +43,6 @@ func fire() -> void:
 			if en.has_method("apply_slow"):
 				en.apply_slow(slow_duration, slow_factor)
 			if en.is_in_group("enemies"):
-				apply_status_on_hit(en, dmg)
 				if en.has_method("has_died") and en.has_died():
 					apply_explosion_on_kill(en.global_position, dmg)
 

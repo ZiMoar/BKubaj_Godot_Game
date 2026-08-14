@@ -51,11 +51,13 @@ var _is_dead: bool = false
 ## a future ailment system that keys effects off the damage type dealt.
 var _last_damage_type: DamageType.Type = DamageType.Type.PHYSICAL
 
-# --- Damage over time / status effects ------------------------------------
-# Burn: discrete ticks every BURN_TICK_INTERVAL. Each tick deals a fixed
-# fraction (BURN_TICK_PCT) of the damage of the hit that applied it. A fresh
-# burn lasts BURN_TICKS ticks; re-applying adds more ticks (extends duration)
-# without raising per-tick damage. The first tick fires immediately (t=0).
+# --- Ailments (status effects keyed off damage type) ----------------------
+# Each damaging hit rolls "ailment chance" (player stat); on success the alemment
+# matching the DAMAGE TYPE of that hit is applied via _apply_ailment().
+
+# FIRE -> Burn: discrete ticks every BURN_TICK_INTERVAL, each dealing a fixed
+# fraction (BURN_TICK_PCT) of the hit that applied it. Re-applying keeps the
+# strongest per-tick damage and extends duration (does NOT stack per upgrade).
 var burn_dps: float = 0.0          # per-tick damage (also the icon active flag)
 var burn_ticks_remaining: int = 0
 var burn_timer: float = 0.0        # time until next burn tick
@@ -64,20 +66,39 @@ const BURN_TICKS: int = 5          # 5 ticks = 2.0 s total duration
 const BURN_TICK_PCT: float = 0.30  # each tick deals 30% of the inflicting hit
 const BURN_MAX_TICKS: int = 30
 
-# Bleed: flat DoT, stackable. Each stack adds its own flat DPS (continuous).
-var bleed_stacks: int = 0
-var bleed_dps_per_stack: float = 0.0
-var bleed_timer: float = 0.0
+# COLD -> Slow (reuses slow_timer / slow_factor; see apply_slow).
 
-# Poison: discrete ticks every POISON_TICK_INTERVAL. Each tick deals the full
-# max-health fraction (POISON_TICK_COUNT ticks total), halved on bosses.
-var poison_dps: float = 0.0        # per-tick damage (also the icon active flag)
-var poison_ticks_remaining: int = 0
+# ARCANE -> Crit vulnerability: while active, non-crit hits have a chance to be
+# upgraded into crits. CRIT_VULN_TIMER also serves as the icon active flag.
+var crit_vuln_timer: float = 0.0
+const CRIT_VULN_DURATION: float = 3.0
+const CRIT_VULN_UPGRADE_CHANCE: float = 0.5  # chance a non-crit hit becomes a crit
+
+# NECROTIC -> Decay: while active, the enemy deals less damage.
+var decay_timer: float = 0.0
+const DECAY_DURATION: float = 3.0
+const DECAY_DAMAGE_MULT: float = 0.8  # enemy deals 20% less damage
+
+# HOLY -> Brand: while active, this enemy takes increased damage from all sources.
+var brand_timer: float = 0.0
+const BRAND_DURATION: float = 3.0
+const BRAND_DAMAGE_MULT: float = 1.5
+
+# POISON -> Stackable DoT: long duration, slow ticks, scaled from the hit but
+# smaller than burn because it stacks. Each stack adds its own per-tick damage.
+var poison_stacks: int = 0
+var poison_tick_dps: float = 0.0   # per-tick damage from ALL stacks
 var poison_timer: float = 0.0      # time until next poison tick
-const POISON_TICK_INTERVAL: float = 1.0
-const POISON_TICK_COUNT: int = 3   # 3 ticks over 3 seconds
+var poison_duration: float = 0.0   # time left before poison ends entirely
+const POISON_TICK_INTERVAL: float = 1.5   # slow ticks
+const POISON_DURATION_MAX: float = 8.0    # long duration
+const POISON_TICK_PCT: float = 0.10       # per-stack per-tick (less than burn)
+const MAX_POISON_STACKS: int = 10
 
-const MAX_BLEED_STACKS: int = 10
+# PHYSICAL -> Impale: stores a % of the hit that applied it, and releases that
+# stored damage on the NEXT hit the enemy takes.
+var impale_pool: float = 0.0
+const IMPALE_PCT: float = 0.30  # store 30% of the inflicting hit
 
 @onready var hp_bar: Control = get_node_or_null("HPBar")
 
@@ -191,36 +212,93 @@ func apply_slow(duration: float, factor: float) -> void:
 	slow_factor = minf(slow_factor, clampf(factor, 0.05, 1.0))
 
 
-# --- Reusable status effects -----------------------------------------------
-# Burn: discrete ticks. Each tick deals BURN_TICK_PCT of the hit that applied
-# it. A fresh application starts BURN_TICKS ticks (first tick at t=0); further
-# applications add more ticks (extending duration) without raising the
-# per-tick damage, per design.
-func apply_burn(hit_damage: float, _duration: float, _pct_per_sec: float) -> void:
-	var tick_dmg: float = hit_damage * BURN_TICK_PCT
-	# Keep the strongest per-tick damage seen; extra applications extend duration.
-	burn_dps = maxf(burn_dps, tick_dmg)
+# --- Ailment application methods (called from _apply_ailment) --------------
+
+# FIRE -> Burn: discrete ticks, each BURN_TICK_PCT of the hit that applied it.
+# Keeps the strongest per-tick damage; re-applying extends duration.
+func apply_burn(hit_damage: float) -> void:
+	burn_dps = maxf(burn_dps, hit_damage * BURN_TICK_PCT)
 	burn_ticks_remaining = mini(burn_ticks_remaining + BURN_TICKS, BURN_MAX_TICKS)
 	if burn_timer <= 0.0:
 		burn_timer = 0.0  # fire the first tick immediately (t=0)
 
 
-# Bleed: flat DoT that stacks. Each stack adds bleed_dps for the duration.
-func apply_bleed(flat_dps_per_stack: float, duration: float) -> void:
-	bleed_stacks = mini(bleed_stacks + 1, MAX_BLEED_STACKS)
-	bleed_dps_per_stack = maxf(bleed_dps_per_stack, flat_dps_per_stack)
-	bleed_timer = maxf(bleed_timer, duration)
+# POISON -> Stackable DoT: long duration, slow ticks. Each stack adds its own
+# per-tick damage (hit_damage * POISON_TICK_PCT), smaller than burn per stack.
+func apply_poison(hit_damage: float) -> void:
+	poison_stacks = mini(poison_stacks + 1, MAX_POISON_STACKS)
+	poison_tick_dps += hit_damage * POISON_TICK_PCT
+	poison_duration = POISON_DURATION_MAX
+	if poison_timer <= 0.0:
+		poison_timer = POISON_TICK_INTERVAL
+	if poison_tick_dps > 0.0 and poison_timer > POISON_TICK_INTERVAL:
+		poison_timer = POISON_TICK_INTERVAL
 
 
-# Poison: discrete ticks. Each tick deals the full max-health fraction
-# (POISON_TICK_COUNT ticks total); halved effectiveness on bosses.
-func apply_poison(pct_max_health_per_sec: float, _duration: float) -> void:
-	var boss_mult: float = 0.5 if is_in_group("bosses") else 1.0
-	# Base tick damage = full pct of max health on a tick, halved vs bosses.
-	poison_dps = maxf(poison_dps, pct_max_health_per_sec * float(max_health) * boss_mult)
-	poison_ticks_remaining = POISON_TICK_COUNT
-	# Ticks at 1s / 2s / 3s so the poison spans a full 3 seconds.
-	poison_timer = POISON_TICK_INTERVAL
+# PHYSICAL -> Impale: store a % of the hit; released on the NEXT hit taken.
+func apply_impale(hit_damage: float) -> void:
+	impale_pool += hit_damage * IMPALE_PCT
+
+
+# ARCANE -> Crit vulnerability: raise the chance incoming hits become crits.
+func apply_crit_vulnerability() -> void:
+	crit_vuln_timer = maxf(crit_vuln_timer, CRIT_VULN_DURATION)
+
+
+# NECROTIC -> Decay: enemy deals less damage.
+func apply_decay() -> void:
+	decay_timer = maxf(decay_timer, DECAY_DURATION)
+
+
+# HOLY -> Brand: enemy takes increased damage from all sources.
+func apply_brand() -> void:
+	brand_timer = maxf(brand_timer, BRAND_DURATION)
+
+
+# Rolls the player's ailment chance. Returns true if the current hit's damage
+# type should also inflict its matching ailment.
+func _roll_ailment() -> bool:
+	var pl: Node = get_tree().get_first_node_in_group("player")
+	if pl == null or not pl.has_method("roll_ailment"):
+		return false
+	return bool(pl.roll_ailment())
+
+
+# Applies the ailment matching the given damage type to this enemy (and, for
+# shock, to a nearby different enemy).
+func _apply_ailment(damage_type: DamageType.Type, hit_damage: int) -> void:
+	match damage_type:
+		DamageType.Type.FIRE:
+			apply_burn(float(hit_damage))
+		DamageType.Type.LIGHTNING:
+			_apply_shock(float(hit_damage))
+		DamageType.Type.COLD:
+			apply_slow(2.0, 0.45)
+		DamageType.Type.ARCANE:
+			apply_crit_vulnerability()
+		DamageType.Type.NECROTIC:
+			apply_decay()
+		DamageType.Type.HOLY:
+			apply_brand()
+		DamageType.Type.POISON:
+			apply_poison(float(hit_damage))
+		DamageType.Type.PHYSICAL:
+			apply_impale(float(hit_damage))
+
+
+# LIGHTNING -> Shock: zap a DIFFERENT nearby enemy for 50% of the hit damage.
+func _apply_shock(hit_damage: float) -> void:
+	var best: Node2D = null
+	var best_d: float = INF
+	for e: Node in get_tree().get_nodes_in_group("enemies"):
+		if not is_instance_valid(e) or e == self:
+			continue
+		var d: float = global_position.distance_squared_to((e as Node2D).global_position)
+		if d < best_d:
+			best_d = d
+			best = e as Node2D
+	if best != null and best.has_method("take_damage"):
+		best.take_damage(maxi(1, int(round(hit_damage * 0.5))), false, DamageType.Type.LIGHTNING, true)
 
 
 func get_effective_speed(delta: float) -> float:
@@ -237,40 +315,65 @@ func _process_status_dots(delta: float) -> void:
 	if burn_ticks_remaining > 0 and burn_timer >= 0.0:
 		burn_timer -= delta
 		if burn_timer <= 0.0:
-			take_damage(maxi(1, int(round(burn_dps))))
+			take_damage(maxi(1, int(round(burn_dps))), false, DamageType.Type.FIRE, true)
 			burn_ticks_remaining -= 1
 			burn_timer = BURN_TICK_INTERVAL
 
-	# Bleed: continuous flat DoT per frame (behaviour unchanged).
-	if bleed_timer > 0.0 and bleed_stacks > 0:
-		take_damage(maxi(1, int(round(bleed_dps_per_stack * float(bleed_stacks) * delta))))
-		bleed_timer = maxf(0.0, bleed_timer - delta)
+	# Poison: slow ticks over a long duration.
+	if poison_duration > 0.0:
+		poison_duration = maxf(0.0, poison_duration - delta)
+		if poison_stacks > 0 and poison_timer >= 0.0:
+			poison_timer -= delta
+			if poison_timer <= 0.0:
+				take_damage(maxi(1, int(round(poison_tick_dps))), false, DamageType.Type.POISON, true)
+				poison_timer = POISON_TICK_INTERVAL
+		if poison_duration <= 0.0:
+			poison_stacks = 0
+			poison_tick_dps = 0.0
 
-	# Poison: discrete ticks once per second.
-	if poison_ticks_remaining > 0 and poison_timer >= 0.0:
-		poison_timer -= delta
-		if poison_timer <= 0.0:
-			take_damage(maxi(1, int(round(poison_dps))))
-			poison_ticks_remaining -= 1
-			poison_timer = POISON_TICK_INTERVAL
+	# Decay / brand / crit-vuln timers tick down.
+	if decay_timer > 0.0:
+		decay_timer = maxf(0.0, decay_timer - delta)
+	if brand_timer > 0.0:
+		brand_timer = maxf(0.0, brand_timer - delta)
+	if crit_vuln_timer > 0.0:
+		crit_vuln_timer = maxf(0.0, crit_vuln_timer - delta)
 
-	# Cleanup so statuses that expire also reset their (possibly stale) strengths.
+	# Cleanup: burn reset when fully expired (impale has no timer / pool persists).
 	if burn_timer <= 0.0 and burn_ticks_remaining <= 0:
 		burn_dps = 0.0
-	if bleed_timer <= 0.0:
-		bleed_stacks = 0
-		bleed_dps_per_stack = 0.0
-	if poison_timer <= 0.0 and poison_ticks_remaining <= 0:
-		poison_dps = 0.0
 
 
-func take_damage(amount: int, is_critical: bool = false, damage_type: DamageType.Type = DamageType.Type.PHYSICAL) -> void:
-	current_health -= amount
-	# Record the type of the most recent damaging hit. A future ailment system
-	# will key status effects off this (chance to inflict a DoT/effect based on
-	# the damage type dealt). Placeholder hook for now.
+func take_damage(amount: int, is_critical: bool = false, damage_type: DamageType.Type = DamageType.Type.PHYSICAL, suppress_ailment: bool = false) -> void:
+	# IMPALE release: stored impale damage is added onto THIS next hit, then cleared.
+	var dealt: float = float(amount)
+	if impale_pool > 0.0:
+		dealt += impale_pool
+		impale_pool = 0.0
+
+	# BRAND (holy): while active, this enemy takes increased damage from all sources.
+	if brand_timer > 0.0:
+		dealt *= BRAND_DAMAGE_MULT
+
+	# CRIT VULNERABILITY (arcane): a non-crit hit has a chance to be upgraded into
+	# a crit. Needs the player's crit multiplier for the damage bump.
+	if not is_critical and crit_vuln_timer > 0.0 and randf() < CRIT_VULN_UPGRADE_CHANCE:
+		is_critical = true
+		var pl: Node = get_tree().get_first_node_in_group("player")
+		if pl != null and pl.has_method("get_critical_multiplier"):
+			dealt *= float(pl.get_critical_multiplier())
+
+	var final_amount: int = maxi(1, int(round(dealt)))
+	current_health -= final_amount
+	# Record the type of the most recent damaging hit.
 	_last_damage_type = damage_type
-	
+
+	# Roll to inflict the ailment matching this hit's damage type (not for DoT
+	# ticks / shock bounces, which pass suppress_ailment = true).
+	if not suppress_ailment and not _is_dead:
+		if _roll_ailment():
+			_apply_ailment(damage_type, final_amount)
+
 	# Show HP bar on hit
 	if hp_bar:
 		hp_bar.value = current_health
@@ -278,7 +381,7 @@ func take_damage(amount: int, is_critical: bool = false, damage_type: DamageType
 		_update_hp_value_label()
 		
 	# Spawn Floating Damage Text
-	_spawn_damage_number(amount, is_critical)
+	_spawn_damage_number(final_amount, is_critical)
 	
 	# Red Flash
 	var tween = create_tween()
@@ -420,7 +523,7 @@ func _on_hitbox_touch(node: Node) -> void:
 	var target = node.get_parent() if node is Area2D else node
 	if target and (target.is_in_group("player") or target.has_method("take_damage")) and not target.is_in_group("enemies"):
 		if can_deal_damage:
-			target.take_damage(contact_damage, self)
+			target.take_damage(_get_outgoing_contact_damage(), self)
 			_apply_thorns_to_attacker(target)
 			_start_damage_cooldown()
 
@@ -430,10 +533,17 @@ func _process_body_contacts() -> void:
 		var collider = collision.get_collider()
 		if collider and collider.is_in_group("player") and can_deal_damage:
 			if collider.has_method("take_damage"):
-				collider.take_damage(contact_damage, self)
+				collider.take_damage(_get_outgoing_contact_damage(), self)
 				_apply_thorns_to_attacker(collider)
 				_start_damage_cooldown()
 				return
+
+# NECROTIC decay reduces the enemy's outgoing contact damage.
+func _get_outgoing_contact_damage() -> int:
+	var dmg: float = float(contact_damage)
+	if decay_timer > 0.0:
+		dmg *= DECAY_DAMAGE_MULT
+	return max(0, int(round(dmg)))
 
 func _apply_thorns_to_attacker(attacker: Node) -> void:
 	if attacker == null or not attacker.has_method("get"):

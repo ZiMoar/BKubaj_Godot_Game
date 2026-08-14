@@ -87,8 +87,6 @@ func fire() -> void:
 			dealt = maxi(1, int(round(float(dealt) * get_range_damage_multiplier(e.global_position.distance_to(origin)))))
 		e.take_damage(dealt, false, damage_type)
 		apply_lifesteal()
-		if e.is_in_group("enemies"):
-			apply_status_on_hit(e, dealt)
 		if e.has_method("apply_knockback"):
 			e.apply_knockback(prev, 90.0)
 		if e.is_in_group("enemies") and e.has_method("has_died") and e.has_died():

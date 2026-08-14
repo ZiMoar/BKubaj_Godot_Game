@@ -75,12 +75,11 @@ func _process_hit(node: Node) -> void:
 			return
 			
 		recently_hit[target] = hit_cooldown
-		target.take_damage(damage, is_critical)
+		target.take_damage(damage, is_critical, source_weapon.damage_type if source_weapon != null else DamageType.Type.PHYSICAL)
 		if target.has_method("apply_knockback"):
 			target.apply_knockback(global_position, knockback_force)
 		if source_player and source_player.has_method("apply_lifesteal"):
 			source_player.apply_lifesteal()
 		if source_weapon and target.is_in_group("enemies"):
-			source_weapon.apply_status_on_hit(target, damage)
 			if target.has_method("has_died") and target.has_died():
 				source_weapon.apply_explosion_on_kill(global_position, damage)

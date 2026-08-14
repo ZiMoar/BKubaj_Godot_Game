@@ -106,7 +106,6 @@ func _hit(node: Node) -> void:
 		if node.has_method("apply_knockback"):
 			node.apply_knockback(global_position, 120.0)
 		if source_weapon and node.is_in_group("enemies"):
-			source_weapon.apply_status_on_hit(node, dealt)
 			if node.has_method("has_died") and node.has_died():
 				source_weapon.apply_explosion_on_kill(global_position, dealt)
 	queue_free()

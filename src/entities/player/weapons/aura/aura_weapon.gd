@@ -65,7 +65,6 @@ func _apply_pulse_damage() -> void:
 			body.take_damage(final_damage, false, damage_type)
 			apply_lifesteal()
 			if body.is_in_group("enemies"):
-				apply_status_on_hit(body, final_damage)
 				if body.has_method("has_died") and body.has_died():
 					apply_explosion_on_kill(body.global_position, final_damage)
 
@@ -79,7 +78,6 @@ func _apply_pulse_damage() -> void:
 			parent.take_damage(final_damage, false, damage_type)
 			apply_lifesteal()
 			if parent.is_in_group("enemies"):
-				apply_status_on_hit(parent, final_damage)
 				if parent.has_method("has_died") and parent.has_died():
 					apply_explosion_on_kill(parent.global_position, final_damage)
 

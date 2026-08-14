@@ -39,12 +39,6 @@ var explosion_on_kill_chance: float = 0.0  # chance a kill triggers an AOE
 var explosion_radius: float = 95.0
 var explosion_damage_ratio: float = 0.6    # as a fraction of the killing hit
 
-# On-hit status effects (share a common duration).
-var on_hit_burn_pct: float = 0.0   # burn DPS as fraction of the hit's damage
-var on_hit_bleed_dps: float = 0.0  # flat bleed DPS per stack
-var on_hit_poison_pct: float = 0.0 # poison DPS as fraction of enemy max HP
-var status_duration: float = 3.0
-
 func _ready() -> void:
 	base_cooldown = cooldown
 	# Check if a CooldownTimer child already exists; if not, create one safely
@@ -149,10 +143,6 @@ func supports_range_damage() -> bool:
 func supports_explosion_on_kill() -> bool:
 	return true
 
-# Whether this weapon can apply on-hit status effects (burn/bleed/poison).
-func supports_status_effects() -> bool:
-	return true
-
 func get_attack_damage(base_damage: float) -> int:
 	var player = get_player()
 	if player == null:
@@ -202,21 +192,6 @@ func _get_screen_reach() -> float:
 		return 0.0
 	var size := vp.get_visible_rect().size
 	return size.length() * 0.5
-
-
-# Applies this weapon's on-hit status effects to an enemy that was just hit.
-# Call this from the weapon / projectile right after dealing damage.
-func apply_status_on_hit(target: Node, hit_damage: int) -> void:
-	if target == null or not is_instance_valid(target):
-		return
-	if not target.has_method("apply_burn") and not target.has_method("apply_bleed") and not target.has_method("apply_poison"):
-		return
-	if on_hit_burn_pct > 0.0 and target.has_method("apply_burn"):
-		target.apply_burn(float(hit_damage), status_duration, on_hit_burn_pct)
-	if on_hit_bleed_dps > 0.0 and target.has_method("apply_bleed"):
-		target.apply_bleed(on_hit_bleed_dps, status_duration)
-	if on_hit_poison_pct > 0.0 and target.has_method("apply_poison"):
-		target.apply_poison(on_hit_poison_pct, status_duration)
 
 
 # After scoring a kill (enemy died), possibly trigger an explosion AOE.
