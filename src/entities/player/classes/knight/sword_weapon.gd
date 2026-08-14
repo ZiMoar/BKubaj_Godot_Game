@@ -93,7 +93,7 @@ func _on_slash_hit(node: Node) -> void:
 	if target and (target.is_in_group("enemies") or target.is_in_group("destructibles")) and target.has_method("take_damage"):
 		if not hit_enemies_this_swing.has(target):
 			hit_enemies_this_swing.append(target)
-			target.take_damage(current_attack_damage, current_attack_is_critical)
+			target.take_damage(current_attack_damage, current_attack_is_critical, damage_type)
 			if target.has_method("apply_knockback"):
 				target.apply_knockback(global_position, knockback_force)
 			apply_lifesteal()

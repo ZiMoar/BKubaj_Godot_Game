@@ -47,6 +47,9 @@ var _sep_params: PhysicsShapeQueryParameters2D = PhysicsShapeQueryParameters2D.n
 # Set the moment the enemy dies (before queue_free takes effect at end of frame).
 # Lets kill-triggered effects (e.g. explosion-on-kill) detect death immediately.
 var _is_dead: bool = false
+## Type of the most recent damaging hit received (PHYSICAL by default). Hook for
+## a future ailment system that keys effects off the damage type dealt.
+var _last_damage_type: DamageType.Type = DamageType.Type.PHYSICAL
 
 # --- Damage over time / status effects ------------------------------------
 # Burn: discrete ticks every BURN_TICK_INTERVAL. Each tick deals a fixed
@@ -261,8 +264,12 @@ func _process_status_dots(delta: float) -> void:
 		poison_dps = 0.0
 
 
-func take_damage(amount: int, is_critical: bool = false) -> void:
+func take_damage(amount: int, is_critical: bool = false, damage_type: DamageType.Type = DamageType.Type.PHYSICAL) -> void:
 	current_health -= amount
+	# Record the type of the most recent damaging hit. A future ailment system
+	# will key status effects off this (chance to inflict a DoT/effect based on
+	# the damage type dealt). Placeholder hook for now.
+	_last_damage_type = damage_type
 	
 	# Show HP bar on hit
 	if hp_bar:

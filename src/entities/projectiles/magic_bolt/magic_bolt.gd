@@ -100,7 +100,7 @@ func _hit(node: Node) -> void:
 		var dealt: int = damage
 		if source_weapon and (source_weapon.close_range_damage_bonus > 0.0 or source_weapon.far_range_damage_bonus > 0.0) and node is Node2D:
 			dealt = maxi(1, int(round(float(dealt) * source_weapon.get_range_damage_multiplier((source_weapon.global_position - (node as Node2D).global_position).length()))))
-		node.take_damage(dealt)
+		node.take_damage(dealt, false, source_weapon.damage_type if source_weapon != null else DamageType.Type.ARCANE)
 		if source_player and source_player.has_method("apply_lifesteal"):
 			source_player.apply_lifesteal()
 		if node.has_method("apply_knockback"):

@@ -20,6 +20,7 @@ const STAGGER_TIME: float = 0.08
 func _ready() -> void:
 	weapon_name = "Arcane Bolts"
 	trigger_type = TriggerType.PRIMARY
+	damage_type = DamageType.Type.ARCANE
 	cooldown = 1.1
 	super._ready()
 

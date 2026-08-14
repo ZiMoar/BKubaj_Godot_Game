@@ -16,6 +16,10 @@ enum TriggerType {
 @export var trigger_type: TriggerType = TriggerType.AUTOMATIC
 @export var cooldown: float = 1.0
 @export var icon_texture: Texture2D
+## Elemental type of the damage this weapon deals. Defaults to PHYSICAL; elemental
+## weapons (fire aura, lightning, frost nova, arcane bolts) override this in _ready().
+## A future ailment system will key status effects off this type.
+@export var damage_type: DamageType.Type = DamageType.Type.PHYSICAL
 
 var cooldown_timer: Timer
 var can_fire: bool = true
@@ -236,7 +240,7 @@ func _explode_at(origin: Vector2, kill_damage: int) -> void:
 			continue
 		var en: Node2D = e as Node2D
 		if origin.distance_to(en.global_position) <= eff_radius:
-			en.take_damage(dmg)
+			en.take_damage(dmg, false, damage_type)
 
 
 ## Spawns a short-lived expanding-ring visual so explosions are clearly visible.

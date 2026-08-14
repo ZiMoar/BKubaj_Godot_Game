@@ -15,6 +15,7 @@ func _ready() -> void:
 	weapon_name = "Fire Aura"
 	trigger_type = TriggerType.AUTOMATIC
 	cooldown = 1.0
+	damage_type = DamageType.Type.FIRE
 	super._ready()
 
 	aura_area.body_entered.connect(_on_body_entered)
@@ -61,7 +62,7 @@ func _apply_pulse_damage() -> void:
 			if hit_this_pulse.has(body_id):
 				continue
 			hit_this_pulse[body_id] = true
-			body.take_damage(final_damage)
+			body.take_damage(final_damage, false, damage_type)
 			apply_lifesteal()
 			if body.is_in_group("enemies"):
 				apply_status_on_hit(body, final_damage)
@@ -75,7 +76,7 @@ func _apply_pulse_damage() -> void:
 			if hit_this_pulse.has(parent_id):
 				continue
 			hit_this_pulse[parent_id] = true
-			parent.take_damage(final_damage)
+			parent.take_damage(final_damage, false, damage_type)
 			apply_lifesteal()
 			if parent.is_in_group("enemies"):
 				apply_status_on_hit(parent, final_damage)

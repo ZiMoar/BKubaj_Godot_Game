@@ -14,6 +14,7 @@ func _ready() -> void:
 	weapon_name = "Frost Nova"
 	trigger_type = TriggerType.AUTOMATIC
 	cooldown = 3.0
+	damage_type = DamageType.Type.COLD
 	super._ready()
 	call_deferred("try_fire")
 
@@ -37,7 +38,7 @@ func fire() -> void:
 			continue
 		var en: Node2D = e as Node2D
 		if origin.distance_to(en.global_position) <= eff_radius:
-			en.take_damage(dmg)
+			en.take_damage(dmg, false, damage_type)
 			apply_lifesteal()
 			if en.has_method("apply_slow"):
 				en.apply_slow(slow_duration, slow_factor)

@@ -64,7 +64,7 @@ func _hit(node: Node) -> void:
 			var dist: float = (source_weapon.global_position - (node as Node2D).global_position).length()
 			dealt = maxi(1, int(round(float(dealt) * source_weapon.get_range_damage_multiplier(dist))))
 
-		node.take_damage(dealt)
+		node.take_damage(dealt, false, source_weapon.damage_type if source_weapon != null else DamageType.Type.PHYSICAL)
 		if source_player and source_player.has_method("apply_lifesteal"):
 			source_player.apply_lifesteal()
 

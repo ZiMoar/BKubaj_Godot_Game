@@ -48,7 +48,7 @@ func fire() -> void:
 			continue
 		var enemy: Node2D = node as Node2D
 		if enemy.global_position.distance_to(center) <= eff_radius:
-			enemy.take_damage(total)
+			enemy.take_damage(total, false, damage_type)
 			apply_lifesteal()
 			if enemy.has_method("apply_knockback"):
 				enemy.apply_knockback(center, 220.0)
