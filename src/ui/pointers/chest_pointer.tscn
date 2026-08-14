@@ -1,8 +1,0 @@
-[gd_scene format=3 uid="uid://dq7itifwebcws"]
-
-[ext_resource type="Script" path="res://src/ui/pointers/chest_pointer.gd" id="1_script"]
-
-[node name="ChestPointer" type="CanvasLayer" unique_id=1453727647]
-
-[node name="Pointer" type="Node2D" parent="." unique_id=2091293406]
-script = ExtResource("1_script")

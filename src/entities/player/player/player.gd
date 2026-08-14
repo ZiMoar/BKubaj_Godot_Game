@@ -126,6 +126,13 @@ var artefact_ids: Array[String] = []
 @onready var hp_value_label: Label = null
 
 func _ready() -> void:
+	# The player travels through ALL enemies (both ground mobs and flying ones).
+	# Contact damage is handled by the enemies' Hitbox areas, not physical
+	# collision, so clear the Enemies (3) and Flying (6) layer bits from our
+	# collision mask. This guarantees the player is never body-blocked regardless
+	# of any individual enemy's mask.
+	collision_mask &= ~(4 | 32)  # drop layer bits 3 (Enemies) and 6 (Flying)
+
 	# Apply the chosen class's starting stat overrides BEFORE computing HP.
 	_apply_class_starting_stats()
 	# Continuing a run? Restore the carried-over progression (stats, weapons,
