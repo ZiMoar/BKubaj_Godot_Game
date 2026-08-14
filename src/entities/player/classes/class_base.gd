@@ -15,6 +15,11 @@ extends Node
 @export var primary_weapon_scene: PackedScene
 @export var secondary_ability_scene: PackedScene
 
+## Movement/mobility ability keyed to the Space (class_ability) input. Each class
+## sets the id of its movement tool; the Player dispatches on it. Values used:
+## "shield_charge" (knight), "teleport" (mage), "dodge_roll" (ranger).
+@export var class_ability_id: String = ""
+
 ## Optional per-class starting stat overrides: property name -> value.
 ## Applied to the Player when a run starts (before HP is computed).
 @export var starting_stats: Dictionary = {}

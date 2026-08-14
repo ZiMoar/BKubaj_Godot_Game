@@ -30,6 +30,19 @@ func _ready() -> void:
 	register_class(MAGE_SCENE)
 	register_map(TEST_ARENA_MAP)
 	register_map(NARROW_ARENA_MAP)
+	_register_class_ability_input()
+
+
+## Register the Space-bar class-ability movement input at runtime. Registered in
+## code (not project.godot) because the editor reverts external project.godot
+## edits, and the player needs this action the moment it enters an arena.
+func _register_class_ability_input() -> void:
+	if InputMap.has_action("class_ability"):
+		return
+	InputMap.add_action("class_ability")
+	var ev := InputEventKey.new()
+	ev.physical_keycode = KEY_SPACE
+	InputMap.action_add_event("class_ability", ev)
 
 
 func register_class(scene: PackedScene) -> void:

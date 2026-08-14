@@ -1,12 +1,12 @@
 class_name SkeletonSpawner
 extends SpawnerBase
 
-@export var spawn_radius: float = 400.0
+@export var spawn_radius: float = 920.0
 
 func _ready() -> void:
 	if enemy_scene == null:
 		enemy_scene = preload("res://src/entities/enemies/swarmer/skeleton/skeleton_enemy.tscn")
-	difficulty_spawn_ratio = 0.668  # Reduced difficulty scaling on spawn frequency (comp. for per-minute difficulty)
+	difficulty_spawn_ratio = 2.2  # Gentler spawn-count ramp so heavy swarms wait for later stages
 	super._ready()
 
 func _spawn_pattern() -> void:

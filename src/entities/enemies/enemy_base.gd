@@ -13,6 +13,7 @@ extends CharacterBody2D
 @export var knockback_decay: float = 160.0
 @export var stat_scale_per_difficulty: float = 0.0  # stat growth multiplier per difficulty point
 @export var damage_scale_ratio: float = 1.0  # damage grows at this fraction of stat_scale_per_difficulty (1.0 = same as health)
+@export var speed_scale_per_difficulty: float = 0.2  # movement speed grows at this rate per difficulty (nerfed, and can be 0 to disable)
 
 var xp_orb_scene: PackedScene = preload("res://src/pickups/xp_orb/xp_orb.tscn")
 var gold_pickup_scene: PackedScene = preload("res://src/pickups/gold_pickup/gold_pickup.tscn")
@@ -285,8 +286,10 @@ func _apply_difficulty_scaling() -> void:
 	# enemies get tougher without becoming one-shot meat-grinders late-game.
 	var damage_mult: float = 1.0 + stat_scale_per_difficulty * damage_scale_ratio * difficulty
 	contact_damage = max(0, int(round(float(contact_damage) * damage_mult)))
-	# Speed scales at half the rate so enemies don't get too fast late-game
-	speed = speed * (1.0 + stat_scale_per_difficulty * 0.5 * difficulty)
+	# Speed scales at a reduced rate so enemies don't outpace the player and
+	# pile up on them (the "stick like glue" feeling). speed_scale_per_difficulty
+	# can be 0 on specific enemies (e.g. bomber) to disable the scaling entirely.
+	speed = speed * (1.0 + stat_scale_per_difficulty * speed_scale_per_difficulty * difficulty)
 
 	if hp_bar:
 		hp_bar.max_value = max_health

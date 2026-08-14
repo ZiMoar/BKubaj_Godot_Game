@@ -1,6 +1,8 @@
 class_name HUD
 extends CanvasLayer
 
+const PAUSE_MENU_SCENE: PackedScene = preload("res://src/ui/pause_menu/pause_menu.tscn")
+
 @onready var xp_bar: ProgressBar = get_node_or_null("Control/TopBar/Header/Row/XPBar") as ProgressBar
 @onready var difficulty_label: Label = get_node_or_null("Control/TopBar/Header/Row/DifficultyLabel") as Label
 @onready var session_timer_label: Label = get_node_or_null("Control/TopBar/Header/Row/SessionTimerLabel") as Label
@@ -34,10 +36,104 @@ var level_up_menu_open: bool = false
 var current_level_number: int = 1
 var session_elapsed_seconds: int = 0
 
+# Class-mobility ability cooldown display (built at runtime to avoid scene-revert).
+var ability_cd_bar: ProgressBar = null
+var ability_cd_label: Label = null
+
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	add_to_group("hud")
+	_ensure_pause_menu()
+	_ensure_ability_cooldown_ui()
 	call_deferred("_initialize_hud")
+
+
+## Builds a small bottom-centre panel showing the Space ability and its cooldown.
+## Created in code (not the scene) so it works in every arena without editing
+## scene files, mirroring the ESC pause-menu approach.
+func _ensure_ability_cooldown_ui() -> void:
+	if get_node_or_null("Control/AbilityCooldownHUD") != null:
+		return
+	var holder: Control = Control.new()
+	holder.name = "AbilityCooldownHUD"
+	holder.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+	holder.position = Vector2(-90, -70)
+	holder.custom_minimum_size = Vector2(180, 40)
+
+	var panel: PanelContainer = PanelContainer.new()
+	panel.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	holder.add_child(panel)
+
+	var vbox: VBoxContainer = VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 2)
+	panel.add_child(vbox)
+
+	ability_cd_label = Label.new()
+	ability_cd_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	ability_cd_label.add_theme_font_size_override("font_size", 13)
+	vbox.add_child(ability_cd_label)
+
+	ability_cd_bar = ProgressBar.new()
+	ability_cd_bar.custom_minimum_size = Vector2(170, 8)
+	ability_cd_bar.show_percentage = false
+	ability_cd_bar.max_value = 1.0
+	vbox.add_child(ability_cd_bar)
+
+	holder.set_mouse_filter(Control.MOUSE_FILTER_IGNORE)
+	get_node("Control").add_child(holder)
+	_update_ability_cooldown_display()
+
+
+func _update_ability_cooldown_display() -> void:
+	if ability_cd_bar == null or ability_cd_label == null:
+		return
+	if current_player == null:
+		current_player = get_tree().get_first_node_in_group("player") as Player
+	if current_player == null or not current_player.has_method("get_class_ability_name"):
+		if ability_cd_label:
+			ability_cd_label.text = ""
+		return
+	var name_: String = current_player.get_class_ability_name()
+	if name_ == "":
+		ability_cd_label.text = ""
+		return
+	var ratio: float = current_player.get_class_ability_cooldown_ratio()
+	var ability_ready: bool = current_player.is_class_ability_ready()
+	if ability_ready:
+		ability_cd_label.text = "SPACE  ·  " + name_ + "  READY"
+		ability_cd_label.add_theme_color_override("font_color", Color(0.55, 1.0, 0.6))
+		ability_cd_bar.value = 1.0
+		ability_cd_bar.add_theme_stylebox_override("fill", _make_bar_style(Color(0.3, 0.9, 0.4)))
+	else:
+		ability_cd_label.text = "SPACE  ·  " + name_ + "  %.1fs" % (ratio * (ratio_cooldown_total()))
+		ability_cd_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.4))
+		ability_cd_bar.value = 1.0 - ratio
+		ability_cd_bar.add_theme_stylebox_override("fill", _make_bar_style(Color(0.85, 0.65, 0.2)))
+
+
+## Total cooldown of the current ability, so the timer text shows real seconds.
+func ratio_cooldown_total() -> float:
+	if current_player == null:
+		return 1.0
+	var cfg: Dictionary = current_player.MOBILITY_CONFIG.get(current_player.get_class_ability_id(), {})
+	return float(cfg.get("cooldown", 1.0))
+
+
+func _make_bar_style(color: Color) -> StyleBoxFlat:
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = color
+	sb.set_corner_radius_all(4)
+	return sb
+
+
+## Adds the ESC pause overlay as a child so it works in every arena without
+## needing to edit each arena scene (avoids the editor-revert issue).
+func _ensure_pause_menu() -> void:
+	if get_node_or_null("PauseMenu") != null:
+		return
+	var pause_menu: PauseMenu = PAUSE_MENU_SCENE.instantiate() as PauseMenu
+	pause_menu.name = "PauseMenu"
+	add_child(pause_menu)
 
 func _initialize_hud() -> void:
 	_connect_to_xp_manager()
@@ -316,6 +412,7 @@ func register_boss(boss: Node2D) -> void:
 
 
 func _process(_delta: float) -> void:
+	_update_ability_cooldown_display()
 	if active_boss and is_instance_valid(active_boss):
 		if boss_bar:
 			boss_bar.max_value = active_boss.max_health

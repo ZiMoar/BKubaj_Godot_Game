@@ -22,3 +22,10 @@ mono_crash.*.json
 # Ziva editor agent (tooling binaries) — not part of the game
 addons/ziva_agent/
 addons/godot_ai/
+
+# Exported game builds (large binaries) - rebuild with export, not tracked
+export_presets.cfg
+/builds/
+/Dungeoneers.exe
+/Dungeoneers.pck
+/Dungeoneers.console.exe

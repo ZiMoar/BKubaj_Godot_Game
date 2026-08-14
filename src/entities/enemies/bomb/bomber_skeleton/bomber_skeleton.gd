@@ -26,6 +26,7 @@ func _ready() -> void:
 	knockback_decay = 14.0
 	stat_scale_per_difficulty = 0.5
 	damage_scale_ratio = 0.35
+	speed_scale_per_difficulty = 0.0  # bomber is already faster than the player; don't let it get faster
 
 	super._ready()
 

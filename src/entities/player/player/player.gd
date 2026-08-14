@@ -69,6 +69,37 @@ var difficulty_runtime_bonus: float = 0.0
 var _lifesteal_cooldown_remaining: float = 0.0
 const LIFESTEAL_COOLDOWN: float = 0.1
 
+# --- Class Mobility Ability (Space) ---
+# Per-class movement tool config, keyed by ClassBase.class_ability_id.
+const MOBILITY_CONFIG: Dictionary = {
+	"shield_charge": {
+		"type": "dash",
+		"speed": 720.0,
+		"duration": 0.30,
+		"cooldown": 3.5,
+		"invincible": true,
+		"shove": 360.0,
+	},
+	"teleport": {
+		"type": "teleport",
+		"range": 260.0,
+		"cooldown": 3.0,
+		"invincible": true,
+	},
+	"dodge_roll": {
+		"type": "dash",
+		"speed": 520.0,
+		"duration": 0.20,
+		"cooldown": 1.5,
+		"invincible": true,
+	},
+}
+var _mobility_active: bool = false
+var _mobility_velocity: Vector2 = Vector2.ZERO
+var _mobility_time_left: float = 0.0
+var _mobility_cd_remaining: float = 0.0
+var _mobility_id: String = ""
+
 # --- Artefact system ---
 const MAX_ARTEFACT_SLOTS: int = 5
 # Artefact IDs (see Artefact class registry).
@@ -470,16 +501,26 @@ func _on_magnet_area_entered(area: Area2D) -> void:
 	elif area is GoldPickup and not area.is_being_collected:
 		area.start_attraction(self)
 
-func _physics_process(_delta: float) -> void:
+func _physics_process(delta: float) -> void:
 	handle_movement()
 	handle_aiming()
 	handle_weapon_inputs()
-	_process_regen(_delta)
-	_process_lifesteal_cooldown(_delta)
+	_process_class_ability_input(delta)
+	_process_regen(delta)
+	_process_lifesteal_cooldown(delta)
 
 # --- Movement & Aiming ---
 func handle_movement() -> void:
 	current_move_input = Input.get_vector("move_left", "move_right", "move_up", "move_down")
+	# While a mobility trick is active, override normal movement with the dash.
+	if _mobility_active:
+		velocity = _mobility_velocity + current_move_input * current_move_speed() * 0.2
+		move_and_slide()
+		_mobility_time_left -= get_physics_process_delta_time()
+		if _mobility_time_left <= 0.0:
+			_mobility_active = false
+			_apply_mobility_shove()
+		return
 	velocity = current_move_input * current_move_speed()
 	move_and_slide()
 
@@ -488,6 +529,125 @@ func current_max_health() -> int:
 
 func current_move_speed() -> float:
 	return maxf(0.0, speed) * maxf(0.0, 1.0 + move_speed_percent_bonus)
+
+# --- Class Mobility Ability (Space) ---
+func _process_class_ability_input(delta: float) -> void:
+	if _mobility_cd_remaining > 0.0:
+		_mobility_cd_remaining = maxf(0.0, _mobility_cd_remaining - delta)
+	if Input.is_action_just_pressed("class_ability"):
+		trigger_class_ability()
+
+func _get_class_ability_id() -> String:
+	var cls: ClassBase = _get_selected_class()
+	if cls == null:
+		return ""
+	return str(cls.get("class_ability_id"))
+
+func trigger_class_ability() -> void:
+	if _mobility_active or _mobility_cd_remaining > 0.0:
+		return
+	var ab_id: String = _get_class_ability_id()
+	_mobility_id = ab_id
+	var cfg: Dictionary = MOBILITY_CONFIG.get(ab_id, {})
+	if cfg.is_empty() or cfg.get("type", "") == "":
+		return
+	var direction: Vector2 = _mobility_direction()
+	if cfg.get("type") == "teleport":
+		_do_teleport(cfg, direction)
+	else:
+		_start_dash(cfg, direction)
+	_mobility_cd_remaining = float(cfg.get("cooldown", 1.0))
+
+# --- Public queries for the HUD ability-cooldown display ---
+## Id of the current class ability (e.g. "shield_charge"), or "" if none.
+func get_class_ability_id() -> String:
+	if _mobility_id != "":
+		return str(_mobility_id)
+	return _get_class_ability_id()
+
+
+## Human-readable label for the current class ability (e.g. "Shield Charge").
+func get_class_ability_name() -> String:
+	var names: Dictionary = {
+		"shield_charge": "Shield Charge",
+		"teleport": "Teleport",
+		"dodge_roll": "Dodge Roll",
+	}
+	return str(names.get(_mobility_id, ""))
+
+
+## Cooldown ready fraction: 0.0 = ready, 1.0 = just used (full CD remaining).
+func get_class_ability_cooldown_ratio() -> float:
+	var cfg: Dictionary = MOBILITY_CONFIG.get(_mobility_id, {})
+	var total: float = float(cfg.get("cooldown", 1.0))
+	if total <= 0.0:
+		return 0.0
+	return clampf(_mobility_cd_remaining / total, 0.0, 1.0)
+
+
+func is_class_ability_ready() -> bool:
+	return _mobility_cd_remaining <= 0.0 and not _mobility_active
+
+
+func _mobility_direction() -> Vector2:
+	# Prefer movement direction if present, else fall back to facing/aim.
+	if current_move_input.length_squared() > 0.01:
+		return current_move_input.normalized()
+	var to_mouse: Vector2 = get_global_mouse_position() - global_position
+	if to_mouse.length_squared() > 1.0:
+		return to_mouse.normalized()
+	return Vector2.RIGHT
+
+func _start_dash(cfg: Dictionary, direction: Vector2) -> void:
+	_mobility_active = true
+	_mobility_velocity = direction * float(cfg.get("speed", 500.0))
+	_mobility_time_left = float(cfg.get("duration", 0.25))
+	if cfg.get("invincible", true):
+		start_mobility_invincibility(float(cfg.get("duration", 0.25)) + 0.1)
+
+func _do_teleport(cfg: Dictionary, direction: Vector2) -> void:
+	var range_: float = float(cfg.get("range", 240.0))
+	var target: Vector2 = global_position + direction * range_
+	# Clamp to the arena's interior so the mage can't blink through walls.
+	var floor_node: Node = _find_floor_node()
+	if floor_node != null and floor_node.get("arena_center") != null and floor_node.get("arena_size") != null:
+		var arena_center: Vector2 = floor_node.arena_center
+		var arena_size: Vector2 = floor_node.arena_size
+		var margin := 40.0
+		var bounds: Rect2 = Rect2(arena_center - arena_size * 0.5 + Vector2(margin, margin), arena_size - Vector2(margin * 2.0, margin * 2.0))
+		target.x = clampf(target.x, bounds.position.x, bounds.position.x + bounds.size.x)
+		target.y = clampf(target.y, bounds.position.y, bounds.position.y + bounds.size.y)
+	global_position = target
+	if cfg.get("invincible", true):
+		start_mobility_invincibility(0.25)
+	_apply_mobility_shove()
+
+func start_mobility_invincibility(duration: float) -> void:
+	_start_invincibility_effect(duration, Color(0.6, 0.8, 1.0, 0.7))
+
+# Room a dash/teleport packs a little punch: shove nearby enemies back.
+func _apply_mobility_shove() -> void:
+	if _mobility_id == "dodge_roll":
+		return
+	var cfg: Dictionary = MOBILITY_CONFIG.get(_mobility_id, {})
+	var shove: float = float(cfg.get("shove", 0.0))
+	if shove <= 0.0:
+		return
+	var radius := 70.0
+	for enemy in get_tree().get_nodes_in_group("enemies"):
+		if not is_instance_valid(enemy) or not enemy.has_method("apply_knockback"):
+			continue
+		if global_position.distance_to(enemy.global_position) <= radius:
+			enemy.apply_knockback(global_position, shove)
+
+func _find_floor_node() -> Node:
+	var node: Node = self
+	while node != null:
+		var f: Node = node.get_node_or_null("Floor")
+		if f != null:
+			return f
+		node = node.get_parent()
+	return null
 
 func _process_lifesteal_cooldown(delta: float) -> void:
 	if _lifesteal_cooldown_remaining > 0.0:
