@@ -1,13 +1,18 @@
 extends Weapon
 
-## Mage primary weapon: Arcane Bolts fired toward the cursor with a random
-## spread (up to spread_deg total). Bolts curve gently via weak homing instead
-## of acting like auto-aim.
+## Mage primary weapon: Arcane Bolts fired toward the cursor. Bolts fire in a
+## sequence, each later bolt allowed a larger random deviation (like a volley
+## that spreads further as it repeats). Bolts curve gently via weak homing.
 @export var bolt_scene: PackedScene
-@export var bolt_count: int = 3
+@export var bolt_count: int = 3  # first bolt + 2 repeats by default
 @export var base_damage: int = 14
-@export var bolt_speed: float = 340.0
-@export var spread_deg: float = 90.0  # total random spread across the volley
+@export var bolt_speed: float = 260.0  # reduced so homing can correct the curve
+## Degrees of max random deviation added per repeat (bolt index beyond the first).
+@export var dev_per_repeat_deg: float = 20.0
+## Minimum deviation for the very first bolt (aims nearly true but never pixel-perfect).
+@export var base_dev_deg: float = 10.0
+## Hard cap on a single bolt's allowed deviation.
+@export var dev_cap_deg: float = 180.0
 
 
 func _ready() -> void:
@@ -37,15 +42,15 @@ func fire() -> void:
 
 	var bolts_to_fire: int = get_effective_projectile_count(bolt_count)
 	var eff_speed: float = get_effective_projectile_speed(bolt_speed)
-	var total_spread: float = deg_to_rad(spread_deg)
 	for i: int in range(bolts_to_fire):
 		var bolt: Area2D = bolt_scene.instantiate() as Area2D
 		get_tree().current_scene.add_child(bolt)
 
-		# Random spread up to total_spread, biased negative->positive across
-		# the volley so a multi-shot volley fans out instead of doubling up.
-		var t: float = 0.0 if bolts_to_fire <= 1 else -total_spread * 0.5 + total_spread * float(i) / float(bolts_to_fire - 1)
-		var bolt_dir: Vector2 = aim.rotated(t + randf_range(-12.0, 12.0) * 0.0174533)
+		# Sequential deviation: each repeat allows 20 more degrees of random
+		# deviation, capped at dev_cap_deg.
+		var dev_deg: float = minf(base_dev_deg + float(i) * dev_per_repeat_deg, dev_cap_deg)
+		var dev_rad: float = deg_to_rad(dev_deg)
+		var bolt_dir: Vector2 = aim.rotated(randf_range(-dev_rad, dev_rad))
 
 		var attack_damage: int = get_attack_damage(base_damage)
 		var is_crit: bool = roll_critical_hit()

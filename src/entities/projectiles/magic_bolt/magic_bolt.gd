@@ -7,7 +7,7 @@ var is_critical: bool = false
 var source_player: Player = null
 var source_weapon: Node = null
 var dir: Vector2 = Vector2.RIGHT
-var _homing_strength: float = 1.2   # weak: bolts only gently curve, no auto-aim
+var _homing_strength: float = 1.8   # gentle curve toward nearby enemies, but not auto-aim
 var _retarget_range_sq: float = 40000.0  # squared; only home within ~200px
 
 var _lifetime: float = 3.0
