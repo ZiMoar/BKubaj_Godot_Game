@@ -77,49 +77,49 @@ var STAT_POOL: Array[Dictionary] = [
 	{
 		"id": "element_fire",
 		"title": "Fire Damage",
-		"description": "Damage becomes FIRE — hits can burn enemies.",
+		"description": "Convert damage to FIRE.",
 		"value": 0,
 		"apply": func(w: Weapon) -> void: w.damage_type = DamageType.Type.FIRE,
 	},
 	{
 		"id": "element_lightning",
 		"title": "Lightning Damage",
-		"description": "Damage becomes LIGHTNING — hits can shock nearby enemies.",
+		"description": "Convert damage to LIGHTNING.",
 		"value": 0,
 		"apply": func(w: Weapon) -> void: w.damage_type = DamageType.Type.LIGHTNING,
 	},
 	{
 		"id": "element_cold",
 		"title": "Cold Damage",
-		"description": "Damage becomes COLD — hits can slow enemies.",
+		"description": "Convert damage to COLD.",
 		"value": 0,
 		"apply": func(w: Weapon) -> void: w.damage_type = DamageType.Type.COLD,
 	},
 	{
 		"id": "element_arcane",
 		"title": "Arcane Damage",
-		"description": "Damage becomes ARCANE — hits can make enemies crit-vulnerable.",
+		"description": "Convert damage to ARCANE.",
 		"value": 0,
 		"apply": func(w: Weapon) -> void: w.damage_type = DamageType.Type.ARCANE,
 	},
 	{
 		"id": "element_necrotic",
 		"title": "Necrotic Damage",
-		"description": "Damage becomes NECROTIC — hits can decay enemy damage dealt.",
+		"description": "Convert damage to NECROTIC.",
 		"value": 0,
 		"apply": func(w: Weapon) -> void: w.damage_type = DamageType.Type.NECROTIC,
 	},
 	{
 		"id": "element_holy",
 		"title": "Holy Damage",
-		"description": "Damage becomes HOLY — hits can brand enemies (take more damage).",
+		"description": "Convert damage to HOLY.",
 		"value": 0,
 		"apply": func(w: Weapon) -> void: w.damage_type = DamageType.Type.HOLY,
 	},
 	{
 		"id": "element_poison",
 		"title": "Poison Damage",
-		"description": "Damage becomes POISON — hits can stack poison.",
+		"description": "Convert damage to POISON.",
 		"value": 0,
 		"apply": func(w: Weapon) -> void: w.damage_type = DamageType.Type.POISON,
 	},
@@ -271,8 +271,21 @@ func _weapon_supports(weapon: Weapon, stat_id: String) -> bool:
 		"explosion_on_kill":
 			return weapon.supports_explosion_on_kill()
 		"element_fire", "element_lightning", "element_cold", "element_arcane", "element_necrotic", "element_holy", "element_poison":
-			return true  # any weapon can be re-forged to a different damage type
+			# Re-forging offered only for elements the weapon does NOT already hold.
+			return weapon.damage_type != _element_damage_type(stat_id)
 	return false
+
+
+func _element_damage_type(stat_id: String) -> DamageType.Type:
+	match stat_id:
+		"element_fire": return DamageType.Type.FIRE
+		"element_lightning": return DamageType.Type.LIGHTNING
+		"element_cold": return DamageType.Type.COLD
+		"element_arcane": return DamageType.Type.ARCANE
+		"element_necrotic": return DamageType.Type.NECROTIC
+		"element_holy": return DamageType.Type.HOLY
+		"element_poison": return DamageType.Type.POISON
+	return DamageType.Type.PHYSICAL
 
 
 func _update_stat_buttons() -> void:

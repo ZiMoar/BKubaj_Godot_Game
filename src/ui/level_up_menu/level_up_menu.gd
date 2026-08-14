@@ -48,7 +48,7 @@ const UPGRADE_POOL: Array[Dictionary] = [
 	{"id": "attack_speed",         "title": "Attack Speed",  "description": "+{value} attack speed.",               "min_rarity": Rarity.COMMON,    "base_value": 20.0,  "value_scaling": 10.0},
 	{"id": "crit_chance",          "title": "Crit Chance",   "description": "+{value}% crit chance.",                "min_rarity": Rarity.UNCOMMON,  "base_value": 0.05,  "value_scaling": 0.025},
 	{"id": "crit_damage",          "title": "Crit Damage",   "description": "+{value}x crit multiplier.",             "min_rarity": Rarity.UNCOMMON,  "base_value": 0.25,  "value_scaling": 0.15},
-	{"id": "ailment_chance",       "title": "Ailment Chance","description": "+{value}% chance to inflict the ailment matching your damage type.", "min_rarity": Rarity.UNCOMMON, "base_value": 0.05, "value_scaling": 0.03},
+	{"id": "ailment_chance",       "title": "Ailment Chance","description": "+{value}% chance to inflict the ailment matching your damage type.", "min_rarity": Rarity.UNCOMMON, "base_value": 0.10, "value_scaling": 0.05},
 	# --- Survival ---
 	{"id": "max_health",           "title": "Max Health",    "description": "+{value} max HP.",                      "min_rarity": Rarity.COMMON,    "base_value": 10.0,  "value_scaling": 5.0},
 	{"id": "armor",                "title": "Armor",         "description": "+{value} armor.",                           "min_rarity": Rarity.UNCOMMON,  "base_value": 20.0,  "value_scaling": 12.0},
