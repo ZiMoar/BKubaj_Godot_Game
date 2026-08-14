@@ -2,6 +2,7 @@ class_name HUD
 extends CanvasLayer
 
 const PAUSE_MENU_SCENE: PackedScene = preload("res://src/ui/pause_menu/pause_menu.tscn")
+const STATS_OVERLAY_SCENE: PackedScene = preload("res://src/ui/stats_overlay/stats_overlay.tscn")
 
 @onready var xp_bar: ProgressBar = get_node_or_null("Control/TopBar/Header/Row/XPBar") as ProgressBar
 @onready var difficulty_label: Label = get_node_or_null("Control/TopBar/Header/Row/DifficultyLabel") as Label
@@ -44,6 +45,7 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	add_to_group("hud")
 	_ensure_pause_menu()
+	_ensure_stats_overlay()
 	_ensure_ability_cooldown_ui()
 	call_deferred("_initialize_hud")
 
@@ -134,6 +136,17 @@ func _ensure_pause_menu() -> void:
 	var pause_menu: PauseMenu = PAUSE_MENU_SCENE.instantiate() as PauseMenu
 	pause_menu.name = "PauseMenu"
 	add_child(pause_menu)
+
+
+## Adds the mid-run stats overlay as a child so it works in every arena without
+## needing to edit each arena scene (avoids the editor-revert issue).
+func _ensure_stats_overlay() -> void:
+	if get_node_or_null("StatsOverlay") != null:
+		return
+	var stats_overlay: Node = STATS_OVERLAY_SCENE.instantiate()
+	stats_overlay.name = "StatsOverlay"
+	add_child(stats_overlay)
+
 
 func _initialize_hud() -> void:
 	_connect_to_xp_manager()

@@ -1,0 +1,85 @@
+[gd_scene format=3 uid="uid://b2statsovl00n"]
+
+[ext_resource type="Script" uid="uid://bo1h2fvt641os" path="res://src/ui/stats_overlay/stats_overlay.gd" id="1_statovl"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_stats_panel"]
+content_margin_left = 24.0
+content_margin_top = 22.0
+content_margin_right = 24.0
+content_margin_bottom = 22.0
+bg_color = Color(0.07, 0.08, 0.11, 0.96)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.6, 0.5, 0.2, 0.9)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[node name="StatsOverlay" type="Control" unique_id=2000000011]
+process_mode = 3
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_statovl")
+
+[node name="Dimmer" type="ColorRect" parent="." unique_id=2000000012]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
+color = Color(0, 0, 0, 0.55)
+
+[node name="CenterContainer" type="CenterContainer" parent="." unique_id=2000000013]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="PanelContainer" parent="CenterContainer" unique_id=2000000014]
+custom_minimum_size = Vector2(520, 340)
+layout_mode = 2
+mouse_filter = 1
+theme_override_styles/panel = SubResource("StyleBoxFlat_stats_panel")
+
+[node name="Vertical" type="VBoxContainer" parent="CenterContainer/Panel" unique_id=2000000015]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="TitleLabel" type="Label" parent="CenterContainer/Panel/Vertical" unique_id=2000000016]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.84, 0.35, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 24
+text = "CHARACTER STATS"
+horizontal_alignment = 1
+
+[node name="Scroll" type="ScrollContainer" parent="CenterContainer/Panel/Vertical" unique_id=2000000017]
+custom_minimum_size = Vector2(0, 222)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="StatsBox" type="VBoxContainer" parent="CenterContainer/Panel/Vertical/Scroll" unique_id=2000000018]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 4
+
+[node name="CloseButton" type="Button" parent="CenterContainer/Panel/Vertical" unique_id=2000000019]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+text = "Close"
+
+[connection signal="pressed" from="CenterContainer/Panel/Vertical/CloseButton" to="." method="_on_close_pressed"]
