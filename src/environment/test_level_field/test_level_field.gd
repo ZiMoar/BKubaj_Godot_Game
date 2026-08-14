@@ -6,7 +6,7 @@ extends Area2D
 ## player can walk away before it can "unintentionally" grant another level.
 
 @export var radius: float = 40.0
-@export var cooldown_seconds: float = 6.0
+@export var cooldown_seconds: float = 1.0
 @export var _draw_dim: Color = Color(0.2, 0.9, 0.4, 0.35)
 @export var _draw_ready: Color = Color(0.3, 1.0, 0.5, 0.6)
 

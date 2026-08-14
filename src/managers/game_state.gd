@@ -217,6 +217,18 @@ func get_next_arena_path() -> String:
 	return NARROW_ARENA_PATH
 
 
+## Captures the player + team-XP state for a loop door that reloads the SAME
+## map. Unlike advance_stage it does NOT bump the stage counter or advance to a
+## different arena — the character keeps its progression but stays on this map.
+func capture_loop_state(player: Node, xp_manager: Node) -> void:
+	if player and player.has_method("capture_run_state"):
+		var snap: Dictionary = player.capture_run_state()
+		if not snap.is_empty():
+			player_snapshot = snap
+	if xp_manager and xp_manager.has_method("capture_xp_state"):
+		xp_snapshot = xp_manager.capture_xp_state()
+
+
 ## Captures the player + team-XP state and advances to the next stage.
 func advance_stage(player: Node, xp_manager: Node) -> void:
 	if player and player.has_method("capture_run_state"):
@@ -233,8 +245,11 @@ func advance_stage(player: Node, xp_manager: Node) -> void:
 ## Applies the stored snapshot to a freshly-instantiated player + XP manager on
 ## the new stage's arena. Returns true if a continuation was applied.
 func apply_continue(player: Node, xp_manager: Node) -> bool:
-	if not run_active or stage <= 1:
+	if not run_active:
 		return false
+	# Note: no `stage <= 1` guard. For a same-map loop door we capture a snapshot
+	# with stage still 1, and apply_continue must restore it. At the very start of
+	# a run the snapshots are empty, so nothing is restored then anyway.
 	var appeared: bool = false
 	if not player_snapshot.is_empty() and player and player.has_method("restore_run_state"):
 		player.restore_run_state(player_snapshot)

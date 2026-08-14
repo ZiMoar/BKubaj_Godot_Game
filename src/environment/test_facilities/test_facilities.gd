@@ -10,7 +10,7 @@ const CHEST_SCENE: PackedScene = preload("res://src/environment/treasure_chest/t
 
 @export var anvil_position: Vector2 = Vector2(-300, 0)
 @export var box_position: Vector2 = Vector2(300, 0)
-@export var respawn_cooldown: float = 5.0
+@export var respawn_cooldown: float = 2.0
 
 var _anvil: Node = null
 var _box: Node = null

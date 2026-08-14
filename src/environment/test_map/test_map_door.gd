@@ -48,5 +48,13 @@ func _on_body_entered(body: Node2D) -> void:
 		return
 	if not body.is_in_group("player"):
 		return
-	if not self_path.is_empty():
-		get_tree().change_scene_to_file(self_path)
+	if self_path.is_empty():
+		return
+	# Carry over progression (level, weapons, gold, XP, artefacts) so the fresh
+	# instance of the map does NOT reset the character — same as real maps.
+	var run_state: Node = get_node_or_null("/root/GameState")
+	if run_state and run_state.has_method("capture_loop_state"):
+		var player: Node = get_tree().get_first_node_in_group("player")
+		var xp_mgr: Node = get_tree().get_first_node_in_group("team_xp_manager")
+		run_state.capture_loop_state(player, xp_mgr)
+	get_tree().change_scene_to_file(self_path)
