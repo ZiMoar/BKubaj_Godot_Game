@@ -201,7 +201,7 @@ func apply_bleed(flat_dps_per_stack: float, duration: float) -> void:
 
 # Poison: discrete ticks. Each tick deals the full max-health fraction
 # (POISON_TICK_COUNT ticks total); halved effectiveness on bosses.
-func apply_poison(pct_max_health_per_sec: float, duration: float) -> void:
+func apply_poison(pct_max_health_per_sec: float, _duration: float) -> void:
 	var boss_mult: float = 0.5 if is_in_group("bosses") else 1.0
 	# Base tick damage = full pct of max health on a tick, halved vs bosses.
 	poison_dps = maxf(poison_dps, pct_max_health_per_sec * float(max_health) * boss_mult)

@@ -6,9 +6,9 @@ var damage: int = 12
 var is_critical: bool = false
 var source_player: Player = null
 var source_weapon: Node = null
-var target: Node2D = null
-var _homing_strength: float = 9.0
-var _retarget_range_sq: float = 999999.0  # squared; effectively unlimited by default
+var dir: Vector2 = Vector2.RIGHT
+var _homing_strength: float = 1.2   # weak: bolts only gently curve, no auto-aim
+var _retarget_range_sq: float = 40000.0  # squared; only home within ~200px
 
 var _lifetime: float = 3.0
 var _hit_enemy: bool = false  # guards against body+area double-hit on the same overlap
@@ -19,18 +19,17 @@ func _ready() -> void:
 	area_entered.connect(_on_area_entered)
 
 
-func setup(start_pos: Vector2, target_enemy: Node2D, bolt_speed: float, bolt_damage: int, crit: bool, player: Player, weapon: Node = null) -> void:
+func setup(start_pos: Vector2, aim_dir: Vector2, bolt_speed: float, bolt_damage: int, crit: bool, player: Player, weapon: Node = null) -> void:
 	global_position = start_pos
-	target = target_enemy
+	dir = aim_dir.normalized()
+	if dir == Vector2.ZERO:
+		dir = Vector2.RIGHT
 	speed = bolt_speed
 	damage = bolt_damage
 	is_critical = crit
 	source_player = player
 	source_weapon = weapon
-	# Face the target immediately so the bolt doesn't drift out of the player's
-	# right side before homing kicks in — it flies toward its mark from frame 1.
-	if is_instance_valid(target_enemy):
-		rotation = (target_enemy.global_position - start_pos).angle()
+	rotation = dir.angle()
 
 
 func _physics_process(delta: float) -> void:
@@ -39,25 +38,22 @@ func _physics_process(delta: float) -> void:
 		queue_free()
 		return
 
-	# If the original target died, re-acquire the nearest enemy so the bolt
-	# keeps being useful instead of flying off into the void.
-	if not is_instance_valid(target):
-		target = _find_nearest_enemy()
+	var current_dir: Vector2 = dir
 
-	var current_dir: Vector2 = Vector2.RIGHT.rotated(rotation)
-
+	# Weak homing: only gently curve toward a nearby enemy (within retarget range).
+	var target: Node2D = _find_nearest_enemy()
 	if is_instance_valid(target):
 		var to_target: Vector2 = target.global_position - global_position
 		var dist: float = to_target.length()
 		if dist > 1.0:
 			var desired_dir: Vector2 = to_target / dist
-			# High turn rate homes quickly. When very close to the target we
-			# stop turning and fly straight, which stops the "orbiting" wobble.
+			# Very low turn rate = gentle curve, not auto-aim. Slow further when
+			# already very close to stop any wobble.
 			var turn: float = _homing_strength * delta
 			if dist < 40.0:
 				turn *= 0.15
-			var new_dir: Vector2 = current_dir.slerp(desired_dir, minf(1.0, turn)).normalized()
-			rotation = new_dir.angle()
+			dir = current_dir.slerp(desired_dir, minf(1.0, turn)).normalized()
+			rotation = dir.angle()
 
 	global_position += current_dir * speed * delta
 
