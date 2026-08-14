@@ -16,6 +16,7 @@ const MAGE_SCENE: PackedScene = preload("res://src/entities/player/classes/mage/
 
 const TEST_ARENA_MAP: PackedScene = preload("res://src/environment/maps/test_arena/test_arena.tscn")
 const NARROW_ARENA_MAP: PackedScene = preload("res://src/environment/maps/narrow_arena/narrow_arena.tscn")
+const TEST_MAP: PackedScene = preload("res://src/environment/maps/test_map/test_map.tscn")
 
 var _classes: Array[ClassBase] = []
 var selected_class_id: String = "knight"
@@ -30,6 +31,7 @@ func _ready() -> void:
 	register_class(MAGE_SCENE)
 	register_map(TEST_ARENA_MAP)
 	register_map(NARROW_ARENA_MAP)
+	register_map(TEST_MAP)
 	_register_class_ability_input()
 
 

@@ -36,6 +36,16 @@ func add_xp(amount: int) -> void:
 	team_xp_changed.emit(current_xp, xp_to_next_level)
 
 
+## Grants a team level immediately, regardless of the current XP cost. Used by
+## the test map's "free level" field so level-ups can be triggered without XP.
+func add_free_level() -> void:
+	team_level += 1
+	xp_to_next_level = int(xp_to_next_level * xp_growth_factor)
+	print("FREE TEAM LEVEL UP! New Team Level: ", team_level, " Next: ", xp_to_next_level)
+	team_leveled_up.emit(team_level)
+	team_xp_changed.emit(current_xp, xp_to_next_level)
+
+
 func capture_xp_state() -> Dictionary:
 	return {
 		"team_level": team_level,

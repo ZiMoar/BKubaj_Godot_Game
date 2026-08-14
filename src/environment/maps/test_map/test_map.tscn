@@ -1,0 +1,11 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://src/environment/maps/test_map/test_map.gd" id="1_map_script"]
+[ext_resource type="PackedScene" path="res://src/environment/test_map/test_map_arena.tscn" id="2_arena"]
+
+[node name="TestMap" type="Node"]
+script = ExtResource("1_map_script")
+map_id = "test_map"
+display_name = "Test Map"
+description = "Tiny sandbox: dummy, infinite anvil/box, free-level field, loop door."
+arena_scene = ExtResource("2_arena")

@@ -1,0 +1,76 @@
+[gd_scene format=3 uid="uid://b25mfdq07ayi0"]
+
+[ext_resource type="PackedScene" uid="uid://ch71iywhtq2is" path="res://src/entities/player/player/player.tscn" id="1_player"]
+[ext_resource type="PackedScene" path="res://src/ui/hud/hud.tscn" id="2_hud"]
+[ext_resource type="Script" uid="uid://dwd47lt1h3cpo" path="res://src/environment/grid_background.gd" id="3_grid"]
+[ext_resource type="Script" uid="uid://byx0vv2w1j4cr" path="res://src/managers/xp_orb_spatial_manager.gd" id="4_xp_spatial"]
+[ext_resource type="PackedScene" path="res://src/managers/team_xp_manager/team_xp_manager.tscn" id="5_team_xp"]
+[ext_resource type="PackedScene" path="res://src/entities/enemies/dummy_enemy/dummy_enemy.tscn" id="6_dummy"]
+[ext_resource type="Script" uid="uid://cp5xbt1thsfk3" path="res://src/environment/test_facilities/test_facilities.gd" id="7_facilities"]
+[ext_resource type="Script" uid="uid://3a4q8jkdsfse" path="res://src/environment/test_level_field/test_level_field.gd" id="8_level_field"]
+[ext_resource type="PackedScene" path="res://src/environment/test_map/test_map_door.tscn" id="9_door"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_horiz"]
+size = Vector2(2300, 32)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_vert"]
+size = Vector2(32, 1340)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_lvl"]
+size = Vector2(70, 70)
+
+[node name="TestMapArena" type="Node2D" unique_id=2044116169]
+
+[node name="XPOrbSpatialManager" type="Node" parent="." unique_id=468462345]
+script = ExtResource("4_xp_spatial")
+
+[node name="TeamXPManager" parent="." unique_id=731361783 instance=ExtResource("5_team_xp")]
+
+[node name="HUD" parent="." unique_id=1077423107 instance=ExtResource("2_hud")]
+
+[node name="Floor" type="Node2D" parent="." unique_id=830376218]
+z_index = -1
+script = ExtResource("3_grid")
+arena_center = Vector2(1100, 650)
+arena_size = Vector2(2200, 1300)
+
+[node name="Walls" type="StaticBody2D" parent="." unique_id=316924287]
+
+[node name="TopWall" type="CollisionShape2D" parent="Walls" unique_id=133517740]
+position = Vector2(1100, -16)
+shape = SubResource("RectangleShape2D_horiz")
+
+[node name="BottomWall" type="CollisionShape2D" parent="Walls" unique_id=83464588]
+position = Vector2(1100, 1316)
+shape = SubResource("RectangleShape2D_horiz")
+
+[node name="LeftWall" type="CollisionShape2D" parent="Walls" unique_id=763816187]
+position = Vector2(-16, 650)
+shape = SubResource("RectangleShape2D_vert")
+
+[node name="RightWall" type="CollisionShape2D" parent="Walls" unique_id=1339051611]
+position = Vector2(2216, 650)
+shape = SubResource("RectangleShape2D_vert")
+
+[node name="DummyEnemy" parent="." unique_id=1137461105 instance=ExtResource("6_dummy")]
+position = Vector2(1100, 560)
+
+[node name="TestFacilities" type="Node2D" parent="." unique_id=1523276695]
+position = Vector2(1100, 760)
+script = ExtResource("7_facilities")
+anvil_position = Vector2(-220, 0)
+box_position = Vector2(220, 0)
+
+[node name="TestLevelField" type="Area2D" parent="." unique_id=794731939]
+position = Vector2(1100, 1000)
+script = ExtResource("8_level_field")
+radius = 42.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="TestLevelField" unique_id=1413588919]
+shape = SubResource("RectangleShape2D_lvl")
+
+[node name="StageDoor" parent="." unique_id=96865849 instance=ExtResource("9_door")]
+position = Vector2(1100, 70)
+
+[node name="Player" parent="." unique_id=494284683 instance=ExtResource("1_player")]
+position = Vector2(1100, 900)
