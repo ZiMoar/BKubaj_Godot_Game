@@ -6,7 +6,7 @@
 [ext_resource type="Script" uid="uid://dwd47lt1h3cpo" path="res://src/environment/grid_background.gd" id="5_grid"]
 [ext_resource type="Script" uid="uid://byx0vv2w1j4cr" path="res://src/managers/xp_orb_spatial_manager.gd" id="6_xp_orb_spatial"]
 [ext_resource type="PackedScene" path="res://src/entities/enemies/spawners/skeleton_brute_spawner/skeleton_brute_spawner.tscn" id="7_brute_spawner"]
-[ext_resource type="PackedScene" uid="uid://bdv04chmloo0k" path="res://src/ui/pointers/chest_pointer/chest_pointer.tscn" id="9_chest_pointer"]
+[ext_resource type="PackedScene" path="res://src/ui/pointers/chest_pointer/chest_pointer.tscn" id="9_chest_pointer"]
 [ext_resource type="PackedScene" path="res://src/ui/pointers/anvil_pointer/anvil_pointer.tscn" id="41_anvil_pointer"]
 [ext_resource type="PackedScene" uid="uid://cwydwctisc1um" path="res://src/entities/enemies/spawners/skeleton_archer_spawner/skeleton_archer_spawner.tscn" id="19_archer_spawner"]
 [ext_resource type="PackedScene" uid="uid://chmoaais0rcay" path="res://src/entities/enemies/spawners/boss_spawner/boss_spawner.tscn" id="29_boss_spawner"]

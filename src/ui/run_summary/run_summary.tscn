@@ -1,0 +1,103 @@
+[gd_scene format=3 uid="uid://dl1q0rtibx3m6"]
+
+[ext_resource type="Script" uid="uid://g48olofkdlhi" path="res://src/ui/run_summary/run_summary.gd" id="1_sum"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_summary_panel"]
+content_margin_left = 30.0
+content_margin_top = 26.0
+content_margin_right = 30.0
+content_margin_bottom = 26.0
+bg_color = Color(0.07, 0.08, 0.11, 0.96)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.6, 0.5, 0.2, 0.9)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_summary_btn"]
+bg_color = Color(0.16, 0.16, 0.21, 0.95)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.5, 0.45, 0.3, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[node name="RunSummary" type="Control" unique_id=2000000001]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_sum")
+
+[node name="Background" type="ColorRect" parent="." unique_id=2000000002]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.03, 0.03, 0.05, 1)
+
+[node name="Center" type="CenterContainer" parent="." unique_id=2000000003]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="PanelContainer" parent="Center" unique_id=2000000004]
+custom_minimum_size = Vector2(420, 320)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_summary_panel")
+
+[node name="Vertical" type="VBoxContainer" parent="Center/Panel" unique_id=2000000005]
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="TitleLabel" type="Label" parent="Center/Panel/Vertical" unique_id=2000000006]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.84, 0.35, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 28
+text = "RUN OVER"
+horizontal_alignment = 1
+
+[node name="SubtitleLabel" type="Label" parent="Center/Panel/Vertical" unique_id=2000000007]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.7, 0.78, 1)
+theme_override_font_sizes/font_size = 12
+text = "You fell in battle."
+horizontal_alignment = 1
+
+[node name="Stats" type="VBoxContainer" parent="Center/Panel/Vertical" unique_id=2000000008]
+layout_mode = 2
+theme_override_constants/separation = 6
+alignment = 1
+
+[node name="MenuButton" type="Button" parent="Center/Panel/Vertical" unique_id=2000000009]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+focus_mode = 1
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 0.9, 0.5, 1)
+theme_override_font_sizes/font_size = 16
+theme_override_styles/normal = SubResource("StyleBoxFlat_summary_btn")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_summary_btn")
+theme_override_styles/hover = SubResource("StyleBoxFlat_summary_btn")
+theme_override_styles/focus = SubResource("StyleBoxFlat_summary_btn")
+text = "BACK TO MENU"
+
+[connection signal="pressed" from="Center/Panel/Vertical/MenuButton" to="." method="_on_menu_pressed"]

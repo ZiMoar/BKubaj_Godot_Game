@@ -434,9 +434,17 @@ func _spawn_damage_number(amount: int, is_critical: bool = false) -> void:
 
 func die() -> void:
 	_is_dead = true
+	_register_kill()
 	_drop_xp()
 	_drop_gold()
 	queue_free()
+
+
+## Reports a player-caused kill to the run stats (GameState) for the summary.
+func _register_kill() -> void:
+	var gs: Node = get_node_or_null("/root/GameState")
+	if gs and gs.has_method("register_enemy_kill"):
+		gs.register_enemy_kill()
 
 
 ## Kills the enemy WITHOUT dropping any loot (XP or gold). Used when clearing a

@@ -123,10 +123,20 @@ var current_arena_path: String = ""
 var player_snapshot: Dictionary = {}
 var xp_snapshot: Dictionary = {}
 
+# Run-stats for the end-of-run summary (kills, duration, difficulty reached).
+var run_kills: int = 0
+var run_elapsed_seconds: int = 0
+var run_difficulty_at_end: float = 0.0
+var run_gold_at_end: int = 0
+var run_started_at: int = 0  # unix epoch ms when the run began
+
 var _last_arena_scene: Node = null
 
 
 func _process(_delta: float) -> void:
+	# Track elapsed run time for the summary (only while a run is active).
+	if run_active:
+		run_elapsed_seconds = maxi(0, int((Time.get_ticks_msec() - run_started_at) / 1000.0))
 	var tree: SceneTree = get_tree()
 	if tree == null:
 		return
@@ -203,6 +213,27 @@ func begin_run(arena_path: String) -> void:
 	current_arena_path = arena_path
 	player_snapshot = {}
 	xp_snapshot = {}
+	run_kills = 0
+	run_elapsed_seconds = 0
+	run_difficulty_at_end = 0.0
+	run_started_at = Time.get_ticks_msec()
+
+
+func register_enemy_kill() -> void:
+	if run_active:
+		run_kills += 1
+
+
+func set_run_difficulty_at_end(value: float) -> void:
+	run_difficulty_at_end = maxf(0.0, value)
+
+
+func set_run_gold_at_end(value: int) -> void:
+	run_gold_at_end = maxi(0, value)
+
+
+func get_summary_scene_path() -> String:
+	return "res://src/ui/run_summary/run_summary.tscn"
 
 
 func end_run() -> void:

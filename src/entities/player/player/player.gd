@@ -780,12 +780,27 @@ func die() -> void:
 		trigger_invincibility()
 		return
 
-	print("Player Died! Reloading scene...")
-	# Ending the run means a scene reload starts a fresh run, not a continuation.
+	print("Player Died! Showing run summary...")
+	# Capture the final difficulty + gold for the end-of-run summary BEFORE the
+	# scene is torn down (the player is still valid here).
 	var run_state: Node = get_node_or_null("/root/GameState")
-	if run_state and run_state.has_method("end_run"):
-		run_state.end_run()
+	if run_state:
+		if run_state.has_method("set_run_difficulty_at_end"):
+			run_state.set_run_difficulty_at_end(get_map_difficulty())
+		if run_state.has_method("set_run_gold_at_end"):
+			run_state.set_run_gold_at_end(gold)
+		if run_state.has_method("end_run"):
+			run_state.end_run()
+		if run_state.has_method("get_summary_scene_path"):
+			call_deferred("_go_to_summary", run_state.get_summary_scene_path())
+			return
+	# Fallback: no GameState summary wiring — just reload to restart.
 	call_deferred("_reload_current_scene_safe")
+
+func _go_to_summary(path: String) -> void:
+	var tree := get_tree()
+	if tree and not path.is_empty():
+		tree.change_scene_to_file(path)
 
 func _reload_current_scene_safe() -> void:
 	var tree := get_tree()

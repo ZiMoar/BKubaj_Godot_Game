@@ -7,6 +7,7 @@ extends Control
 ## StartButton when classes are implemented.
 
 const CLASS_SELECT_SCENE: String = "res://src/ui/class_select_menu/class_select_menu.tscn"
+const ARSENAL_SCENE: String = "res://src/ui/arsenal_menu/arsenal_menu.tscn"
 
 @onready var start_button: Button = get_node_or_null("CenterContainer/Panel/Vertical/StartButton") as Button
 @onready var quit_button: Button = get_node_or_null("CenterContainer/Panel/Vertical/QuitButton") as Button
@@ -22,6 +23,10 @@ func _unhandled_input(event: InputEvent) -> void:
 	# Allow Enter/Space to start even before focus lands on the button.
 	if event.is_action_pressed("ui_accept"):
 		_start_game()
+
+
+func _on_arsenal_pressed() -> void:
+	get_tree().change_scene_to_file(ARSENAL_SCENE)
 
 
 func _on_start_pressed() -> void:
