@@ -12,6 +12,9 @@ var _timer: float = 10.0
 var _player: Node2D = null
 var _active_chests: Array[Node] = []
 var _spawned_once: bool = false
+## Set false by the StageController once the room is cleared, so a weapon box
+## doesn't spawn after the boss dies (matches the enemy/anvil spawners).
+var is_active: bool = true
 
 
 func _ready() -> void:
@@ -46,6 +49,8 @@ func _find_floor_node() -> GridBackground:
 
 
 func _physics_process(delta: float) -> void:
+	if not is_active:
+		return  # Room cleared; don't spawn another box after the boss dies.
 	if _spawned_once:
 		return  # Weapon boxes spawn once per room.
 

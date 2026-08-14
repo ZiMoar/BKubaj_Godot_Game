@@ -91,6 +91,13 @@ func _pause_all_spawners() -> void:
 	for b: Node in get_tree().get_nodes_in_group("boss_spawner"):
 		if is_instance_valid(b):
 			b.set("is_active", false)
+	# Stop anvil + weapon-box respawning once the room is cleared, same as enemies.
+	for s: Node in get_tree().get_nodes_in_group("anvil_spawner"):
+		if is_instance_valid(s):
+			s.set("is_active", false)
+	for s: Node in get_tree().get_nodes_in_group("chest_spawner"):
+		if is_instance_valid(s):
+			s.set("is_active", false)
 
 
 func _start_drop_sweep() -> void:

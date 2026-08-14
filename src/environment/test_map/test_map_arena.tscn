@@ -6,7 +6,6 @@
 [ext_resource type="Script" uid="uid://byx0vv2w1j4cr" path="res://src/managers/xp_orb_spatial_manager.gd" id="4_xp_spatial"]
 [ext_resource type="PackedScene" path="res://src/managers/team_xp_manager/team_xp_manager.tscn" id="5_team_xp"]
 [ext_resource type="PackedScene" path="res://src/entities/enemies/dummy_enemy/dummy_enemy.tscn" id="6_dummy"]
-[ext_resource type="Script" uid="uid://c2jaspnoyu78g" path="res://src/entities/enemies/dummy_enemy/dummy_enemy.gd" id="6_j6qop"]
 [ext_resource type="Script" uid="uid://cp5xbt1thsfk3" path="res://src/environment/test_facilities/test_facilities.gd" id="7_facilities"]
 [ext_resource type="Script" uid="uid://3a4q8jkdsfse" path="res://src/environment/test_level_field/test_level_field.gd" id="8_level_field"]
 [ext_resource type="PackedScene" path="res://src/environment/test_map/test_map_door.tscn" id="9_door"]
@@ -53,11 +52,8 @@ shape = SubResource("RectangleShape2D_vert")
 position = Vector2(2216, 650)
 shape = SubResource("RectangleShape2D_vert")
 
-[node name="DummyEnemy" type="CharacterBody2D" parent="." unique_id=1137461105 groups=["enemies"] instance=ExtResource("6_dummy")]
+[node name="DummyEnemy" parent="." unique_id=1137461105 instance=ExtResource("6_dummy")]
 position = Vector2(1100, 560)
-collision_layer = 4
-collision_mask = 3
-script = ExtResource("6_j6qop")
 
 [node name="TestFacilities" type="Node2D" parent="." unique_id=1523276695]
 position = Vector2(1100, 760)

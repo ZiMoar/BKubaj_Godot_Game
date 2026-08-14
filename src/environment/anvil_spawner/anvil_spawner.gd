@@ -13,6 +13,9 @@ var _timer: float = 0.0
 var _enabled: bool = false
 var _active_anvils: Array[Node] = []
 var _player: Node2D = null
+## Set false by the StageController once the room is cleared, so anvils stop
+## respawning after the boss dies (matches the enemy spawners).
+var is_active: bool = true
 
 
 func _ready() -> void:
@@ -44,6 +47,9 @@ func _find_floor_node() -> GridBackground:
 
 
 func _physics_process(delta: float) -> void:
+	# Stop spawning entirely once the room is cleared (boss dead).
+	if not is_active:
+		return
 	# Stay dormant until the first weapon box has spawned.
 	if not _enabled:
 		var chest: Node = get_tree().get_first_node_in_group("chest_spawner")
