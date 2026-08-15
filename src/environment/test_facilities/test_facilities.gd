@@ -14,17 +14,21 @@ const RELIC_SCENE: PackedScene = preload("res://src/pickups/artefact_pickup/arte
 @export var anvil_position: Vector2 = Vector2(-280, -100)
 @export var box_position: Vector2 = Vector2(280, -100)
 @export var relic_position: Vector2 = Vector2(-280, 100)
+@export var golden_anvil_position: Vector2 = Vector2(280, 100)
 @export var respawn_cooldown: float = 2.0
 
 var _anvil: Node = null
 var _box: Node = null
 var _relic: Node = null
+var _golden_anvil: Node = null
 var _anvil_timer: float = 0.0
 var _box_timer: float = 0.0
 var _relic_timer: float = 0.0
+var _golden_anvil_timer: float = 0.0
 var _anvil_waiting: bool = false
 var _box_waiting: bool = false
 var _relic_waiting: bool = false
+var _golden_anvil_waiting: bool = false
 
 
 func _ready() -> void:
@@ -33,6 +37,7 @@ func _ready() -> void:
 	call_deferred("_spawn_anvil")
 	call_deferred("_spawn_box")
 	call_deferred("_spawn_relic")
+	call_deferred("_spawn_golden_anvil")
 
 
 func _physics_process(delta: float) -> void:
@@ -52,6 +57,11 @@ func _physics_process(delta: float) -> void:
 		if _relic_timer <= 0.0:
 			_relic_waiting = false
 			_spawn_relic()
+	if _golden_anvil_waiting and not is_instance_valid(_golden_anvil):
+		_golden_anvil_timer -= delta
+		if _golden_anvil_timer <= 0.0:
+			_golden_anvil_waiting = false
+			_spawn_golden_anvil()
 
 
 func _spawn_anvil() -> void:
@@ -79,3 +89,15 @@ func _spawn_relic() -> void:
 	_relic = relic
 	_relic_waiting = true
 	_relic_timer = respawn_cooldown
+
+
+## Golden anvil: guarantees a signature upgrade in the menu. Must set is_golden
+## BEFORE add_child so the visual picks it up in _ready().
+func _spawn_golden_anvil() -> void:
+	var anvil: Node = ANVIL_SCENE.instantiate()
+	anvil.set("is_golden", true)
+	anvil.global_position = global_position + golden_anvil_position
+	get_parent().add_child(anvil)
+	_golden_anvil = anvil
+	_golden_anvil_waiting = true
+	_golden_anvil_timer = respawn_cooldown
