@@ -62,7 +62,7 @@ static func _weapons() -> Array[Dictionary]:
 	list.append({
 		"name": "Longbow",
 		"subtitle": "Bow · primary · 0.65s",
-		"desc": "A 3-shot combo: 3 arrows at 45°, then 4 at 90°, then 5 at 135°. Arrows pierce and chain. Physics damage.",
+		"desc": "A 3-step combo that cycles 1, then 2, then 3 arrows spread in a shallow fan. Arrows pierce and chain. "+Projectile" anvil upgrades don't add bow arrows — instead they feed the Ranger's Rain of Arrows, making the volley hit harder. Physics damage.",
 		"color": gold,
 	})
 
@@ -82,7 +82,7 @@ static func _weapons() -> Array[Dictionary]:
 	list.append({
 		"name": "Rain of Arrows",
 		"subtitle": "AoE · secondary · 4s",
-		"desc": "Rains arrows over a wide radius. Ranger's right-click ability.",
+		"desc": "Rains arrows over a wide radius. Ranger's right-click ability. Scales with the Longbow's \"+Projectile\" upgrades: each extra projectile adds another arrow's worth of damage to the volley.",
 		"color": gold,
 	})
 

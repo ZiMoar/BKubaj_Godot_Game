@@ -1,8 +1,9 @@
 extends Weapon
 
 ## Ranger primary weapon: a Longbow with a 3-shot combo for clearing hordes.
-## Combo step 1 fires 3 arrows spread over 45°, step 2 fires 4 over 90°,
-## step 3 fires 5 over 135°, then it loops back to step 1.
+## Combo step 1 fires 1 arrow, step 2 fires 2 arrows, step 3 fires 3 arrows,
+## then it loops back to step 1. (Nerfed from 3/4/5 up to 1/2/3.) The combo is
+## always centered on the cursor.
 @export var arrow_scene: PackedScene
 @export var damage: int = 18
 @export var arrow_speed: float = 540.0
@@ -12,9 +13,9 @@ extends Weapon
 
 # Combo definition: [arrow_count, total_spread_degrees] per step.
 const COMBO: Array[Vector2i] = [
-	Vector2i(3, 45),
-	Vector2i(4, 90),
-	Vector2i(5, 135),
+	Vector2i(1, 10),
+	Vector2i(2, 30),
+	Vector2i(3, 60),
 ]
 
 var combo_step: int = 0
@@ -30,6 +31,13 @@ func supports_pierce() -> bool:
 	return true
 
 func supports_chain() -> bool:
+	return true
+
+## Projectile count is supported, but instead of adding arrows to the Longbow
+## itself, extra projectiles feed the Rain of Arrows (see ranger_rain_weapon.gd).
+## This lets "+ projectile" anvil upgrades meaningfully buff the Ranger's
+## secondary. Documented in the compendium, not the anvil tooltip.
+func supports_projectile_count() -> bool:
 	return true
 
 func supports_projectile_speed() -> bool:
@@ -66,7 +74,7 @@ func fire() -> void:
 	if arrow_scene == null:
 		return
 
-	# Advance the combo: 3 arrows / 45°, 4 / 90°, 5 / 135°, always centered on the cursor.
+	# Advance the combo: 1 arrow, 2 arrows, 3 arrows, always centered on the cursor.
 	var step: Vector2i = COMBO[combo_step]
 	combo_step = (combo_step + 1) % COMBO.size()
 
