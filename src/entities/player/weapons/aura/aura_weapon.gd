@@ -54,7 +54,7 @@ func get_signature_pool() -> Array[Dictionary]:
 		{
 			"id": "righteous_fire",
 			"title": "Righteous Fire",
-			"description": "Aura deals extra damage equal to 5% of your max HP, but burns you with each pulse.",
+			"description": "Deals 5% of your max HP as extra damage, but burns you each pulse.",
 			"value": 5,
 			"apply": func(_w: Weapon) -> void: pass,
 		},
