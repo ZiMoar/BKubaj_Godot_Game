@@ -112,6 +112,7 @@ const TEST_ARENA_PATH: String = "res://src/environment/test_arena.tscn"
 const NARROW_ARENA_PATH: String = "res://src/environment/narrow_arena.tscn"
 const STAGE_DOOR_SCENE: PackedScene = preload("res://src/environment/stage_door/stage_door.tscn")
 const STAGE_CONTROLLER_SCENE: PackedScene = preload("res://src/environment/stage_controller/stage_controller.tscn")
+const OBSTACLE_SPAWNER_SCENE: PackedScene = preload("res://src/environment/obstacles/obstacle_spawner/obstacle_spawner.tscn")
 const ANVIL_POINTER_SCENE: PackedScene = preload("res://src/ui/pointers/anvil_pointer/anvil_pointer.tscn")
 const CHEST_POINTER_SCENE: PackedScene = preload("res://src/ui/pointers/chest_pointer/chest_pointer.tscn")
 const MIN_DIFFICULTY_PER_STAGE: float = 2.0
@@ -159,6 +160,8 @@ func _maybe_setup_arena(scene: Node) -> void:
 		_add_stage_door(scene, floor_node)
 	if scene.get_node_or_null("StageController") == null:
 		_add_stage_controller(scene)
+	if scene.get_node_or_null("ObstacleSpawner") == null:
+		_add_obstacle_spawner(scene)
 	if scene.get_node_or_null("ChestPointer") == null:
 		_add_chest_pointer(scene)
 	if scene.get_node_or_null("AnvilPointer") == null:
@@ -181,6 +184,15 @@ func _add_stage_controller(scene: Node) -> void:
 	# add_child, so setting it afterward left _door null and the door never opened.
 	ctrl.set("door_path", NodePath("../StageDoor"))
 	scene.add_child(ctrl)
+
+
+func _add_obstacle_spawner(scene: Node) -> void:
+	# Randomize the arena's obstacles once per arena by clearing the baked-in
+	# presets and letting the spawner place a fresh random set. Added at runtime
+	# (like the StageController) so it survives editor reverts of the .tscn.
+	var spawner: Node = OBSTACLE_SPAWNER_SCENE.instantiate()
+	spawner.name = "ObstacleSpawner"
+	scene.add_child(spawner)
 
 
 func _add_anvil_pointer(scene: Node) -> void:
