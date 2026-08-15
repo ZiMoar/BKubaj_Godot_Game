@@ -93,6 +93,12 @@ func _populate() -> void:
 	_add_stat("Luck", "%d%%" % int(round(float(player.get("luck")) * 100.0)))
 	_add_stat("Magnet", "on" if bool(player.get("magnet_enabled")) else "off")
 	_add_stat("Dash charges", "%d" % int(player.get("dash_charges")))
+	var dash_cd: float = float(player.get("dash_cooldown"))
+	if dash_cd > 0.0:
+		_add_stat("Dash CD", "-%d%%" % int(round(dash_cd * 100.0)))
+	var dash_range: float = float(player.get("dash_range_bonus"))
+	if dash_range > 0.0:
+		_add_stat("Dash range", "+%d%%" % int(round(dash_range * 100.0)))
 
 	_add_section("Run")
 	_add_stat("Difficulty", "%.1f" % difficulty)

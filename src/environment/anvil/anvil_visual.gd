@@ -10,6 +10,12 @@ extends Node2D
 		golden = v
 		queue_redraw()
 
+## Anvil kind for colouring: 0=standard, 1=elemental, 2=inverted.
+@export var kind: int = 0:
+	set(v):
+		kind = v
+		queue_redraw()
+
 func _draw() -> void:
 	var body := Color(0.55, 0.55, 0.62)
 	var base := Color(0.35, 0.35, 0.4)
@@ -20,6 +26,16 @@ func _draw() -> void:
 		base = Color(0.6, 0.42, 0.1)
 		bar = Color(0.98, 0.82, 0.4)
 		hilite = Color(1.0, 0.92, 0.6)
+	elif kind == 1:  # Elemental — icy/arcane blue.
+		body = Color(0.4, 0.65, 0.95)
+		base = Color(0.2, 0.35, 0.6)
+		bar = Color(0.55, 0.8, 1.0)
+		hilite = Color(0.8, 0.92, 1.0)
+	elif kind == 2:  # Inverted — corrupt purple/red.
+		body = Color(0.75, 0.35, 0.6)
+		base = Color(0.45, 0.18, 0.4)
+		bar = Color(0.9, 0.45, 0.7)
+		hilite = Color(1.0, 0.7, 0.9)
 
 	# Base block (the anvil's flat bottom)
 	draw_rect(Rect2(-14, 6, 28, 8), base)

@@ -45,7 +45,11 @@ const ARTEFACTS: Script = preload("res://src/systems/artefact.gd")
 @export var magnet_enabled: bool = false
 @export_range(0.0, 2000.0, 1.0) var magnet_range: float = 50.0
 @export var dash_charges: int = 1
-@export var dash_cooldown: float = 0.0
+## Dash-cooldown reduction as a fraction (0.3 = 30% shorter refill). Reused by
+## the Winged Boots dash-upgrade pickups. Stored/captured across stages.
+@export_range(0.0, 0.8, 0.01) var dash_cooldown: float = 0.0
+## Fractional dash-range multiplier (0.3 = +30% dash distance). Winged Boots.
+@export var dash_range_bonus: float = 0.0
 @export var invincibility_duration: float = 0.05
 @export var invincibility_frame_bonus: float = 0.0
 
@@ -111,6 +115,8 @@ var _mobility_velocity: Vector2 = Vector2.ZERO
 var _mobility_time_left: float = 0.0
 var _mobility_cd_remaining: float = 0.0
 var _mobility_id: String = ""
+# Dash charge bank: ready charges. The refill countdown reuses _mobility_cd_remaining.
+var _dash_charges_ready: int = 1
 # Momentum relic: window (s) of +50% damage after a dash/teleport.
 var _momentum_timer: float = 0.0
 const MOMENTUM_WINDOW: float = 1.0
@@ -118,6 +124,8 @@ const MOMENTUM_DAMAGE_MULT: float = 1.50
 
 # --- Artefact system ---
 const MAX_ARTEFACT_SLOTS: int = 5
+# Cursed relics have their own slot pool, so normal relic slots aren't consumed.
+const MAX_CURSED_ARTEFACT_SLOTS: int = 3
 # Artefact IDs (see Artefact class registry).
 const ARTEFACT_ARMOR_TO_THORNS: String = "armor_to_thorns"
 const ARTEFACT_LIFESTEAL_CRIT: String = "lifesteal_crit"
@@ -131,6 +139,8 @@ const LIFESTEAL_TO_DAMAGE_PER_UNIT: float = 0.03
 const THORNS_TO_DAMAGE_PER_UNIT: float = 0.02
 
 var artefact_ids: Array[String] = []
+## Cursed relics occupy a separate pool so they don't crowd out normal relics.
+var cursed_artefact_ids: Array[String] = []
 
 # --- Node References ---
 @onready var weapons_container: Node2D = $Weapons
@@ -293,6 +303,11 @@ func heal(amount: float) -> void:
 	_update_hp_value_label()
 
 
+## Heals a percentage (0..1) of the player's max health. Used by heal pickups.
+func heal_percent(percent: float) -> void:
+	heal(float(current_max_health()) * clampf(percent, 0.0, 1.0))
+
+
 ## Shield cap: defaults to 50% of max health; bonuses can raise it.
 func get_shield_cap() -> float:
 	return float(current_max_health()) * (SHIELD_CAP_RATIO_BASE + maxf(0.0, shield_cap_ratio_bonus))
@@ -424,9 +439,12 @@ func add_weapon(weapon_scene: PackedScene) -> Weapon:
 
 # --- Artefact equipment ---
 
+## Adds a normal relic. Cursed relics route to the cursed pool instead.
 func add_artefact(artefact_id: String) -> bool:
 	if artefact_id.is_empty() or has_artefact(artefact_id):
 		return false
+	if bool(ARTEFACTS.is_cursed(artefact_id)):
+		return add_cursed_artefact(artefact_id)
 	if artefact_ids.size() >= MAX_ARTEFACT_SLOTS:
 		return false
 	artefact_ids.append(artefact_id)
@@ -434,16 +452,40 @@ func add_artefact(artefact_id: String) -> bool:
 	return true
 
 
+## Adds a cursed relic to its own slot pool (destructive trade-off relics).
+func add_cursed_artefact(artefact_id: String) -> bool:
+	if artefact_id.is_empty() or has_artefact(artefact_id):
+		return false
+	if cursed_artefact_ids.size() >= MAX_CURSED_ARTEFACT_SLOTS:
+		return false
+	cursed_artefact_ids.append(artefact_id)
+	artefacts_changed.emit()
+	return true
+
+
+## Checks both normal and cursed pools.
 func has_artefact(artefact_id: String) -> bool:
-	return artefact_id in artefact_ids
+	return artefact_id in artefact_ids or artefact_id in cursed_artefact_ids
 
 
 func get_artefact_count() -> int:
+	return artefact_ids.size() + cursed_artefact_ids.size()
+
+
+func get_normal_artefact_count() -> int:
 	return artefact_ids.size()
+
+
+func get_cursed_artefact_count() -> int:
+	return cursed_artefact_ids.size()
 
 
 func get_artefact_slot_capacity() -> int:
 	return MAX_ARTEFACT_SLOTS
+
+
+func get_cursed_artefact_slot_capacity() -> int:
+	return MAX_CURSED_ARTEFACT_SLOTS
 
 
 func get_artefact_slot_color(slot_index: int) -> Color:
@@ -463,6 +505,13 @@ func get_artefact_at_slot(slot_index: int) -> String:
 	if slot_index < 0 or slot_index >= artefact_ids.size():
 		return ""
 	return artefact_ids[slot_index]
+
+
+## Raw cursed artefact id at the given cursed slot.
+func get_cursed_artefact_at_slot(slot_index: int) -> String:
+	if slot_index < 0 or slot_index >= cursed_artefact_ids.size():
+		return ""
+	return cursed_artefact_ids[slot_index]
 
 
 # --- Gold & Greed ---
@@ -625,10 +674,31 @@ func current_move_speed() -> float:
 
 # --- Class Mobility Ability (Space) ---
 func _process_class_ability_input(delta: float) -> void:
-	if _mobility_cd_remaining > 0.0:
+	var cfg: Dictionary = MOBILITY_CONFIG.get(_get_class_ability_id(), {})
+	if str(cfg.get("type", "")) == "dash":
+		_process_dash_charge_refill(delta, cfg)
+	elif _mobility_cd_remaining > 0.0:
 		_mobility_cd_remaining = maxf(0.0, _mobility_cd_remaining - delta)
 	if Input.is_action_just_pressed("class_ability"):
 		trigger_class_ability()
+
+
+## Refills dash charges over time (each charge refills after the cooldown, which
+## the Winged Boots cooldown-reduction shortens). Only applies to dash-type moves.
+func _process_dash_charge_refill(delta: float, cfg: Dictionary) -> void:
+	var max_charges: int = maxi(1, dash_charges)
+	if _dash_charges_ready >= max_charges:
+		return
+	_mobility_cd_remaining -= delta
+	if _mobility_cd_remaining <= 0.0:
+		_dash_charges_ready = mini(max_charges, _dash_charges_ready + 1)
+		_mobility_cd_remaining = _effective_dash_cooldown(cfg)
+
+
+## Default per-dash refill time (config cooldown reduced by dash_cooldown bonus).
+func _effective_dash_cooldown(cfg: Dictionary) -> float:
+	return maxf(0.05, float(cfg.get("cooldown", 1.0)) * (1.0 - clampf(dash_cooldown, 0.0, 0.8)))
+
 
 func _get_class_ability_id() -> String:
 	var cls: ClassBase = _get_selected_class()
@@ -637,19 +707,28 @@ func _get_class_ability_id() -> String:
 	return str(cls.get("class_ability_id"))
 
 func trigger_class_ability() -> void:
-	if _mobility_active or _mobility_cd_remaining > 0.0:
+	if _mobility_active:
 		return
 	var ab_id: String = _get_class_ability_id()
 	_mobility_id = ab_id
 	var cfg: Dictionary = MOBILITY_CONFIG.get(ab_id, {})
 	if cfg.is_empty() or cfg.get("type", "") == "":
 		return
-	var direction: Vector2 = _mobility_direction()
-	if cfg.get("type") == "teleport":
-		_do_teleport(cfg, direction)
-	else:
+	# Dash-type moves draw from the charge bank; teleport uses a single cooldown.
+	if str(cfg.get("type", "")) == "dash":
+		if _dash_charges_ready < 1:
+			return
+		_dash_charges_ready -= 1
+		_mobility_cd_remaining = _effective_dash_cooldown(cfg)
+		var direction: Vector2 = _mobility_direction()
 		_start_dash(cfg, direction)
-	_mobility_cd_remaining = float(cfg.get("cooldown", 1.0))
+		return
+	if _mobility_cd_remaining > 0.0:
+		return
+	var direction2: Vector2 = _mobility_direction()
+	if cfg.get("type") == "teleport":
+		_do_teleport(cfg, direction2)
+		_mobility_cd_remaining = float(cfg.get("cooldown", 1.0))
 
 # --- Public queries for the HUD ability-cooldown display ---
 ## Id of the current class ability (e.g. "shield_charge"), or "" if none.
@@ -672,14 +751,34 @@ func get_class_ability_name() -> String:
 ## Cooldown ready fraction: 0.0 = ready, 1.0 = just used (full CD remaining).
 func get_class_ability_cooldown_ratio() -> float:
 	var cfg: Dictionary = MOBILITY_CONFIG.get(_mobility_id, {})
-	var total: float = float(cfg.get("cooldown", 1.0))
+	var total: float = _effective_dash_cooldown(cfg)
 	if total <= 0.0:
 		return 0.0
 	return clampf(_mobility_cd_remaining / total, 0.0, 1.0)
 
 
 func is_class_ability_ready() -> bool:
-	return _mobility_cd_remaining <= 0.0 and not _mobility_active
+	if _mobility_active:
+		return false
+	if str(MOBILITY_CONFIG.get(_mobility_id, {}).get("type", "")) == "dash":
+		return _dash_charges_ready > 0
+	return _mobility_cd_remaining <= 0.0
+
+
+## Winged Boots: grant +1 stored dash charge (raises the bank AND the ready pool).
+func add_dash_charge() -> void:
+	dash_charges = maxi(1, dash_charges + 1)
+	_dash_charges_ready = maxi(_dash_charges_ready, mini(dash_charges, _dash_charges_ready + 1))
+
+
+## Winged Boots: shorten the dash cooldown by the given fraction (0.25 = 25% faster).
+func reduce_dash_cooldown(fraction: float) -> void:
+	dash_cooldown = clampf(dash_cooldown + fraction, 0.0, 0.8)
+
+
+## Winged Boots: increase dash range by the given fraction (0.30 = +30% distance).
+func increase_dash_range(fraction: float) -> void:
+	dash_range_bonus = maxf(0.0, dash_range_bonus + fraction)
 
 
 func _mobility_direction() -> Vector2:
@@ -694,9 +793,10 @@ func _mobility_direction() -> Vector2:
 func _start_dash(cfg: Dictionary, direction: Vector2) -> void:
 	_mobility_active = true
 	_mobility_velocity = direction * float(cfg.get("speed", 500.0))
-	_mobility_time_left = float(cfg.get("duration", 0.25))
+	# Winged Boots range bonus scales how far the dash carries (duration).
+	_mobility_time_left = float(cfg.get("duration", 0.25)) * (1.0 + maxf(0.0, dash_range_bonus))
 	if cfg.get("invincible", true):
-		start_mobility_invincibility(float(cfg.get("duration", 0.25)) + 0.1)
+		start_mobility_invincibility(_mobility_time_left + 0.1)
 	if has_artefact("momentum"):
 		_momentum_timer = MOMENTUM_WINDOW
 
@@ -971,6 +1071,7 @@ func capture_run_state() -> Dictionary:
 		"magnet_range": magnet_range,
 		"dash_charges": dash_charges,
 		"dash_cooldown": dash_cooldown,
+		"dash_range_bonus": dash_range_bonus,
 		"invincibility_duration": invincibility_duration,
 		"invincibility_frame_bonus": invincibility_frame_bonus,
 		"growth_percent_bonus": growth_percent_bonus,
@@ -983,6 +1084,7 @@ func capture_run_state() -> Dictionary:
 		"difficulty_runtime_bonus": difficulty_runtime_bonus,
 		"pierce_bonus": pierce_bonus,
 		"artefact_ids": artefact_ids.duplicate(),
+		"cursed_artefact_ids": cursed_artefact_ids.duplicate(),
 	}
 	# Capture each equipped weapon by its scene path + its anvil stat bonuses.
 	var weapons: Array[Dictionary] = []
@@ -1004,6 +1106,7 @@ func capture_run_state() -> Dictionary:
 				"close_range_damage_bonus": w.close_range_damage_bonus,
 				"far_range_damage_bonus": w.far_range_damage_bonus,
 				"explosion_on_kill_chance": w.explosion_on_kill_chance,
+				"damage_percent_bonus": w.damage_percent_bonus,
 				"damage_type": int(w.damage_type),
 				"signature_ids": (w.signature_ids as Array[String]).duplicate(),
 			})
@@ -1039,6 +1142,7 @@ func restore_run_state(snap: Dictionary) -> void:
 			weapon.close_range_damage_bonus = wdata.get("close_range_damage_bonus", 0.0)
 			weapon.far_range_damage_bonus = wdata.get("far_range_damage_bonus", 0.0)
 			weapon.explosion_on_kill_chance = wdata.get("explosion_on_kill_chance", 0.0)
+			weapon.damage_percent_bonus = wdata.get("damage_percent_bonus", 0.0)
 			weapon.damage_type = int(wdata.get("damage_type", int(weapon.damage_type))) as DamageType.Type
 			weapon.signature_ids = (wdata.get("signature_ids", []) as Array).duplicate()
 			if weapon.trigger_type == Weapon.TriggerType.AUTOMATIC:

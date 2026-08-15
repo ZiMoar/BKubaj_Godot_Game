@@ -62,6 +62,89 @@ var STAT_POOL: Array[Dictionary] = [
 		"apply": func(w: Weapon) -> void: w.projectile_speed_bonus += 0.30,
 	},
 	{
+		"id": "close_range_damage",
+		"title": "Close Range",
+		"description": "+{value}% damage to enemies near you.",
+		"value": 40,
+		"weight": 1.0,
+		"apply": func(w: Weapon) -> void: w.close_range_damage_bonus += 0.40,
+	},
+	{
+		"id": "explosion_on_kill",
+		"title": "Explosion on Kill",
+		"description": "{value}% chance kills explode in an AOE.",
+		"value": 25,
+		"weight": 1.0,
+		"apply": func(w: Weapon) -> void: w.explosion_on_kill_chance = minf(1.0, w.explosion_on_kill_chance + 0.25),
+	},
+]
+
+## Elemental anvil pool: ONLY damage-type conversion stats. This anvil is a
+## separate pickup (new room types); normal anvils never roll these anymore.
+var ELEMENTAL_STAT_POOL: Array[Dictionary] = [
+	{
+		"id": "element_fire",
+		"title": "Fire Damage",
+		"description": "Convert damage to FIRE.",
+		"value": 0,
+		"weight": 1.0,
+		"apply": func(w: Weapon) -> void: w.damage_type = DamageType.Type.FIRE,
+	},
+	{
+		"id": "element_lightning",
+		"title": "Lightning Damage",
+		"description": "Convert damage to LIGHTNING.",
+		"value": 0,
+		"weight": 1.0,
+		"apply": func(w: Weapon) -> void: w.damage_type = DamageType.Type.LIGHTNING,
+	},
+	{
+		"id": "element_cold",
+		"title": "Cold Damage",
+		"description": "Convert damage to COLD.",
+		"value": 0,
+		"weight": 1.0,
+		"apply": func(w: Weapon) -> void: w.damage_type = DamageType.Type.COLD,
+	},
+	{
+		"id": "element_arcane",
+		"title": "Arcane Damage",
+		"description": "Convert damage to ARCANE.",
+		"value": 0,
+		"weight": 1.0,
+		"apply": func(w: Weapon) -> void: w.damage_type = DamageType.Type.ARCANE,
+	},
+	{
+		"id": "element_necrotic",
+		"title": "Necrotic Damage",
+		"description": "Convert damage to NECROTIC.",
+		"value": 0,
+		"weight": 1.0,
+		"apply": func(w: Weapon) -> void: w.damage_type = DamageType.Type.NECROTIC,
+	},
+	{
+		"id": "element_holy",
+		"title": "Holy Damage",
+		"description": "Convert damage to HOLY.",
+		"value": 0,
+		"weight": 1.0,
+		"apply": func(w: Weapon) -> void: w.damage_type = DamageType.Type.HOLY,
+	},
+	{
+		"id": "element_poison",
+		"title": "Poison Damage",
+		"description": "Convert damage to POISON.",
+		"value": 0,
+		"weight": 1.0,
+		"apply": func(w: Weapon) -> void: w.damage_type = DamageType.Type.POISON,
+	},
+]
+
+## Inverted anvil pool: the "give something up" stats. Trades negatives for a
+## payoff. Far Range lives here (an odd stat that rewards keeping distance), plus
+## new reduce-AOE / reduce-projectiles(+damage comp) / reduce-pierce / reduce-chain.
+var INVERTED_STAT_POOL: Array[Dictionary] = [
+	{
 		"id": "projectile_speed_down",
 		"title": "Slow Projectiles",
 		"description": "-{value}% projectile travel speed.",
@@ -78,14 +161,6 @@ var STAT_POOL: Array[Dictionary] = [
 		"apply": func(w: Weapon) -> void: w.duration_bonus -= 0.25,
 	},
 	{
-		"id": "close_range_damage",
-		"title": "Close Range",
-		"description": "+{value}% damage to enemies near you.",
-		"value": 40,
-		"weight": 1.0,
-		"apply": func(w: Weapon) -> void: w.close_range_damage_bonus += 0.40,
-	},
-	{
 		"id": "far_range_damage",
 		"title": "Far Range",
 		"description": "+{value}% damage to distant enemies.",
@@ -94,68 +169,38 @@ var STAT_POOL: Array[Dictionary] = [
 		"apply": func(w: Weapon) -> void: w.far_range_damage_bonus += 0.40,
 	},
 	{
-		"id": "explosion_on_kill",
-		"title": "Explosion on Kill",
-		"description": "{value}% chance kills explode in an AOE.",
-		"value": 25,
+		"id": "area_down",
+		"title": "Shrink Area",
+		"description": "-{value}% skill & projectile size.",
+		"value": 10,
 		"weight": 1.0,
-		"apply": func(w: Weapon) -> void: w.explosion_on_kill_chance = minf(1.0, w.explosion_on_kill_chance + 0.25),
+		"apply": func(w: Weapon) -> void: w.area_bonus -= 0.10,
 	},
 	{
-		"id": "element_fire",
-		"title": "Fire Damage",
-		"description": "Convert damage to FIRE.",
-		"value": 0,
-		"weight": 0.5,
-		"apply": func(w: Weapon) -> void: w.damage_type = DamageType.Type.FIRE,
+		"id": "projectile_count_down",
+		"title": "Fewer Projectiles",
+		"description": "-{value} projectile(s), but +25% damage each.",
+		"value": 1,
+		"weight": 1.0,
+		"apply": func(w: Weapon) -> void:
+			w.projectile_count_bonus = maxi(-1, w.projectile_count_bonus - 1)
+			w.damage_percent_bonus += 0.25,
 	},
 	{
-		"id": "element_lightning",
-		"title": "Lightning Damage",
-		"description": "Convert damage to LIGHTNING.",
-		"value": 0,
-		"weight": 0.5,
-		"apply": func(w: Weapon) -> void: w.damage_type = DamageType.Type.LIGHTNING,
+		"id": "pierce_down",
+		"title": "Less Pierce",
+		"description": "-{value} pierce.",
+		"value": 1,
+		"weight": 1.0,
+		"apply": func(w: Weapon) -> void: w.pierce_bonus -= 1,
 	},
 	{
-		"id": "element_cold",
-		"title": "Cold Damage",
-		"description": "Convert damage to COLD.",
-		"value": 0,
-		"weight": 0.5,
-		"apply": func(w: Weapon) -> void: w.damage_type = DamageType.Type.COLD,
-	},
-	{
-		"id": "element_arcane",
-		"title": "Arcane Damage",
-		"description": "Convert damage to ARCANE.",
-		"value": 0,
-		"weight": 0.5,
-		"apply": func(w: Weapon) -> void: w.damage_type = DamageType.Type.ARCANE,
-	},
-	{
-		"id": "element_necrotic",
-		"title": "Necrotic Damage",
-		"description": "Convert damage to NECROTIC.",
-		"value": 0,
-		"weight": 0.5,
-		"apply": func(w: Weapon) -> void: w.damage_type = DamageType.Type.NECROTIC,
-	},
-	{
-		"id": "element_holy",
-		"title": "Holy Damage",
-		"description": "Convert damage to HOLY.",
-		"value": 0,
-		"weight": 0.5,
-		"apply": func(w: Weapon) -> void: w.damage_type = DamageType.Type.HOLY,
-	},
-	{
-		"id": "element_poison",
-		"title": "Poison Damage",
-		"description": "Convert damage to POISON.",
-		"value": 0,
-		"weight": 0.5,
-		"apply": func(w: Weapon) -> void: w.damage_type = DamageType.Type.POISON,
+		"id": "chain_down",
+		"title": "Less Chain",
+		"description": "-{value} chain.",
+		"value": 1,
+		"weight": 1.0,
+		"apply": func(w: Weapon) -> void: w.chain_count_bonus -= 1,
 	},
 ]
 
@@ -177,6 +222,12 @@ var _current_stats: Array[Dictionary] = []
 var _rerolls_done: int = 0
 ## Golden anvils (5% of spawns) guarantee at least one signature upgrade choice.
 var _is_golden: bool = false
+
+## What kind of anvil opened this menu: STANDARD rolls the normal stat pool (with
+## signatures/golden), ELEMENTAL rolls only damage-type conversions, INVERTED
+## rolls the negative/"give something up" stats. Set by open_menu(kind).
+enum AnvilKind { STANDARD, ELEMENTAL, INVERTED }
+var _anvil_kind: int = AnvilKind.STANDARD
 
 ## Golden border/destructive styling used to flag signature upgrade choices so a
 ## player can tell at a glance that a signature mod rolled (vs a normal stat).
@@ -253,11 +304,12 @@ func _bind_buttons() -> void:
 		reroll_button.pressed.connect(_on_reroll_pressed)
 
 
-func open_menu(golden: bool = false) -> void:
+func open_menu(golden: bool = false, kind: int = AnvilKind.STANDARD) -> void:
 	_current_player = get_tree().get_first_node_in_group("player") as Player
 	if _current_player == null:
 		return
 	_is_golden = golden
+	_anvil_kind = kind
 	visible = true
 	_show_weapon_selection()
 
@@ -304,9 +356,21 @@ func _show_weapon_selection() -> void:
 		weapon_list.add_child(btn)
 
 	if title_label:
-		title_label.text = "Golden Anvil" if _is_golden else "The Anvil"
+		match _anvil_kind:
+			AnvilKind.ELEMENTAL:
+				title_label.text = "Elemental Anvil"
+			AnvilKind.INVERTED:
+				title_label.text = "Inverted Anvil"
+			_:
+				title_label.text = "Golden Anvil" if _is_golden else "The Anvil"
 	if subtitle_label:
-		subtitle_label.text = "Choose a weapon to upgrade. Grants a signature choice!" if _is_golden else "Choose a weapon to upgrade."
+		match _anvil_kind:
+			AnvilKind.ELEMENTAL:
+				subtitle_label.text = "Choose a weapon to reforge its damage type."
+			AnvilKind.INVERTED:
+				subtitle_label.text = "Choose a weapon to trade away a stat."
+			_:
+				subtitle_label.text = "Choose a weapon to upgrade. Grants a signature choice!" if _is_golden else "Choose a weapon to upgrade."
 	weapon_list.visible = true
 	if weapon_scroll:
 		weapon_scroll.visible = true
@@ -344,6 +408,12 @@ func _show_stat_selection() -> void:
 
 
 func _roll_stats(weapon: Weapon) -> Array[Dictionary]:
+	# Elemental and inverted anvils roll ONLY their own pool — no signatures.
+	if _anvil_kind == AnvilKind.ELEMENTAL:
+		return _roll_stats_normal(_filter_supported(weapon, ELEMENTAL_STAT_POOL))
+	if _anvil_kind == AnvilKind.INVERTED:
+		return _roll_stats_normal(_filter_supported(weapon, INVERTED_STAT_POOL))
+
 	var pool: Array[Dictionary] = []
 	for stat: Dictionary in STAT_POOL:
 		if _weapon_supports(weapon, stat["id"] as String):
@@ -381,6 +451,16 @@ func _roll_stats_normal(pool: Array[Dictionary]) -> Array[Dictionary]:
 		choices.append(pool[index])
 		pool.remove_at(index)
 	return choices
+
+
+## Returns only the stats in the given pool that the weapon supports. Used for
+## the elemental/inverted anvil pools which share the same capability checks.
+func _filter_supported(weapon: Weapon, pool: Array[Dictionary]) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	for stat: Dictionary in pool:
+		if _weapon_supports(weapon, stat["id"] as String):
+			result.append(stat)
+	return result
 
 
 ## Golden anvil: exactly one guaranteed signature choice, plus two normal stats.
@@ -430,14 +510,20 @@ func _weapon_supports(weapon: Weapon, stat_id: String) -> bool:
 			return weapon.supports_area()
 		"repeat":
 			return weapon.supports_repeat()
-		"projectile_speed":
-			return weapon.supports_projectile_speed()
-		"projectile_speed_down":
+		"projectile_speed", "projectile_speed_down":
 			return weapon.supports_projectile_speed()
 		"duration_shorten":
 			return weapon.supports_duration()
 		"close_range_damage", "far_range_damage":
 			return weapon.supports_range_damage()
+		"area_down":
+			return weapon.supports_area()
+		"projectile_count_down":
+			return weapon.supports_projectile_count()
+		"pierce_down":
+			return weapon.supports_pierce()
+		"chain_down":
+			return weapon.supports_chain()
 		"explosion_on_kill":
 			return weapon.supports_explosion_on_kill()
 		"element_fire", "element_lightning", "element_cold", "element_arcane", "element_necrotic", "element_holy", "element_poison":

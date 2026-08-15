@@ -3,6 +3,7 @@ extends CanvasLayer
 
 const PAUSE_MENU_SCENE: PackedScene = preload("res://src/ui/pause_menu/pause_menu.tscn")
 const STATS_OVERLAY_SCENE: PackedScene = preload("res://src/ui/stats_overlay/stats_overlay.tscn")
+const DASH_UPGRADE_MENU_SCENE: PackedScene = preload("res://src/ui/dash_upgrade_menu/dash_upgrade_menu.tscn")
 
 @onready var xp_bar: ProgressBar = get_node_or_null("Control/TopBar/Header/Row/XPBar") as ProgressBar
 @onready var difficulty_label: Label = get_node_or_null("Control/TopBar/Header/Row/DifficultyLabel") as Label
@@ -40,6 +41,8 @@ var session_elapsed_seconds: int = 0
 # Class-mobility ability cooldown display (built at runtime to avoid scene-revert).
 var ability_cd_bar: ProgressBar = null
 var ability_cd_label: Label = null
+# Winged Boots dash-upgrade menu (built at runtime to avoid scene-revert).
+var dash_upgrade_menu: Control = null
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -47,6 +50,7 @@ func _ready() -> void:
 	_ensure_pause_menu()
 	_ensure_stats_overlay()
 	_ensure_ability_cooldown_ui()
+	_ensure_dash_upgrade_menu()
 	call_deferred("_initialize_hud")
 
 
@@ -146,6 +150,19 @@ func _ensure_stats_overlay() -> void:
 	var stats_overlay: Node = STATS_OVERLAY_SCENE.instantiate()
 	stats_overlay.name = "StatsOverlay"
 	add_child(stats_overlay)
+
+
+## Adds the Winged Boots dash-upgrade menu as a child so it works in every arena
+## without editing arena scenes (avoids the editor-revert issue).
+func _ensure_dash_upgrade_menu() -> void:
+	if dash_upgrade_menu != null or get_node_or_null("DashUpgradeMenu") != null:
+		return
+	var menu: Control = DASH_UPGRADE_MENU_SCENE.instantiate() as Control
+	menu.name = "DashUpgradeMenu"
+	add_child(menu)
+	dash_upgrade_menu = menu
+	if menu.has_signal("upgrade_selected") and not menu.upgrade_selected.is_connected(_on_dash_upgrade_selected):
+		menu.upgrade_selected.connect(_on_dash_upgrade_selected)
 
 
 func _initialize_hud() -> void:
@@ -338,15 +355,42 @@ func _on_weapon_choice_selected(weapon_scene: PackedScene) -> void:
 
 # --- Anvil Upgrade (upgrade a specific weapon's stats) ---
 
-func show_anvil_upgrade(golden: bool = false) -> void:
+func show_anvil_upgrade(golden: bool = false, kind: int = 0) -> void:
 	if anvil_upgrade_menu == null or current_player == null:
 		return
 	get_tree().paused = true
-	anvil_upgrade_menu.open_menu(golden)
+	anvil_upgrade_menu.open_menu(golden, kind)
 
 
 func _on_anvil_upgrade_applied(_weapon: Weapon, _stat_id: String) -> void:
 	anvil_upgrade_menu.close_menu()
+	get_tree().paused = false
+
+
+# --- Winged Boots (dash upgrade) ---
+
+func show_dash_upgrade() -> void:
+	if dash_upgrade_menu == null or current_player == null:
+		return
+	if not current_player.has_method("add_dash_charge"):
+		return
+	get_tree().paused = true
+	dash_upgrade_menu.open_menu()
+
+
+func _on_dash_upgrade_selected(upgrade_id: String) -> void:
+	if current_player == null:
+		dash_upgrade_menu.close_menu()
+		get_tree().paused = false
+		return
+	match upgrade_id:
+		"dash_charge":
+			current_player.add_dash_charge()
+		"dash_cooldown":
+			current_player.reduce_dash_cooldown(0.25)
+		"dash_range":
+			current_player.increase_dash_range(0.30)
+	dash_upgrade_menu.close_menu()
 	get_tree().paused = false
 
 

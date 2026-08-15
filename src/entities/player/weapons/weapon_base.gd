@@ -39,6 +39,9 @@ var far_range_damage_bonus: float = 0.0    # dmg mult beyond two-thirds of reach
 var explosion_on_kill_chance: float = 0.0  # chance a kill triggers an AOE
 var explosion_radius: float = 95.0
 var explosion_damage_ratio: float = 0.6    # as a fraction of the killing hit
+## Flat multiplicative damage bonus (e.g. inverted anvil "Fewer Projectiles"
+## compensates with +25% damage each projectile removed).
+var damage_percent_bonus: float = 0.0
 
 ## Signature upgrades this weapon has taken this run (each once). Signatures are
 ## transformative per-weapon upgrades granted by the (rare) golden anvil, and can
@@ -193,9 +196,10 @@ func apply_signature(entry: Dictionary) -> void:
 func get_attack_damage(base_damage: float) -> int:
 	var player = get_player()
 	if player == null:
-		return max(0, int(round(base_damage)))
+		return max(0, int(round(base_damage * (1.0 + damage_percent_bonus))))
 
-	return player.get_attack_damage(base_damage)
+	var dmg: int = player.get_attack_damage(base_damage)
+	return max(0, int(round(float(dmg) * (1.0 + damage_percent_bonus))))
 
 func roll_critical_hit() -> bool:
 	var player = get_player()

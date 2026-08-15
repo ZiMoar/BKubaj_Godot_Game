@@ -145,7 +145,17 @@ static func get_display_color(artefact_id: String) -> Color:
 	var def: Dictionary = get_def(artefact_id)
 	if def.is_empty():
 		return Color(0.5, 0.5, 0.5)
+	# Cursed relics get a distinct warning tint unless they set their own color.
+	if is_cursed(artefact_id) and not def.has("color"):
+		return Color(0.8, 0.2, 0.6)
 	return def["color"] as Color
+
+
+## Returns true if the artefact is a CURSED relic (marked with "cursed": true).
+## Cursed relics grant strong bonuses but carry a downside; they occupy separate
+## cursed slots. Actual cursed relics to be designed later.
+static func is_cursed(artefact_id: String) -> bool:
+	return bool(get_def(artefact_id).get("cursed", false))
 
 
 static func all_ids() -> Array[String]:

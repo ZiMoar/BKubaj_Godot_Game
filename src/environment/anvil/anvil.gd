@@ -10,14 +10,21 @@ extends Area2D
 ## Golden anvils (rare spawn) guarantee a signature upgrade in the choice menu.
 var is_golden: bool = false
 
+## Anvil kind passed to the upgrade menu: 0=standard, 1=elemental, 2=inverted.
+## Elemental anvils reforge damage types; inverted anvils trade away stats. The
+## standard pickup (anvil.tscn) is kind 0; elemental/inverted are distinct room
+## spawns set from their own scene/spawner.
+var anvil_kind: int = 0
+
 var _collected: bool = false
 
 
 func _ready() -> void:
 	body_entered.connect(_on_body_entered)
-	# Make the visual reflect whether this is a golden (signature) anvil.
+	# Make the visual reflect golden and/or kind.
 	if sprite and sprite.has_method("set"):
 		sprite.set("golden", is_golden)
+		sprite.set("kind", anvil_kind)
 	# Subtle bob so the anvil clearly reads as a pickup.
 	var tween: Tween = create_tween()
 	tween.set_loops()
@@ -39,5 +46,5 @@ func _on_body_entered(body: Node2D) -> void:
 		hud = root.get_node_or_null("HUD") as HUD
 
 	if hud and hud.has_method("show_anvil_upgrade"):
-		hud.show_anvil_upgrade(is_golden)
+		hud.show_anvil_upgrade(is_golden, anvil_kind)
 		queue_free()

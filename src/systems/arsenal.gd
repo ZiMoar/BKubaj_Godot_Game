@@ -227,4 +227,28 @@ static func _legend() -> Array[Dictionary]:
 			"desc": "Difficulty grows over time and persists across stages. It scales enemy health, damage and speed, and gates which enemy types can spawn.",
 			"color": Color(0.85, 0.7, 0.35),
 		},
+		{
+			"name": "Elemental Anvil",
+			"subtitle": "Re-forges a weapon's damage type",
+			"desc": "A rare anvil that only converts a weapon's damage type — no stat boosts. Scaling rolls are light, so it's purely about which ailment you want on that weapon.",
+			"color": Color(0.4, 0.65, 0.95),
+		},
+		{
+			"name": "Inverted Anvil",
+			"subtitle": "Trades a stat away for a payoff",
+			"desc": "A corrupt anvil that gives negative stats in exchange for a bonus — slower projectiles, shorter range, fewer projectiles (with +25% damage to compensate), less area, less pierce or fewer chains. High risk, high reward.",
+			"color": Color(0.8, 0.35, 0.6),
+		},
+		{
+			"name": "Winged Boots",
+			"subtitle": "Dash-only upgrades",
+			"desc": "Pick 1 of 3 upgrades: an extra dash charge, 25% faster charge recovery, or 30% longer dashes. Purely mobility — damage-after-dash effects stay on relics.",
+			"color": Color(0.6, 0.8, 1.0),
+		},
+		{
+			"name": "Healing Pickups",
+			"subtitle": "25%, half, or full heal",
+			"desc": "Collectable runes that restore 25%, 50% or 100% of your max health. Rarer versions restore more.",
+			"color": Color(0.35, 0.9, 0.5),
+		},
 	]
