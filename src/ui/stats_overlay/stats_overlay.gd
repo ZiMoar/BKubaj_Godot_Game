@@ -8,6 +8,8 @@ extends Control
 
 const TOGGLE_KEY: Key = KEY_TAB
 
+const ARTEFACTS: Script = preload("res://src/systems/artefact.gd")
+
 @onready var stats_box: VBoxContainer = get_node_or_null("CenterContainer/Panel/Vertical/Scroll/StatsBox") as VBoxContainer
 @onready var close_button: Button = get_node_or_null("CenterContainer/Panel/Vertical/CloseButton") as Button
 
@@ -98,6 +100,54 @@ func _populate() -> void:
 	if player.has_method("get_artefact_count"):
 		relic_count = int(player.call("get_artefact_count"))
 	_add_stat("Relics", "%d" % relic_count)
+
+	if relic_count > 0:
+		_add_relic_listing(player)
+
+
+## Lists the player's currently-equipped relics with their names + descriptions.
+func _add_relic_listing(player: Node) -> void:
+	_add_section("Relics")
+	for i: int in range(int(player.call("get_artefact_count"))):
+		var id: String = player.call("get_artefact_at_slot", i)
+		if id.is_empty():
+			continue
+		var name_text: String = ARTEFACTS.get_display_name(id) if ARTEFACTS != null else id
+		var desc: String = ARTEFACTS.get_description(id) if ARTEFACTS != null else ""
+		var colour: Color = player.call("get_artefact_slot_color", i)
+		_add_relic_row(i + 1, name_text, desc, colour)
+
+
+func _add_relic_row(index: int, name_text: String, desc: String, colour: Color) -> void:
+	if stats_box == null:
+		return
+	var name_row := HBoxContainer.new()
+	name_row.add_theme_constant_override("separation", 8)
+	var idx := Label.new()
+	idx.text = "%d." % index
+	idx.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
+	idx.add_theme_font_size_override("font_size", 13)
+	var nm := Label.new()
+	nm.text = name_text
+	nm.add_theme_color_override("font_color", colour)
+	nm.add_theme_font_size_override("font_size", 13)
+	nm.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	name_row.add_child(idx)
+	name_row.add_child(nm)
+	stats_box.add_child(name_row)
+	if not desc.is_empty():
+		var desc_l := Label.new()
+		desc_l.text = desc
+		desc_l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		desc_l.add_theme_color_override("font_color", Color(0.8, 0.8, 0.8))
+		desc_l.add_theme_font_size_override("font_size", 11)
+		desc_l.add_theme_constant_override("line_separation", 0)
+		desc_l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var indent := MarginContainer.new()
+		indent.add_theme_constant_override("margin_left", 24)
+		indent.add_theme_constant_override("margin_right", 4)
+		indent.add_child(desc_l)
+		stats_box.add_child(indent)
 
 
 func _add_section(title: String) -> void:

@@ -430,6 +430,13 @@ func get_artefact_slot_name(slot_index: int) -> String:
 	return ARTEFACTS.get_display_name(artefact_ids[slot_index])
 
 
+## Raw artefact id at the given equip slot (for lookups / logging).
+func get_artefact_at_slot(slot_index: int) -> String:
+	if slot_index < 0 or slot_index >= artefact_ids.size():
+		return ""
+	return artefact_ids[slot_index]
+
+
 # --- Gold & Greed ---
 
 func get_gold() -> int:
