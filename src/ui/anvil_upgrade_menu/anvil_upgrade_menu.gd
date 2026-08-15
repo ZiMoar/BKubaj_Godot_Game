@@ -305,16 +305,27 @@ func _roll_stats(weapon: Weapon) -> Array[Dictionary]:
 		sig_pool.append(entry)
 
 	# If golden, guarantee at least one signature among the three choices.
-	if _is_golden and not sig_pool.is_empty():
-		return _roll_golden(pool, sig_pool)
+	if _is_golden:
+		if not sig_pool.is_empty():
+			return _roll_golden(pool, sig_pool)
+		# FAILSAFE: the weapon already owns all its signatures (can't roll more),
+		# so the golden anvil falls back to a normal 3-stat roll. No signature
+		# gets guaranteed — we just behave like a standard anvil.
+		return _roll_stats_normal(pool)
 
 	# Normal anvil: roll purely by weight (signatures included, rarely chosen).
 	var combined: Array[Dictionary] = pool + sig_pool
+	return _roll_stats_normal(combined)
+
+
+## Picks 3 distinct stats purely by weight (no signature guarantee). Used for
+## normal anvils, and as the golden failsafe when no signatures remain.
+func _roll_stats_normal(pool: Array[Dictionary]) -> Array[Dictionary]:
 	var choices: Array[Dictionary] = []
-	while choices.size() < 3 and not combined.is_empty():
-		var index: int = _weighted_pick(combined)
-		choices.append(combined[index])
-		combined.remove_at(index)
+	while choices.size() < 3 and not pool.is_empty():
+		var index: int = _weighted_pick(pool)
+		choices.append(pool[index])
+		pool.remove_at(index)
 	return choices
 
 
