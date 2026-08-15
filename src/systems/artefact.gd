@@ -117,6 +117,58 @@ const ARTEFACT_POOL: Array[Dictionary] = [
 		"desc": "HP Regen that would heal you past full health instead grants Shield.",
 		"color": Color(0.5, 0.8, 1.0),
 	},
+	# --- Cursed relics (the seven sins). Strong bonuses with a real downside. ---
+	# They share the same 5-slot inventory as normal relics but only drop from
+	# cursed relic pickups. Marked "cursed": true.
+	{
+		"id": "hubris",
+		"name": "Hubris",
+		"desc": "Pride. Deal +30% damage to bosses, but take +20% damage from bosses.",
+		"color": Color(0.85, 0.32, 0.35),
+		"cursed": true,
+	},
+	{
+		"id": "avarice",
+		"name": "Avarice",
+		"desc": "Greed. 25% of XP gained is converted into Gold instead.",
+		"color": Color(1.0, 0.85, 0.2),
+		"cursed": true,
+	},
+	{
+		"id": "succubus_embrace",
+		"name": "Succubus's Embrace",
+		"desc": "Lust. Your Lifesteal is doubled, but all healing you receive is reduced by 40%.",
+		"color": Color(0.92, 0.35, 0.62),
+		"cursed": true,
+	},
+	{
+		"id": "green_eyed_gaze",
+		"name": "Green-Eyed Gaze",
+		"desc": "Envy. Each nearby enemy grants +2% damage and +1% crit chance (capped +60%/+30%). Nearby enemies deal +4% damage to you.",
+		"color": Color(0.45, 0.85, 0.4),
+		"cursed": true,
+	},
+	{
+		"id": "insatiable_maw",
+		"name": "Insatiable Maw",
+		"desc": "Gluttony. Every pickup has a 20% chance to heal 6% Max HP and a 20% chance to deal 6% Max HP damage.",
+		"color": Color(0.82, 0.5, 0.2),
+		"cursed": true,
+	},
+	{
+		"id": "burning_ire",
+		"name": "Burning Ire",
+		"desc": "Wrath. Critical hits deal +60% bonus critical damage, but non-critical hits deal 30% less.",
+		"color": Color(1.0, 0.45, 0.12),
+		"cursed": true,
+	},
+	{
+		"id": "idle_fortitude",
+		"name": "Idle Fortitude",
+		"desc": "Sloth. While standing still, HP Regen is doubled and max Shield +50%. Move speed -20%.",
+		"color": Color(0.68, 0.58, 0.95),
+		"cursed": true,
+	},
 ]
 
 

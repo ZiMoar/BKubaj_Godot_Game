@@ -45,13 +45,9 @@ func open_for_player(player: Player, cursed_only: bool = false) -> void:
 		return
 	if not player.has_method("get_artefact_count") or not player.has_method("get_artefact_slot_capacity"):
 		return
-	# Cursed relics use their own slot pool, so cap-check against curses.
-	if cursed_only:
-		if not player.has_method("get_cursed_artefact_count") or not player.has_method("get_cursed_artefact_slot_capacity"):
-			return
-		if player.get_cursed_artefact_count() >= player.get_cursed_artefact_slot_capacity():
-			return
-	elif player.get_artefact_count() >= player.get_artefact_slot_capacity():
+	# Normal and cursed relics share the same 5-slot inventory, so always cap
+	# against the combined count.
+	if player.get_artefact_count() >= player.get_artefact_slot_capacity():
 		return
 
 	visible = true

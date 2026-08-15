@@ -455,6 +455,14 @@ func take_damage(amount: int, is_critical: bool = false, damage_type: DamageType
 	if is_critical and shock_timer > 0.0 and plr != null and plr.has_method("has_artefact") and plr.has_artefact("static_conduit"):
 		dealt *= 1.50
 
+	# Wrath (Burning Ire): non-critical hits deal less. (Crit bonus is applied on
+	# the player side via get_critical_multiplier().)
+	if not is_critical and plr != null and plr.has_method("has_artefact") and plr.has_artefact("burning_ire"):
+		dealt *= 0.70
+	# Pride (Hubris): the player deals +30% damage to bosses.
+	if is_in_group("bosses") and plr != null and plr.has_method("has_artefact") and plr.has_artefact("hubris"):
+		dealt *= 1.30
+
 	var final_amount: int = maxi(1, int(round(dealt)))
 	current_health -= final_amount
 	# Record the type of the most recent damaging hit.

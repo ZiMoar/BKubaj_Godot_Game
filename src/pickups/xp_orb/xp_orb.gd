@@ -116,6 +116,9 @@ func start_attraction(player: Node2D) -> void:
 	target_player = player
 
 func _collect() -> void:
+	var player: Node = get_tree().get_first_node_in_group("player")
+	if player and player.has_method("roll_pickup_gluttony"):
+		player.roll_pickup_gluttony()
 	var manager = get_tree().get_first_node_in_group("team_xp_manager") as TeamXPManager
 	if manager:
 		manager.add_xp(xp_value)

@@ -56,9 +56,12 @@ func start_attraction(player: Node2D) -> void:
 
 
 func _collect() -> void:
-	if target_player and target_player.has_method("add_shield"):
-		var shield_amt: float = float(target_player.current_max_health()) * SOUL_CAP_PCT
-		target_player.add_shield(shield_amt)
+	if target_player:
+		if target_player.has_method("roll_pickup_gluttony"):
+			target_player.roll_pickup_gluttony()
+		if target_player.has_method("add_shield"):
+			var shield_amt: float = float(target_player.current_max_health()) * SOUL_CAP_PCT
+			target_player.add_shield(shield_amt)
 	queue_free()
 
 

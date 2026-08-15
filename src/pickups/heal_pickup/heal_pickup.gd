@@ -40,6 +40,8 @@ func _on_body_entered(body: Node2D) -> void:
 	if not body.is_in_group("player"):
 		return
 	_collected = true
+	if body.has_method("roll_pickup_gluttony"):
+		body.roll_pickup_gluttony()
 	if body.has_method("heal_percent"):
 		body.heal_percent(heal_fraction)
 	queue_free()

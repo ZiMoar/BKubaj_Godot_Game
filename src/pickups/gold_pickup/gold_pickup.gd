@@ -89,9 +89,12 @@ func start_attraction(player: Node2D) -> void:
 
 
 func _collect() -> void:
-	if target_player and target_player.has_method("add_gold"):
-		var base: int = max(1, gold_value)
-		target_player.add_gold(base)
+	if target_player:
+		if target_player.has_method("roll_pickup_gluttony"):
+			target_player.roll_pickup_gluttony()
+		if target_player.has_method("add_gold"):
+			var base: int = max(1, gold_value)
+			target_player.add_gold(base)
 	queue_free()
 
 

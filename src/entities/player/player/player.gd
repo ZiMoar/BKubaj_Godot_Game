@@ -132,11 +132,38 @@ const ARTEFACT_LIFESTEAL_CRIT: String = "lifesteal_crit"
 const ARTEFACT_LIFESTEAL_TO_DAMAGE: String = "lifesteal_to_damage"
 const ARTEFACT_MAXHP_TO_ARMOR: String = "maxhp_to_armor"
 const ARTEFACT_REGEN_TO_ATTACK_SPEED: String = "regen_to_attack_speed"
+# --- Cursed relic IDs (the seven sins). ---
+const ARTEFACT_HUBRIS: String = "hubris"
+const ARTEFACT_AVARICE: String = "avarice"
+const ARTEFACT_SUCCUBUS_EMBRACE: String = "succubus_embrace"
+const ARTEFACT_GREEN_EYED_GAZE: String = "green_eyed_gaze"
+const ARTEFACT_INSATIABLE_MAW: String = "insatiable_maw"
+const ARTEFACT_BURNING_IRE: String = "burning_ire"
+const ARTEFACT_IDLE_FORTITUDE: String = "idle_fortitude"
 # Cross-interaction scaling factors for the artefact effects.
 const IRON_HEART_ARMOR_RATIO: float = 0.20
 const REGEN_TO_ATTACK_SPEED_FACTOR: float = 5.0
 const LIFESTEAL_TO_DAMAGE_PER_UNIT: float = 0.03
 const THORNS_TO_DAMAGE_PER_UNIT: float = 0.02
+# --- Cursed relic (seven sins) scaling factors. ---
+const HUBRIS_BOSS_DAMAGE_MULT: float = 1.30
+const HUBRIS_BOSS_TAKEN_MULT: float = 1.20
+const AVARICE_XP_TO_GOLD_RATIO: float = 0.25
+const LUST_LIFESTEAL_MULT: float = 2.0
+const LUST_HEAL_REDUCTION: float = 0.60
+const ENVY_RADIUS: float = 600.0
+const ENVY_DAMAGE_PER_ENEMY: float = 0.02
+const ENVY_CRIT_PER_ENEMY: float = 0.01
+const ENVY_DAMAGE_CAP: float = 0.60
+const ENVY_CRIT_CAP: float = 0.30
+const ENVY_NEARBY_TAKEN_MULT: float = 1.04
+const GLUTTONY_CHANCE: float = 0.20
+const GLUTTONY_FRACTION: float = 0.06
+const WRATH_CRIT_DAMAGE_BONUS: float = 0.60
+const WRATH_NONCRIT_PENALTY: float = 0.70
+const SLOTH_SPEED_MULT: float = 0.80
+const SLOTH_REGEN_MULT: float = 2.0
+const SLOTH_SHIELD_CAP_BONUS: float = 0.25   # +50% of the 0.5 base shield cap
 
 var artefact_ids: Array[String] = []
 ## Cursed relics occupy a separate pool so they don't crowd out normal relics.
@@ -226,10 +253,14 @@ func get_thorns_damage() -> float:
 	return value
 
 func get_critical_multiplier() -> float:
-	return maxf(1.0, critical_hit_damage_multiplier)
+	var mult: float = critical_hit_damage_multiplier
+	# Wrath (Burning Ire): critical hits deal +60% bonus critical damage.
+	if has_artefact(ARTEFACT_BURNING_IRE):
+		mult += WRATH_CRIT_DAMAGE_BONUS
+	return maxf(1.0, mult)
 
 func roll_critical_hit() -> bool:
-	return randf() < clamp(critical_hit_chance, 0.0, 1.0)
+	return randf() < clamp(critical_hit_chance + get_envy_crit_bonus(), 0.0, 1.0)
 
 ## Rolls whether a damaging hit also inflicts its damage-type's ailment.
 func roll_ailment() -> bool:
@@ -240,6 +271,45 @@ func roll_ailment() -> bool:
 func roll_ailment_result() -> float:
 	return clamp(ailment_chance, 0.0, 1.0)
 
+## True while the player isn't moving (used by Sloth's Idle Fortitude).
+func _is_idle() -> bool:
+	return current_move_input.length_squared() < 0.001
+
+
+## Number of living enemies within the Envy relic's radius.
+func nearby_enemy_count() -> int:
+	var n: int = 0
+	var pos: Vector2 = global_position
+	for e: Node in get_tree().get_nodes_in_group("enemies"):
+		if is_instance_valid(e) and e is Node2D and (e as Node2D).global_position.distance_to(pos) <= ENVY_RADIUS:
+			n += 1
+	return n
+
+
+## Envy (Green-Eyed Gaze): bonus damage from nearby enemies, capped.
+func get_envy_damage_bonus() -> float:
+	if not has_artefact(ARTEFACT_GREEN_EYED_GAZE):
+		return 0.0
+	return minf(ENVY_DAMAGE_CAP, float(nearby_enemy_count()) * ENVY_DAMAGE_PER_ENEMY)
+
+
+## Envy (Green-Eyed Gaze): bonus crit chance from nearby enemies, capped.
+func get_envy_crit_bonus() -> float:
+	if not has_artefact(ARTEFACT_GREEN_EYED_GAZE):
+		return 0.0
+	return minf(ENVY_CRIT_CAP, float(nearby_enemy_count()) * ENVY_CRIT_PER_ENEMY)
+
+
+## Gluttony (Insatiable Maw): roll the heal/hurt chances on a picked-up pickup.
+func roll_pickup_gluttony() -> void:
+	if not has_artefact(ARTEFACT_INSATIABLE_MAW) or current_health <= 0:
+		return
+	if randf() < GLUTTONY_CHANCE:
+		heal_percent(GLUTTONY_FRACTION)
+	if randf() < GLUTTONY_CHANCE:
+		take_damage(maxi(1, int(round(float(current_max_health()) * GLUTTONY_FRACTION))))
+
+
 func get_attack_damage(base_damage: float) -> int:
 	var flat_applied = maxf(0.0, base_damage + might_flat_bonus)
 	var damage = flat_applied * get_might_multiplier()
@@ -249,6 +319,10 @@ func get_attack_damage(base_damage: float) -> int:
 	# Momentum relic: +50% damage while the post-dash window is active.
 	if has_artefact("momentum") and _momentum_timer > 0.0:
 		damage *= MOMENTUM_DAMAGE_MULT
+	# Envy (Green-Eyed Gaze): bonus damage scaling with nearby enemies.
+	var envy_bonus: float = get_envy_damage_bonus()
+	if envy_bonus > 0.0:
+		damage *= 1.0 + envy_bonus
 	return max(0, int(round(damage)))
 
 func get_map_difficulty() -> float:
@@ -287,6 +361,9 @@ func apply_lifesteal() -> void:
 
 	_lifesteal_cooldown_remaining = LIFESTEAL_COOLDOWN
 	var heal_amount: float = lifesteal_flat * get_might_multiplier()
+	# Lust (Succubus's Embrace): lifesteal is doubled.
+	if has_artefact(ARTEFACT_SUCCUBUS_EMBRACE):
+		heal_amount *= LUST_LIFESTEAL_MULT
 	# Vampiric Rage artefact: lifesteal heal can roll crit for double healing.
 	if has_artefact(ARTEFACT_LIFESTEAL_CRIT) and roll_critical_hit():
 		heal_amount *= get_critical_multiplier()
@@ -294,6 +371,11 @@ func apply_lifesteal() -> void:
 
 func heal(amount: float) -> void:
 	if amount <= 0.0 or current_health <= 0:
+		return
+	# Lust (Succubus's Embrace): all healing received is reduced by 40%.
+	if has_artefact(ARTEFACT_SUCCUBUS_EMBRACE):
+		amount *= LUST_HEAL_REDUCTION
+	if amount <= 0.0:
 		return
 
 	current_health = min(current_max_health(), int(round(current_health + amount)))
@@ -310,7 +392,11 @@ func heal_percent(percent: float) -> void:
 
 ## Shield cap: defaults to 50% of max health; bonuses can raise it.
 func get_shield_cap() -> float:
-	return float(current_max_health()) * (SHIELD_CAP_RATIO_BASE + maxf(0.0, shield_cap_ratio_bonus))
+	var bonus: float = maxf(0.0, shield_cap_ratio_bonus)
+	# Sloth (Idle Fortitude): +50% max Shield while standing still.
+	if has_artefact(ARTEFACT_IDLE_FORTITUDE) and _is_idle():
+		bonus += SLOTH_SHIELD_CAP_BONUS
+	return float(current_max_health()) * (SHIELD_CAP_RATIO_BASE + bonus)
 
 
 ## Grants shield up to the cap. Clamped; never exceeds cap.
@@ -452,11 +538,12 @@ func add_artefact(artefact_id: String) -> bool:
 	return true
 
 
-## Adds a cursed relic to its own slot pool (destructive trade-off relics).
+## Adds a cursed relic. Cursed relics share the SAME 5-slot inventory as normal
+## relics (they only differ in source), so the cap is the combined count.
 func add_cursed_artefact(artefact_id: String) -> bool:
 	if artefact_id.is_empty() or has_artefact(artefact_id):
 		return false
-	if cursed_artefact_ids.size() >= MAX_CURSED_ARTEFACT_SLOTS:
+	if artefact_ids.size() + cursed_artefact_ids.size() >= MAX_ARTEFACT_SLOTS:
 		return false
 	cursed_artefact_ids.append(artefact_id)
 	artefacts_changed.emit()
@@ -488,16 +575,31 @@ func get_cursed_artefact_slot_capacity() -> int:
 	return MAX_CURSED_ARTEFACT_SLOTS
 
 
+## The display order across the shared 5 slots is: normal relics first, then
+## cursed relics.
+func _artefact_id_at_slot(slot_index: int) -> String:
+	if slot_index < 0:
+		return ""
+	if slot_index < artefact_ids.size():
+		return artefact_ids[slot_index]
+	var cursed_idx: int = slot_index - artefact_ids.size()
+	if cursed_idx >= 0 and cursed_idx < cursed_artefact_ids.size():
+		return cursed_artefact_ids[cursed_idx]
+	return ""
+
+
 func get_artefact_slot_color(slot_index: int) -> Color:
-	if slot_index < 0 or slot_index >= artefact_ids.size():
+	var id: String = _artefact_id_at_slot(slot_index)
+	if id.is_empty():
 		return Color(0.25, 0.25, 0.25)
-	return ARTEFACTS.get_display_color(artefact_ids[slot_index])
+	return ARTEFACTS.get_display_color(id)
 
 
 func get_artefact_slot_name(slot_index: int) -> String:
-	if slot_index < 0 or slot_index >= artefact_ids.size():
+	var id: String = _artefact_id_at_slot(slot_index)
+	if id.is_empty():
 		return ""
-	return ARTEFACTS.get_display_name(artefact_ids[slot_index])
+	return ARTEFACTS.get_display_name(id)
 
 
 ## Raw artefact id at the given equip slot (for lookups / logging).
@@ -670,7 +772,11 @@ func current_max_health() -> int:
 	return max(1, max_health + max_health_bonus)
 
 func current_move_speed() -> float:
-	return maxf(0.0, speed) * maxf(0.0, 1.0 + move_speed_percent_bonus)
+	var base: float = maxf(0.0, speed) * maxf(0.0, 1.0 + move_speed_percent_bonus)
+	# Sloth (Idle Fortitude): move speed -20%.
+	if has_artefact(ARTEFACT_IDLE_FORTITUDE):
+		base *= SLOTH_SPEED_MULT
+	return base
 
 # --- Class Mobility Ability (Space) ---
 func _process_class_ability_input(delta: float) -> void:
@@ -854,7 +960,11 @@ func _process_regen(delta: float) -> void:
 	if hp_regen_per_second <= 0.0 or current_health <= 0:
 		return
 
-	hp_regen_bank += hp_regen_per_second * delta
+	var regen_per_second: float = hp_regen_per_second
+	# Sloth (Idle Fortitude): HP Regen is doubled while standing still.
+	if has_artefact(ARTEFACT_IDLE_FORTITUDE) and _is_idle():
+		regen_per_second *= SLOTH_REGEN_MULT
+	hp_regen_bank += regen_per_second * delta
 	if hp_regen_bank < 1.0:
 		return
 
@@ -932,6 +1042,18 @@ func take_damage(amount: int, source: Node = null) -> void:
 	if randf() < eff_evasion:
 		trigger_evasion()
 		return
+
+	# Cursed-relic damage taken modifiers.
+	var curse_mult: float = 1.0
+	# Pride (Hubris): take +20% damage from bosses.
+	if has_artefact(ARTEFACT_HUBRIS) and source != null and is_instance_valid(source) and source.is_in_group("bosses"):
+		curse_mult *= HUBRIS_BOSS_TAKEN_MULT
+	# Envy (Green-Eyed Gaze): nearby enemies deal +4% damage to you.
+	if has_artefact(ARTEFACT_GREEN_EYED_GAZE) and source != null and is_instance_valid(source) and source is Node2D:
+		if (source as Node2D).global_position.distance_to(global_position) <= ENVY_RADIUS:
+			curse_mult *= ENVY_NEARBY_TAKEN_MULT
+	if curse_mult != 1.0:
+		amount = maxi(1, int(round(float(amount) * curse_mult)))
 
 	# Radiant Barrier (holy auto-weapon): an active barrier can reduce/absorb the
 	# next hit taken and release a holy wave. Ask any active barrier to process
