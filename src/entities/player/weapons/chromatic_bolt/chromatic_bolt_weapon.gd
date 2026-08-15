@@ -7,9 +7,9 @@ extends Weapon
 
 const ChromaticOrbScene: PackedScene = preload("res://src/entities/projectiles/chromatic_orb/chromatic_orb.tscn")
 
-const ORB_INITIAL_SPEED: float = 240.0
-const ORB_DECEL: float = 120.0
-const ORB_LIFETIME: float = 4.0
+const ORB_INITIAL_SPEED: float = 130.0
+const ORB_DECEL: float = 19.0
+const ORB_LIFETIME: float = 10.0
 const BOLT_INTERVAL: float = 0.6
 const BASE_BOLT_COUNT: int = 3
 const BASE_BOLT_DAMAGE: int = 16

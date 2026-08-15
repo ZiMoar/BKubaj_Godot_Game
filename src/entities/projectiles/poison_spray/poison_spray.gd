@@ -1,37 +1,33 @@
 class_name PoisonSprayEffect
 extends Node2D
 
-## Continuous poison stream. Sits at the player's position, oriented at the
-## nearest enemy, and every tick applies a POISON stack to every enemy inside
-## the cone. Deals NO direct damage — it only inflicts the poison ailment,
-## guaranteed, using an "as-if" hit value that the player's ailment chance
-## boosts (since the ailment is guaranteed, chance converts to damage).
+## Poison Spray emitter. Once fired, the player's weapon releases a continuous
+## stream of narrow cone "puffs" for the attack's duration — each puff flies
+## forward from the player toward the nearest enemy, re-applying the POISON
+## ailment as it sweeps. This simulates a spraying motion rather than a single
+## static field. Deals NO direct damage — it only inflicts poison, guaranteed.
+
+const PuffScript: Script = preload("res://src/entities/projectiles/poison_puff/poison_puff.gd")
 
 var source_weapon: Node = null
-var direction: Vector2 = Vector2.RIGHT
 var duration: float = 2.0
-var tick_interval: float = 0.25
-var range_px: float = 180.0
-var half_angle: float = 0.6  # radians (~34 deg each side)
+var release_interval: float = 0.18
+var range_px: float = 190.0
+var half_angle: float = 0.22
 var hit_value: int = 20
 
 var _age: float = 0.0
-var _tick_timer: float = 0.0
+var _release_timer: float = 0.0
 
 
-func setup(weapon: Node, aim_dir: Vector2, val: int, dur: float, tick: float, rng_px: float) -> void:
+func setup(weapon: Node, val: int, dur: float, interval: float, rng_px: float, angle: float) -> void:
 	source_weapon = weapon
-	direction = aim_dir.normalized()
-	if direction == Vector2.ZERO:
-		direction = Vector2.RIGHT
 	hit_value = val
 	duration = dur
-	tick_interval = tick
+	release_interval = interval
 	range_px = rng_px
-	rotation = direction.angle()
-	# First tick happens on the first physics frame (after being added to the
-	# tree), so we don't touch the tree before the node is parented.
-	_tick_timer = 0.0
+	half_angle = angle
+	_release_timer = 0.0
 
 
 func _physics_process(delta: float) -> void:
@@ -39,46 +35,34 @@ func _physics_process(delta: float) -> void:
 	if _age >= duration:
 		queue_free()
 		return
-	_tick_timer -= delta
-	if _tick_timer <= 0.0:
-		_tick_timer = tick_interval
-		_apply_tick()
+	_release_timer -= delta
+	if _release_timer <= 0.0:
+		_release_timer = release_interval
+		_release_puff()
 
 
-func _apply_tick() -> void:
+func _release_puff() -> void:
+	var dir: Vector2 = _nearest_enemy_dir()
+	var puff: Node2D = PuffScript.new()
+	puff.name = "PoisonPuff"
+	puff.global_position = global_position
+	if puff.has_method("setup"):
+		puff.setup(source_weapon, dir, hit_value, half_angle, range_px)
+	get_tree().current_scene.add_child(puff)
+
+
+func _nearest_enemy_dir() -> Vector2:
 	var enemies: Array[Node] = get_tree().get_nodes_in_group("enemies")
+	var nearest: Node2D = null
+	var best_d: float = INF
 	for e: Node in enemies:
 		if not is_instance_valid(e):
 			continue
 		var en: Node2D = e as Node2D
-		if not _in_cone(en.global_position):
-			continue
-		if en.has_method("apply_poison"):
-			en.apply_poison(float(hit_value))
-			if source_weapon and source_weapon.has_method("apply_lifesteal"):
-				source_weapon.apply_lifesteal()
-			# Track kills? Poison never kills directly through these this way, but
-			# explosion-on-kill won't fire on a pure ailment. Keep it simple.
-
-
-func _in_cone(target: Vector2) -> bool:
-	var to: Vector2 = target - global_position
-	var dist: float = to.length()
-	if dist > range_px:
-		return false
-	var ang: float = to.angle() - direction.angle()
-	ang = wrapf(ang, -PI, PI)
-	return absf(ang) <= half_angle
-
-
-func _draw() -> void:
-	# Draw a translucent hazard cone facing `direction`.
-	var pts := PackedVector2Array()
-	pts.append(Vector2.ZERO)
-	var steps := 24
-	for i in range(steps + 1):
-		var a: float = -half_angle + (2.0 * half_angle) * float(i) / float(steps)
-		pts.append(Vector2(cos(a), sin(a)) * range_px)
-	draw_colored_polygon(pts, Color(0.5, 0.85, 0.35, 0.18))
-	# Hazard speckles.
-	draw_arc(Vector2.ZERO, range_px, -half_angle, half_angle, steps, Color(0.6, 0.9, 0.4, 0.4), 2.0)
+		var d: float = global_position.distance_squared_to(en.global_position)
+		if d < best_d:
+			best_d = d
+			nearest = en
+	if nearest != null:
+		return (nearest.global_position - global_position).normalized()
+	return Vector2.RIGHT

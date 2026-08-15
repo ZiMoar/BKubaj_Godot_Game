@@ -11,8 +11,9 @@ const PoisonSprayScene: PackedScene = preload("res://src/entities/projectiles/po
 
 const BASE_HIT_VALUE: int = 30
 const SPRAY_DURATION: float = 2.4
-const TICK_INTERVAL: float = 0.25
+const TICK_INTERVAL: float = 0.18
 const SPRAY_RANGE: float = 190.0
+const HALF_ANGLE: float = 0.22   # narrow cone (~12.6 deg each side)
 const COOLDOWN: float = 3.2
 
 
@@ -33,7 +34,6 @@ func supports_duration() -> bool:
 
 
 func fire() -> void:
-	var aim: Vector2 = _nearest_enemy_dir()
 	var player := get_player()
 	var hit_value: int = get_attack_damage(BASE_HIT_VALUE)
 	if player and player.has_method("get"):
@@ -47,11 +47,11 @@ func fire() -> void:
 	if spray.has_method("setup"):
 		spray.setup(
 			self,
-			aim,
 			hit_value,
 			get_effective_duration(SPRAY_DURATION),
 			TICK_INTERVAL,
-			SPRAY_RANGE * get_area_multiplier()
+			SPRAY_RANGE * get_area_multiplier(),
+			HALF_ANGLE
 		)
 	get_tree().current_scene.add_child(spray)
 

@@ -146,12 +146,16 @@ var STAT_POOL: Array[Dictionary] = [
 @onready var choice_1: Button = get_node_or_null("CenterContainer/Panel/Vertical/StatBox/Choice1") as Button
 @onready var choice_2: Button = get_node_or_null("CenterContainer/Panel/Vertical/StatBox/Choice2") as Button
 @onready var choice_3: Button = get_node_or_null("CenterContainer/Panel/Vertical/StatBox/Choice3") as Button
-@onready var back_button: Button = get_node_or_null("CenterContainer/Panel/Vertical/StatBox/BackButton") as Button
+@onready var back_button: Button = get_node_or_null("CenterContainer/Panel/Vertical/StatBox/BottomRow/BackButton") as Button
+@onready var reroll_button: Button = get_node_or_null("CenterContainer/Panel/Vertical/StatBox/BottomRow/RerollButton") as Button
 
 var rng := RandomNumberGenerator.new()
 var _current_player: Player = null
 var _selected_weapon: Weapon = null
 var _current_stats: Array[Dictionary] = []
+var _rerolls_done: int = 0
+
+const REROLL_BASE_COST: int = 50
 
 
 func _ready() -> void:
@@ -170,6 +174,8 @@ func _bind_buttons() -> void:
 		choice_3.pressed.connect(_on_stat_pressed.bind(2))
 	if back_button and not back_button.pressed.is_connected(_on_back_pressed):
 		back_button.pressed.connect(_on_back_pressed)
+	if reroll_button and not reroll_button.pressed.is_connected(_on_reroll_pressed):
+		reroll_button.pressed.connect(_on_reroll_pressed)
 
 
 func open_menu() -> void:
@@ -232,6 +238,7 @@ func _show_weapon_selection() -> void:
 
 func _on_weapon_pressed(weapon: Weapon) -> void:
 	_selected_weapon = weapon
+	_rerolls_done = 0
 	_show_stat_selection()
 
 
@@ -250,6 +257,7 @@ func _show_stat_selection() -> void:
 		stat_box.visible = true
 
 	_update_stat_buttons()
+	_update_reroll_ui()
 
 
 func _roll_stats(weapon: Weapon) -> Array[Dictionary]:
@@ -304,6 +312,44 @@ func _element_damage_type(stat_id: String) -> DamageType.Type:
 		"element_holy": return DamageType.Type.HOLY
 		"element_poison": return DamageType.Type.POISON
 	return DamageType.Type.PHYSICAL
+
+
+func get_current_reroll_cost() -> int:
+	# Free rerolls on the test map (detected via TestFacilities presence).
+	if get_tree().get_first_node_in_group("test_facilities") != null:
+		return 0
+	return REROLL_BASE_COST * (1 << _rerolls_done)
+
+
+func _on_reroll_pressed() -> void:
+	if _selected_weapon == null:
+		return
+	var player: Player = _current_player
+	var cost: int = get_current_reroll_cost()
+	if cost > 0 and (player == null or not player.can_afford(cost)):
+		_update_reroll_ui()
+		return
+	if cost > 0 and not player.spend_gold(cost):
+		_update_reroll_ui()
+		return
+	_rerolls_done += 1
+	_current_stats = _roll_stats(_selected_weapon)
+	_update_stat_buttons()
+	_update_reroll_ui()
+
+
+func _update_reroll_ui() -> void:
+	if reroll_button == null:
+		return
+	var cost: int = get_current_reroll_cost()
+	if cost == 0:
+		reroll_button.text = "Reroll (free)"
+		reroll_button.disabled = false
+		return
+	var player: Player = _current_player
+	var affordable: bool = player != null and player.can_afford(cost)
+	reroll_button.text = "Reroll (%dg)" % cost
+	reroll_button.disabled = not affordable
 
 
 func _update_stat_buttons() -> void:

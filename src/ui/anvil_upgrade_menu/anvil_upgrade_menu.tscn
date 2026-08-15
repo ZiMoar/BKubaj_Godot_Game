@@ -71,21 +71,32 @@ theme_override_constants/separation = 6
 visible = false
 
 [node name="Choice1" type="Button" parent="CenterContainer/Panel/Vertical/StatBox"]
-custom_minimum_size = Vector2(0, 42)
+custom_minimum_size = Vector2(0, 38)
 layout_mode = 2
 text = "Choice 1"
 
 [node name="Choice2" type="Button" parent="CenterContainer/Panel/Vertical/StatBox"]
-custom_minimum_size = Vector2(0, 42)
+custom_minimum_size = Vector2(0, 38)
 layout_mode = 2
 text = "Choice 2"
 
 [node name="Choice3" type="Button" parent="CenterContainer/Panel/Vertical/StatBox"]
-custom_minimum_size = Vector2(0, 42)
+custom_minimum_size = Vector2(0, 38)
 layout_mode = 2
 text = "Choice 3"
 
-[node name="BackButton" type="Button" parent="CenterContainer/Panel/Vertical/StatBox"]
-custom_minimum_size = Vector2(0, 28)
+[node name="BottomRow" type="HBoxContainer" parent="CenterContainer/Panel/Vertical/StatBox"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="BackButton" type="Button" parent="CenterContainer/Panel/Vertical/StatBox/BottomRow"]
+custom_minimum_size = Vector2(0, 26)
+size_flags_horizontal = 3
 layout_mode = 2
 text = "Back"
+
+[node name="RerollButton" type="Button" parent="CenterContainer/Panel/Vertical/StatBox/BottomRow"]
+custom_minimum_size = Vector2(0, 26)
+size_flags_horizontal = 3
+layout_mode = 2
+text = "Reroll"
