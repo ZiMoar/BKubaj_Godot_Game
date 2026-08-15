@@ -35,7 +35,7 @@ func get_signature_pool() -> Array[Dictionary]:
 		{
 			"id": "vacuum_grasp",
 			"title": "Vacuum Grasp",
-			"description": "Pulses now PULL enemies toward the impact point instead of knocking them away, grouping them up.",
+			"description": "Pulses pull enemies toward the impact instead of knocking them away.",
 			"value": 1,
 			"apply": func(_w: Weapon) -> void: pass,
 		},

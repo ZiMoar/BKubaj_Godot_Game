@@ -28,7 +28,7 @@ func get_signature_pool() -> Array[Dictionary]:
 		{
 			"id": "deep_freeze",
 			"title": "Deep Freeze",
-			"description": "Enemies already slowed have a chance to be FROZEN solid — they stop moving and take double damage.",
+			"description": "Slowed enemies may become frozen, stopping them and doubling damage taken.",
 			"value": 35,
 			"apply": func(_w: Weapon) -> void: pass,
 		},

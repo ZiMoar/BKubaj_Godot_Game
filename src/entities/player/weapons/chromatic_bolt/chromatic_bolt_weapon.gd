@@ -41,7 +41,7 @@ func get_signature_pool() -> Array[Dictionary]:
 		{
 			"id": "ailment_resonance",
 			"title": "Ailment Resonance",
-			"description": "Bolts deal +20% damage for each DIFFERENT ailment already active on the enemy.",
+			"description": "Bolts deal +20% damage for each distinct ailment on the enemy.",
 			"value": 20,
 			"apply": func(_w: Weapon) -> void: pass,
 		},

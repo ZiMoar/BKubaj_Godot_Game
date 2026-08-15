@@ -40,7 +40,7 @@ func get_signature_pool() -> Array[Dictionary]:
 		{
 			"id": "cluster_bomb",
 			"title": "Cluster Bomb",
-			"description": "Bombs explode into several smaller secondary charges that scatter and go off a moment later.",
+			"description": "Bombs split into smaller charges that scatter and detonate moments later.",
 			"value": 1,
 			"apply": func(_w: Weapon) -> void: pass,
 		},

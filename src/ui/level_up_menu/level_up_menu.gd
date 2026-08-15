@@ -63,7 +63,7 @@ const UPGRADE_POOL: Array[Dictionary] = [
 	# --- Progression ---
 	{"id": "growth",               "title": "Growth",        "description": "+{value}% XP gained.",                  "min_rarity": Rarity.UNCOMMON,  "base_value": 0.20,  "value_scaling": 0.10},
 	{"id": "greed",                "title": "Greed",         "description": "+{value}% gold gained.",                 "min_rarity": Rarity.UNCOMMON,  "base_value": 0.20,  "value_scaling": 0.10},
-	{"id": "luck",                 "title": "Luck",          "description": "+{value} luck (better rarity rolls).",  "min_rarity": Rarity.UNCOMMON,  "base_value": 5.0,   "value_scaling": 3.0},
+	{"id": "luck",                 "title": "Luck",          "description": "+{value} luck, improving rarity rolls.",  "min_rarity": Rarity.UNCOMMON,  "base_value": 5.0,   "value_scaling": 3.0},
 	# --- Debug ---
 	{"id": "difficulty",           "title": "Difficulty",    "description": "+{value} difficulty.",                  "min_rarity": Rarity.RARE,      "base_value": 1.0,   "value_scaling": 0.5},
 ]

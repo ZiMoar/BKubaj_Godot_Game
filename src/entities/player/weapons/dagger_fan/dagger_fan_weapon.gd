@@ -42,7 +42,7 @@ func get_signature_pool() -> Array[Dictionary]:
 		{
 			"id": "returning_blades",
 			"title": "Returning Blades",
-			"description": "Daggers boomerang back to you after their flight, hitting enemies again on the way home.",
+			"description": "Daggers return after their flight, hitting enemies again on the way back.",
 			"value": 1,
 			"apply": func(_w: Weapon) -> void: pass,
 		},

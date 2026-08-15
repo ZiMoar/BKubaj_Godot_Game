@@ -45,7 +45,7 @@ func get_signature_pool() -> Array[Dictionary]:
 		{
 			"id": "anomaly_shot",
 			"title": "Anomaly Shot",
-			"description": "Every 4th volley becomes one massive piercing bolt. Its damage scales with your projectile count.",
+			"description": "Every fourth volley becomes a massive piercing bolt that scales with projectile count.",
 			"value": 1,
 			"apply": func(_w: Weapon) -> void: pass,
 		},

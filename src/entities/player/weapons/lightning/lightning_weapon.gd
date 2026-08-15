@@ -33,7 +33,7 @@ func get_signature_pool() -> Array[Dictionary]:
 		{
 			"id": "chain_ramp",
 			"title": "Chain Ramp",
-			"description": "Deals increased damage for each chain remaining — the first strike hits hardest.",
+			"description": "Chain strikes deal more damage the earlier they hit in the chain.",
 			"value": 20,
 			"apply": func(_w: Weapon) -> void: pass,
 		},

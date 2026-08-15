@@ -64,7 +64,7 @@ var STAT_POOL: Array[Dictionary] = [
 	{
 		"id": "projectile_speed_down",
 		"title": "Slow Projectiles",
-		"description": "-{value}% projectile travel speed (slow orbs linger).",
+		"description": "-{value}% projectile travel speed.",
 		"value": 30,
 		"weight": 1.0,
 		"apply": func(w: Weapon) -> void: w.projectile_speed_bonus -= 0.30,
@@ -72,7 +72,7 @@ var STAT_POOL: Array[Dictionary] = [
 	{
 		"id": "duration_shorten",
 		"title": "Shorter Duration",
-		"description": "-{value}% effect duration (bombs go off sooner).",
+		"description": "-{value}% effect duration.",
 		"value": 25,
 		"weight": 1.0,
 		"apply": func(w: Weapon) -> void: w.duration_bonus -= 0.25,
@@ -80,7 +80,7 @@ var STAT_POOL: Array[Dictionary] = [
 	{
 		"id": "close_range_damage",
 		"title": "Close Range",
-		"description": "+{value}% damage to close enemies (first third of reach).",
+		"description": "+{value}% damage to enemies near you.",
 		"value": 40,
 		"weight": 1.0,
 		"apply": func(w: Weapon) -> void: w.close_range_damage_bonus += 0.40,
@@ -88,7 +88,7 @@ var STAT_POOL: Array[Dictionary] = [
 	{
 		"id": "far_range_damage",
 		"title": "Far Range",
-		"description": "+{value}% damage to far enemies (beyond two-thirds of reach).",
+		"description": "+{value}% damage to distant enemies.",
 		"value": 40,
 		"weight": 1.0,
 		"apply": func(w: Weapon) -> void: w.far_range_damage_bonus += 0.40,

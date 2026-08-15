@@ -37,7 +37,7 @@ func get_signature_pool() -> Array[Dictionary]:
 		{
 			"id": "righteous_rebound",
 			"title": "Righteous Rebound",
-			"description": "The holy wave's damage is greatly amplified by the amount the barrier blocked — big hits release devastating counter-blasts.",
+			"description": "The holy wave's damage scales with the damage the barrier blocked.",
 			"value": 100,
 			"apply": func(_w: Weapon) -> void: pass,
 		},

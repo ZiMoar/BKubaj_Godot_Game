@@ -39,7 +39,7 @@ func get_signature_pool() -> Array[Dictionary]:
 		{
 			"id": "twin_spray",
 			"title": "Twin Spray",
-			"description": "The spray also emits in the opposite direction, poisoning enemies behind you too.",
+			"description": "The spray also emits in the opposite direction, hitting enemies behind you.",
 			"value": 1,
 			"apply": func(_w: Weapon) -> void: pass,
 		},

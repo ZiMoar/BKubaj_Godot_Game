@@ -49,7 +49,7 @@ func get_signature_pool() -> Array[Dictionary]:
 		{
 			"id": "dancing_arrows",
 			"title": "Dancing Arrows",
-			"description": "Convert all pierce bonuses to chain. Each chain-hit deals +20% damage.",
+			"description": "Converts pierce bonuses to chain. Each chained hit deals +20% damage.",
 			"value": 20,
 			"apply": func(_w: Weapon) -> void: pass,
 		},
