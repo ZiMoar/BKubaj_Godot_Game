@@ -26,12 +26,17 @@ const ExplosionEffectScript: Script = preload("res://src/effects/explosion_effec
 const ClusterScene: PackedScene = preload("res://src/entities/projectiles/explosive_charge/explosive_charge.tscn")
 
 
-func setup(pos: Vector2, dmg: int, crit: bool, fuse_len: float, radius_px: float, player: Node, weapon: Node) -> void:
+func setup(pos: Vector2, dmg: int, crit: bool, fuse_len: float, ref_fuse: float, radius_px: float, player: Node, weapon: Node) -> void:
 	global_position = pos
 	damage = dmg
 	is_critical = crit
 	fuse = maxf(0.3, fuse_len)
-	max_fuse = fuse
+	# max_fuse is the REFERENCE maximum fuse (not the bomb's own fuse). Keeping
+	# them distinct lets the blast scale with how short the fuse actually got:
+	# charge_mult = lerp(1.0, 2.0, fuse/max_fuse). If max_fuse were just `fuse`
+	# the ratio would always be 1.0 and "Shorter Duration" would never weaken
+	# the bomb — the exact bug this fixes.
+	max_fuse = maxf(0.3, ref_fuse)
 	radius = radius_px
 	source_player = player
 	source_weapon = weapon
@@ -94,7 +99,7 @@ func _explode() -> void:
 			var mini_pos: Vector2 = origin + offset
 			mini_charge.global_position = mini_pos
 			if mini_charge.has_method("setup"):
-				mini_charge.setup(mini_pos, sub_dmg, is_critical, sub_fuse, sub_radius, source_player, source_weapon)
+				mini_charge.setup(mini_pos, sub_dmg, is_critical, sub_fuse, sub_fuse, sub_radius, source_player, source_weapon)
 			get_tree().current_scene.add_child(mini_charge)
 
 	if get_tree() and get_tree().current_scene:

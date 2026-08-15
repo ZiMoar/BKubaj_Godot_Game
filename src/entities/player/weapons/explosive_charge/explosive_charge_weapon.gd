@@ -55,14 +55,18 @@ func fire() -> void:
 		dmg = int(round(float(dmg) * get_critical_multiplier()))
 
 	for i in range(count):
-		var fuse_len: float = randf_range(MIN_FUSE, MAX_FUSE)
-		# Shorter-duration anvil shrinks the fuse range (quicker booms).
+		# Roll the natural fuse FIRST, then optionally shorten it by the
+		# duration bonus. The natural (un-shortened) length is passed through as
+		# the bomb's reference max, so the blast scales DOWN when the fuse is
+		# shortened by the anvil's "Shorter Duration" upgrade (quicker, weaker
+		# booms) and stays at full power for un-upgraded bombs.
+		var natural_fuse: float = randf_range(MIN_FUSE, MAX_FUSE)
 		var dur_mult: float = (1.0 + duration_bonus)
-		fuse_len = maxf(0.3, fuse_len * dur_mult)
+		var fuse_len: float = maxf(0.3, natural_fuse * dur_mult)
 
 		var bomb: Node = ExplosiveChargeScene.instantiate()
 		bomb.name = "ExplosiveCharge"
 		bomb.global_position = global_position + Vector2(randf_range(-10, 10), randf_range(-10, 10))
 		if bomb.has_method("setup"):
-			bomb.setup(bomb.global_position, dmg, crit, fuse_len, BOMB_RADIUS * get_area_multiplier(), get_player(), self)
+			bomb.setup(bomb.global_position, dmg, crit, fuse_len, natural_fuse, BOMB_RADIUS * get_area_multiplier(), get_player(), self)
 		get_tree().current_scene.add_child(bomb)
