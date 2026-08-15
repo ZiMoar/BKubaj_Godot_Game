@@ -122,7 +122,6 @@ func set_selected_map(id: String) -> void:
 # ---------------------------------------------------------------------------
 
 const CATACOMBS_PATH: String = "res://src/environment/catacombs_arena.tscn"
-const NARROW_ARENA_PATH: String = "res://src/environment/narrow_arena.tscn"
 const SHOP_ARENA_PATH: String = "res://src/environment/rooms/shop_arena.tscn"
 const SPECIAL_ANVIL_ARENA_PATH: String = "res://src/environment/rooms/special_anvil_arena.tscn"
 const RELIC_ARENA_PATH: String = "res://src/environment/rooms/relic_arena.tscn"
@@ -290,11 +289,11 @@ func _random_noncombat_path() -> String:
 	return rooms[randi() % rooms.size()]
 
 
-## The next combat arena (alternates the classic fight maps for variety).
+## The next combat arena. Narrow Arena has been removed from the map rotation,
+## so every combat stage (including doors that follow a shop/anvil/relic room)
+## always opens the Catacombs.
 func _combat_path() -> String:
-	if current_arena_path.ends_with(NARROW_ARENA_PATH):
-		return CATACOMBS_PATH
-	return NARROW_ARENA_PATH
+	return CATACOMBS_PATH
 
 
 ## Captures the player + team-XP state for a loop door that reloads the SAME
