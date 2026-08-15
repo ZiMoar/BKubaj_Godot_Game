@@ -260,6 +260,15 @@ func capture_loop_state(player: Node, xp_manager: Node) -> void:
 		xp_snapshot = xp_manager.capture_xp_state()
 
 
+## Clears the carried-over snapshots for a reset/loop door that reloads the SAME
+## map but starts the character FRESH (no auto-weapons, relics, gold, level or
+## stat progression). On the fresh map, _setup_class_starting_weapons re-adds
+## only the class primary/secondary, so the player can try something new.
+func reset_loop_state() -> void:
+	player_snapshot = {}
+	xp_snapshot = {}
+
+
 ## Captures the player + team-XP state and advances to the next stage.
 func advance_stage(player: Node, xp_manager: Node) -> void:
 	if player and player.has_method("capture_run_state"):
