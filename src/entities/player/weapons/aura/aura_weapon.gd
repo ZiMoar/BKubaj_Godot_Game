@@ -77,10 +77,11 @@ func _apply_pulse_damage() -> void:
 		if player and player.has_method("current_max_health"):
 			var extra: int = int(round(float(player.current_max_health()) * 0.05))
 			final_damage += extra
-			# Self-burn: the player eats the same amount each pulse (mitigated by
-			# their own armor/shield like any other damage). Skip while invincible.
+			# Self-burn: the player eats the same amount each pulse (channeled
+			# through the player's own take_damage, so their armor/shield mitigate
+			# it like any other damage). Skip while invincible.
 			if not (player.get("is_invincible") == true):
-				player.take_damage(maxi(1, extra), false, DamageType.Type.FIRE, true)
+				player.take_damage(maxi(1, extra), self)
 
 	# Deduplicate so each enemy only gets hit once per pulse (bodies + hitbox areas overlap)
 	var hit_this_pulse: Dictionary = {}  # enemy instance_id -> true
