@@ -33,6 +33,9 @@ func _ready() -> void:
 	register_map(NARROW_ARENA_MAP)
 	register_map(TEST_MAP)
 	_register_class_ability_input()
+	# Apply any saved player keybinds to the live InputMap so every scene (menu
+	# or arena) starts with the player's configured bindings.
+	KeybindSettings.apply_saved()
 
 
 ## Register the Space-bar class-ability movement input at runtime. Registered in
