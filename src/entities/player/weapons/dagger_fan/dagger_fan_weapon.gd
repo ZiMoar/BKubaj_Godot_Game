@@ -36,6 +36,19 @@ func supports_range_damage() -> bool:
 	return true
 
 
+## Dagger Fan's signature upgrades (granted by the rare golden anvil).
+func get_signature_pool() -> Array[Dictionary]:
+	return [
+		{
+			"id": "returning_blades",
+			"title": "Returning Blades",
+			"description": "Daggers boomerang back to you after their flight, hitting enemies again on the way home.",
+			"value": 1,
+			"apply": func(_w: Weapon) -> void: pass,
+		},
+	]
+
+
 func fire() -> void:
 	if dagger_scene == null:
 		return
@@ -56,6 +69,7 @@ func fire() -> void:
 	# Slight random jitter so consecutive volleys don't overlap perfectly.
 	var eff_count: int = get_effective_projectile_count(dagger_count)
 	var eff_speed: float = get_effective_projectile_speed(dagger_speed)
+	var do_return: bool = has_signature("returning_blades")
 	var step: float = TAU / eff_count
 	for i in range(eff_count):
 		var dir: Vector2 = Vector2.RIGHT.rotated(step * i + randf_range(-0.07, 0.07))
@@ -63,5 +77,5 @@ func fire() -> void:
 		if dagger == null or not dagger.has_method("setup"):
 			continue
 		get_tree().current_scene.add_child(dagger)
-		dagger.setup(global_position, dir, eff_speed, dmg, crit, get_player(), total_pierce, total_chain, eff_chain_range, self)
+		dagger.setup(global_position, dir, eff_speed, dmg, crit, get_player(), total_pierce, total_chain, eff_chain_range, self, do_return)
 		dagger.scale *= get_area_multiplier()

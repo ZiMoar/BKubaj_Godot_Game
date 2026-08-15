@@ -35,6 +35,19 @@ func supports_duration() -> bool:
 	return true
 
 
+## Chromatic Bolt's signature upgrades (granted by the rare golden anvil).
+func get_signature_pool() -> Array[Dictionary]:
+	return [
+		{
+			"id": "ailment_resonance",
+			"title": "Ailment Resonance",
+			"description": "Bolts deal +20% damage for each DIFFERENT ailment already active on the enemy.",
+			"value": 20,
+			"apply": func(_w: Weapon) -> void: pass,
+		},
+	]
+
+
 func fire() -> void:
 	# Aim the throw at the nearest enemy, else a random direction.
 	var dir_start: Vector2 = Vector2.RIGHT

@@ -5,6 +5,12 @@ extends Weapon
 
 var active_books: Array[Area2D] = []
 
+## Tome Volley: each book fires a bolt here on an interval.
+var _volley_timer: float = 0.0
+const TOME_VOLLEY_INTERVAL: float = 1.0
+const TomeBoltScene: PackedScene = preload("res://src/entities/projectiles/magic_bolt/magic_bolt.tscn")
+
+
 func _ready() -> void:
 	weapon_name = "Orbiting Books"
 	trigger_type = TriggerType.AUTOMATIC
@@ -18,6 +24,19 @@ func _ready() -> void:
 func supports_projectile_count() -> bool:
 	return true
 
+
+## Orbiting Books' signature upgrades (granted by the rare golden anvil).
+func get_signature_pool() -> Array[Dictionary]:
+	return [
+		{
+			"id": "tome_volley",
+			"title": "Tome Volley",
+			"description": "Books periodically fire a small arcane bolt at the nearest enemy.",
+			"value": 1,
+			"apply": func(_w: Weapon) -> void: pass,
+		},
+	]
+
 func _physics_process(delta: float) -> void:
 	# 1. Clean out freed/destroyed book references
 	active_books = active_books.filter(func(item): return is_instance_valid(item))
@@ -26,6 +45,14 @@ func _physics_process(delta: float) -> void:
 	for proj in active_books:
 		if proj.has_method("update_orbit"):
 			proj.update_orbit(delta, global_position)
+
+	# 3. Tome Volley: while the signature is owned, each book periodically fires
+	#    a small arcane shot at the nearest enemy.
+	if has_signature("tome_volley"):
+		_volley_timer -= delta
+		if _volley_timer <= 0.0:
+			_volley_timer = TOME_VOLLEY_INTERVAL
+			_fire_tome_volleys()
 
 func fire() -> void:
 	if book_scene == null:
@@ -56,3 +83,41 @@ func fire() -> void:
 			spawned_book.scale *= get_area_multiplier()
 
 		active_books.append(spawned_book)
+
+
+## Tome Volley: each orbiting book lobs a magic bolt at the nearest enemy.
+func _fire_tome_volleys() -> void:
+	if TomeBoltScene == null or active_books.is_empty():
+		return
+	var enemies: Array[Node] = get_tree().get_nodes_in_group("enemies")
+	if enemies.is_empty():
+		return
+	var eff_speed: float = get_effective_projectile_speed(340.0)
+	var dmg: int = get_attack_damage(14)
+	var crit: bool = roll_critical_hit()
+	if crit:
+		dmg = int(round(float(dmg) * get_critical_multiplier()))
+
+	var nearest: Node2D = null
+	var best_d: float = INF
+	for e: Node in enemies:
+		if not is_instance_valid(e):
+			continue
+		var en: Node2D = e as Node2D
+		var d: float = global_position.distance_squared_to(en.global_position)
+		if d < best_d:
+			best_d = d
+			nearest = en
+	if nearest == null:
+		return
+
+	for book: Area2D in active_books:
+		if not is_instance_valid(book):
+			continue
+		var shot: Node = TomeBoltScene.instantiate()
+		get_tree().current_scene.add_child(shot)
+		if shot.has_method("setup"):
+			var to: Vector2 = (nearest.global_position - book.global_position).normalized()
+			if to == Vector2.ZERO:
+				to = Vector2.RIGHT
+			shot.setup(book.global_position, to, eff_speed, dmg, crit, get_player(), self, 0)

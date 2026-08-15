@@ -49,12 +49,20 @@ func _on_hit_area(area: Area2D) -> void:
 
 func _hit(node: Node) -> void:
 	if node and (node.is_in_group("enemies") or node.is_in_group("destructibles")) and node.has_method("take_damage"):
-		node.take_damage(damage, is_critical, damage_type)
+		var dealt: int = damage
+		# Ailment Resonance: the bolt deals extra damage for each distinct ailment
+		# already active on the enemy (+20% each).
+		if source_weapon and source_weapon.has_method("has_signature") and source_weapon.has_signature("ailment_resonance") \
+				and node.has_method("count_active_ailments"):
+			var ailments: int = node.count_active_ailments()
+			if ailments > 0:
+				dealt += int(round(float(dealt) * 0.20 * float(ailments)))
+		node.take_damage(dealt, is_critical, damage_type)
 		if source_player and source_player.has_method("apply_lifesteal"):
 			source_player.apply_lifesteal()
 		if source_weapon and node.is_in_group("enemies"):
 			if node.has_method("has_died") and node.has_died():
-				source_weapon.apply_explosion_on_kill(global_position, damage)
+				source_weapon.apply_explosion_on_kill(global_position, dealt)
 	queue_free()
 
 

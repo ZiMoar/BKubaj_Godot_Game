@@ -132,4 +132,3 @@ func _on_slash_hit(node: Node) -> void:
 			if target.is_in_group("enemies"):
 				if target.has_method("has_died") and target.has_died():
 					apply_explosion_on_kill(target.global_position, current_attack_damage)
-

@@ -44,6 +44,23 @@ func _apply_area_radius() -> void:
 		aura_visual.set_radius(eff_radius)
 
 
+func supports_range_damage() -> bool:
+	return true
+
+
+## Fire Aura's signature upgrades (granted by the rare golden anvil).
+func get_signature_pool() -> Array[Dictionary]:
+	return [
+		{
+			"id": "righteous_fire",
+			"title": "Righteous Fire",
+			"description": "Aura deals EXTRA damage equal to 5% of your max HP, but burns you too with each pulse.",
+			"value": 5,
+			"apply": func(_w: Weapon) -> void: pass,
+		},
+	]
+
+
 func _apply_pulse_damage() -> void:
 	if aura_visual:
 		aura_visual.pulse()
@@ -52,6 +69,18 @@ func _apply_pulse_damage() -> void:
 	var is_crit: bool = roll_critical_hit()
 	if is_crit:
 		final_damage = int(round(float(final_damage) * get_critical_multiplier()))
+
+	# Righteous Fire: the aura deals extra damage equal to a % of the player's
+	# max HP, but burns the player too with each pulse.
+	if has_signature("righteous_fire"):
+		var player: Node = get_player()
+		if player and player.has_method("current_max_health"):
+			var extra: int = int(round(float(player.current_max_health()) * 0.05))
+			final_damage += extra
+			# Self-burn: the player eats the same amount each pulse (mitigated by
+			# their own armor/shield like any other damage). Skip while invincible.
+			if not (player.get("is_invincible") == true):
+				player.take_damage(maxi(1, extra), false, DamageType.Type.FIRE, true)
 
 	# Deduplicate so each enemy only gets hit once per pulse (bodies + hitbox areas overlap)
 	var hit_this_pulse: Dictionary = {}  # enemy instance_id -> true

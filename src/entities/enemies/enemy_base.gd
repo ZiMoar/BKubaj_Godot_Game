@@ -272,6 +272,30 @@ func mark_shocked() -> void:
 	shock_timer = SHOCK_DURATION
 
 
+## Counts how many DISTINCT ailments are currently active on this enemy.
+## Used by the Chromatic Bolt "Ailment Resonance" signature (bonus damage per
+## ailment) and any future synergy effects.
+func count_active_ailments() -> int:
+	var count: int = 0
+	if burn_dps > 0.0 or burn_ticks_remaining > 0:
+		count += 1
+	if poison_stacks > 0 or poison_duration > 0.0:
+		count += 1
+	if slow_timer > 0.0:
+		count += 1
+	if shock_timer > 0.0:
+		count += 1
+	if crit_vuln_timer > 0.0:
+		count += 1
+	if decay_timer > 0.0:
+		count += 1
+	if brand_timer > 0.0:
+		count += 1
+	if impale_pool > 0.0:
+		count += 1
+	return count
+
+
 # Rolls the player's ailment chance. Returns true if the current hit's damage
 # type should also inflict its matching ailment.
 func _roll_ailment() -> bool:

@@ -14,6 +14,12 @@ var chain_range: float = 180.0
 var source_weapon: Node = null
 var _lifetime: float = 1.6
 var _already_hit: Dictionary = {}
+## Returning Blades (boomerang) — dagger flies a bit then returns to the player.
+var returning: bool = false
+var _return_timer: float = 0.0
+var _return_delay: float = 0.5
+var _age: float = 0.0
+var _has_returned: bool = false
 
 
 func _ready() -> void:
@@ -21,7 +27,7 @@ func _ready() -> void:
 	area_entered.connect(_on_area_entered)
 
 
-func setup(pos: Vector2, direction: Vector2, dagger_speed: float, dmg: int, crit: bool, player: Player, pierce_total: int = 1, chain_total: int = 0, chain_range_px: float = 180.0, weapon: Node = null) -> void:
+func setup(pos: Vector2, direction: Vector2, dagger_speed: float, dmg: int, crit: bool, player: Player, pierce_total: int = 1, chain_total: int = 0, chain_range_px: float = 180.0, weapon: Node = null, do_return: bool = false) -> void:
 	global_position = pos
 	dir = direction.normalized()
 	speed = dagger_speed
@@ -32,14 +38,44 @@ func setup(pos: Vector2, direction: Vector2, dagger_speed: float, dmg: int, crit
 	pierce_left = maxi(0, pierce_total - 1)
 	chain_left = maxi(0, chain_total)
 	chain_range = chain_range_px
+	returning = do_return
 	rotation = dir.angle()
 
 
 func _physics_process(delta: float) -> void:
 	_lifetime -= delta
+	_age += delta
 	if _lifetime <= 0.0:
 		queue_free()
 		return
+
+	# Returning Blades: when the return delay elapses, boomerang back to the player.
+	if returning and not _has_returned and _age >= _return_delay:
+		_has_returned = true
+		_already_hit.clear()
+
+	if _has_returned:
+		_return_timer += delta
+		if _return_timer <= 1.0:
+			var p: Node = source_player
+			if p and is_instance_valid(p):
+				var to_p: Vector2 = (p.global_position - global_position).normalized()
+				if to_p != Vector2.ZERO:
+					dir = to_p
+					rotation = dir.angle()
+				global_position += dir * speed * 1.3 * delta
+				# Stop when it reaches the player.
+				if global_position.distance_to(p.global_position) < 14.0:
+					queue_free()
+					return
+			else:
+				queue_free()
+				return
+		else:
+			queue_free()
+			return
+		return
+
 	global_position += dir * speed * delta
 
 
