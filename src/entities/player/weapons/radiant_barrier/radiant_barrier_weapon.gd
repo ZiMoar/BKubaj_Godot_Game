@@ -89,14 +89,24 @@ func _release_holy_wave(blocked_damage: int) -> void:
 			if en.is_in_group("enemies") and en.has_method("has_died") and en.has_died():
 				apply_explosion_on_kill(en.global_position, wave_dmg)
 
-	# Expanding ring visual.
+	# Expanding-ring explosion visual so the block is unmistakable (bigger +
+	# brighter than the base explosion so it reads clearly on the grid floor).
 	if is_instance_valid(self) and get_tree() and get_tree().current_scene:
 		var fx: Node2D = ExplosionEffectScript.new()
 		fx.name = "RadiantWaveFX"
 		fx.global_position = origin
-		fx.set("max_radius", eff_radius)
-		fx.set("color", Color(1.0, 0.95, 0.7, 0.9))
+		fx.set("max_radius", eff_radius * 1.2)
+		fx.set("color", Color(1.0, 0.9, 0.5, 1.0))
+		fx.set("_duration", 0.5)
 		get_tree().current_scene.add_child(fx)
+		# Second, inner bright flash that fills and fades even faster.
+		var fx2: Node2D = ExplosionEffectScript.new()
+		fx2.name = "RadiantFlashFX"
+		fx2.global_position = origin
+		fx2.set("max_radius", eff_radius * 0.7)
+		fx2.set("color", Color(1.0, 1.0, 0.85, 1.0))
+		fx2.set("_duration", 0.25)
+		get_tree().current_scene.add_child(fx2)
 
 
 func _draw() -> void:

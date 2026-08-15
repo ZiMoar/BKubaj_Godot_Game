@@ -10,12 +10,15 @@ extends Control
 signal upgrade_applied(weapon: Weapon, stat_id: String)
 
 # The anvil stat pool. Each entry knows how to apply itself to a Weapon node.
+# "weight" governs how likely an entry is to be rolled vs others (higher = more
+# common). Damage-type conversions are half-weighted so they appear less often.
 var STAT_POOL: Array[Dictionary] = [
 	{
 		"id": "projectile_count",
 		"title": "Projectile Count",
 		"description": "+{value} projectile(s).",
 		"value": 1,
+		"weight": 1.0,
 		"apply": func(w: Weapon) -> void: w.projectile_count_bonus += 1,
 	},
 	{
@@ -23,6 +26,7 @@ var STAT_POOL: Array[Dictionary] = [
 		"title": "Pierce",
 		"description": "+{value} pierce.",
 		"value": 1,
+		"weight": 1.0,
 		"apply": func(w: Weapon) -> void: w.pierce_bonus += 1,
 	},
 	{
@@ -30,6 +34,7 @@ var STAT_POOL: Array[Dictionary] = [
 		"title": "Chain",
 		"description": "+{value} chain.",
 		"value": 1,
+		"weight": 1.0,
 		"apply": func(w: Weapon) -> void: w.chain_count_bonus += 1,
 	},
 	{
@@ -37,6 +42,7 @@ var STAT_POOL: Array[Dictionary] = [
 		"title": "Area",
 		"description": "+{value}% skill & projectile size.",
 		"value": 10,
+		"weight": 1.0,
 		"apply": func(w: Weapon) -> void: w.area_bonus += 0.10,
 	},
 	{
@@ -44,6 +50,7 @@ var STAT_POOL: Array[Dictionary] = [
 		"title": "Repeat",
 		"description": "Attack {value} extra time(s) in succession.",
 		"value": 1,
+		"weight": 1.0,
 		"apply": func(w: Weapon) -> void: w.repeat_bonus += 1,
 	},
 	{
@@ -51,6 +58,7 @@ var STAT_POOL: Array[Dictionary] = [
 		"title": "Projectile Speed",
 		"description": "+{value}% projectile travel speed.",
 		"value": 30,
+		"weight": 1.0,
 		"apply": func(w: Weapon) -> void: w.projectile_speed_bonus += 0.30,
 	},
 	{
@@ -58,6 +66,7 @@ var STAT_POOL: Array[Dictionary] = [
 		"title": "Slow Projectiles",
 		"description": "-{value}% projectile travel speed (slow orbs linger).",
 		"value": 30,
+		"weight": 1.0,
 		"apply": func(w: Weapon) -> void: w.projectile_speed_bonus -= 0.30,
 	},
 	{
@@ -65,6 +74,7 @@ var STAT_POOL: Array[Dictionary] = [
 		"title": "Shorter Duration",
 		"description": "-{value}% effect duration (bombs go off sooner).",
 		"value": 25,
+		"weight": 1.0,
 		"apply": func(w: Weapon) -> void: w.duration_bonus -= 0.25,
 	},
 	{
@@ -72,6 +82,7 @@ var STAT_POOL: Array[Dictionary] = [
 		"title": "Close Range",
 		"description": "+{value}% damage to close enemies (first third of reach).",
 		"value": 40,
+		"weight": 1.0,
 		"apply": func(w: Weapon) -> void: w.close_range_damage_bonus += 0.40,
 	},
 	{
@@ -79,6 +90,7 @@ var STAT_POOL: Array[Dictionary] = [
 		"title": "Far Range",
 		"description": "+{value}% damage to far enemies (beyond two-thirds of reach).",
 		"value": 40,
+		"weight": 1.0,
 		"apply": func(w: Weapon) -> void: w.far_range_damage_bonus += 0.40,
 	},
 	{
@@ -86,6 +98,7 @@ var STAT_POOL: Array[Dictionary] = [
 		"title": "Explosion on Kill",
 		"description": "{value}% chance kills explode in an AOE.",
 		"value": 25,
+		"weight": 1.0,
 		"apply": func(w: Weapon) -> void: w.explosion_on_kill_chance = minf(1.0, w.explosion_on_kill_chance + 0.25),
 	},
 	{
@@ -93,6 +106,7 @@ var STAT_POOL: Array[Dictionary] = [
 		"title": "Fire Damage",
 		"description": "Convert damage to FIRE.",
 		"value": 0,
+		"weight": 0.5,
 		"apply": func(w: Weapon) -> void: w.damage_type = DamageType.Type.FIRE,
 	},
 	{
@@ -100,6 +114,7 @@ var STAT_POOL: Array[Dictionary] = [
 		"title": "Lightning Damage",
 		"description": "Convert damage to LIGHTNING.",
 		"value": 0,
+		"weight": 0.5,
 		"apply": func(w: Weapon) -> void: w.damage_type = DamageType.Type.LIGHTNING,
 	},
 	{
@@ -107,6 +122,7 @@ var STAT_POOL: Array[Dictionary] = [
 		"title": "Cold Damage",
 		"description": "Convert damage to COLD.",
 		"value": 0,
+		"weight": 0.5,
 		"apply": func(w: Weapon) -> void: w.damage_type = DamageType.Type.COLD,
 	},
 	{
@@ -114,6 +130,7 @@ var STAT_POOL: Array[Dictionary] = [
 		"title": "Arcane Damage",
 		"description": "Convert damage to ARCANE.",
 		"value": 0,
+		"weight": 0.5,
 		"apply": func(w: Weapon) -> void: w.damage_type = DamageType.Type.ARCANE,
 	},
 	{
@@ -121,6 +138,7 @@ var STAT_POOL: Array[Dictionary] = [
 		"title": "Necrotic Damage",
 		"description": "Convert damage to NECROTIC.",
 		"value": 0,
+		"weight": 0.5,
 		"apply": func(w: Weapon) -> void: w.damage_type = DamageType.Type.NECROTIC,
 	},
 	{
@@ -128,6 +146,7 @@ var STAT_POOL: Array[Dictionary] = [
 		"title": "Holy Damage",
 		"description": "Convert damage to HOLY.",
 		"value": 0,
+		"weight": 0.5,
 		"apply": func(w: Weapon) -> void: w.damage_type = DamageType.Type.HOLY,
 	},
 	{
@@ -135,6 +154,7 @@ var STAT_POOL: Array[Dictionary] = [
 		"title": "Poison Damage",
 		"description": "Convert damage to POISON.",
 		"value": 0,
+		"weight": 0.5,
 		"apply": func(w: Weapon) -> void: w.damage_type = DamageType.Type.POISON,
 	},
 ]
@@ -268,10 +288,25 @@ func _roll_stats(weapon: Weapon) -> Array[Dictionary]:
 
 	var choices: Array[Dictionary] = []
 	while choices.size() < 3 and not pool.is_empty():
-		var index: int = rng.randi_range(0, pool.size() - 1)
+		var index: int = _weighted_pick(pool)
 		choices.append(pool[index])
 		pool.remove_at(index)
 	return choices
+
+
+## Weighted random pick from a pool of stat dicts (entries carry a "weight").
+## Skimpy entries (e.g. damage-type conversion at 0.5) appear less often.
+func _weighted_pick(pool: Array[Dictionary]) -> int:
+	var total: float = 0.0
+	for stat: Dictionary in pool:
+		total += float(stat.get("weight", 1.0))
+	var roll: float = rng.randf() * total
+	var acc: float = 0.0
+	for i: int in range(pool.size()):
+		acc += float(pool[i].get("weight", 1.0))
+		if roll < acc:
+			return i
+	return pool.size() - 1
 
 
 func _weapon_supports(weapon: Weapon, stat_id: String) -> bool:
