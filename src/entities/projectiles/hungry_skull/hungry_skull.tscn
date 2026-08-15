@@ -1,0 +1,14 @@
+[gd_scene format=3 uid="uid://b2hgryskl00n" load_steps=3]
+
+[ext_resource type="Script" path="res://src/entities/projectiles/hungry_skull/hungry_skull.gd" id="1_skull"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_skull"]
+radius = 8.0
+
+[node name="HungrySkull" type="Area2D"]
+collision_layer = 64
+collision_mask = 36
+script = ExtResource("1_skull")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_skull")

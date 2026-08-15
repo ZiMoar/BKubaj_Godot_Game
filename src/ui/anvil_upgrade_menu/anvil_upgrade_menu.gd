@@ -54,6 +54,20 @@ var STAT_POOL: Array[Dictionary] = [
 		"apply": func(w: Weapon) -> void: w.projectile_speed_bonus += 0.30,
 	},
 	{
+		"id": "projectile_speed_down",
+		"title": "Slow Projectiles",
+		"description": "-{value}% projectile travel speed (slow orbs linger).",
+		"value": 30,
+		"apply": func(w: Weapon) -> void: w.projectile_speed_bonus -= 0.30,
+	},
+	{
+		"id": "duration_shorten",
+		"title": "Shorter Duration",
+		"description": "-{value}% effect duration (bombs go off sooner).",
+		"value": 25,
+		"apply": func(w: Weapon) -> void: w.duration_bonus -= 0.25,
+	},
+	{
 		"id": "close_range_damage",
 		"title": "Close Range",
 		"description": "+{value}% damage to close enemies (first third of reach).",
@@ -266,6 +280,10 @@ func _weapon_supports(weapon: Weapon, stat_id: String) -> bool:
 			return weapon.supports_repeat()
 		"projectile_speed":
 			return weapon.supports_projectile_speed()
+		"projectile_speed_down":
+			return weapon.supports_projectile_speed()
+		"duration_shorten":
+			return weapon.supports_duration()
 		"close_range_damage", "far_range_damage":
 			return weapon.supports_range_damage()
 		"explosion_on_kill":

@@ -1,0 +1,7 @@
+[gd_scene format=3 uid="uid://b2mgcplse00n"]
+
+[ext_resource type="Script" path="res://src/entities/projectiles/magic_pulse/magic_pulse.gd" id="1_pulse"]
+
+[node name="MagicPulseEffect" type="Node2D"]
+z_index = 5
+script = ExtResource("1_pulse")

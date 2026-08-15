@@ -738,6 +738,14 @@ func take_damage(amount: int, source: Node = null) -> void:
 		trigger_evasion()
 		return
 
+	# Radiant Barrier (holy auto-weapon): an active barrier can reduce/absorb the
+	# next hit taken and release a holy wave. Ask any active barrier to process
+	# this hit; it returns the damage that still gets through.
+	amount = _try_radiant_barrier(amount)
+	if amount <= 0:
+		trigger_invincibility()
+		return
+
 	# Flat armor uses the same diminishing-returns formula as attack speed:
 	# 100/(100+armor). armor=100 -> 50% damage taken, armor=300 -> 25%.
 	var mitigated_damage = maxf(0.0, float(amount) * get_damage_reduction_multiplier())
@@ -759,6 +767,21 @@ func trigger_invincibility() -> void:
 
 func trigger_evasion() -> void:
 	_start_invincibility_effect(invincibility_duration + invincibility_frame_bonus, Color(0.35, 0.85, 1.0, 0.75))
+
+
+## Asks any active Radiant Barrier (holy auto-weapon, in group "radiant_barrier")
+## to process an incoming hit. The barrier reduces the damage (this hit becomes
+## "blocked") and releases a holy wave; returns the damage that still gets
+## through (0 if fully absorbed).
+func _try_radiant_barrier(amount: int) -> int:
+	var barriers := get_tree().get_nodes_in_group("radiant_barrier")
+	var remaining: int = amount
+	for b: Node in barriers:
+		if is_instance_valid(b) and b.has_method("block_hit"):
+			remaining = int(b.block_hit(amount))
+			if remaining < amount:
+				break  # an active barrier blocked this hit
+	return remaining
 
 func _start_invincibility_effect(duration: float, flash_color: Color) -> void:
 	is_invincible = true

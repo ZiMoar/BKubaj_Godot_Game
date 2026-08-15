@@ -1,0 +1,7 @@
+[gd_scene format=3 uid="uid://b2expcharge00n"]
+
+[ext_resource type="Script" path="res://src/entities/projectiles/explosive_charge/explosive_charge.gd" id="1_charge"]
+
+[node name="ExplosiveCharge" type="Node2D"]
+z_index = 4
+script = ExtResource("1_charge")

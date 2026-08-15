@@ -1,0 +1,111 @@
+extends Weapon
+
+## Radiant Barrier — automatic. Grants the player a holy barrier that absorbs the
+## next hit taken (reducing it to 0) and, when struck, releases a local wave of
+## HOLY damage. Re-arms on its cooldown. The barrier registers itself in the
+## "radiant_barrier" group so the player's take_damage can hand it the hit.
+
+const BLOCK_FULL: bool = true   # barrier fully absorbs the next hit
+
+const COOLDOWN: float = 7.0
+const BARRIER_DURATION: float = 3.0   # how long the barrier waits for a hit
+const WAVE_DAMAGE: int = 40
+const WAVE_RADIUS: float = 130.0
+const WAVE_KNOCKBACK: float = 120.0
+
+var _barrier_active: bool = false
+var _barrier_timer: float = 0.0
+var _wave_pulse: float = 0.0   # cosmetic expanding flash after a block
+
+
+func _ready() -> void:
+	weapon_name = "Radiant Barrier"
+	trigger_type = TriggerType.AUTOMATIC
+	cooldown = COOLDOWN
+	damage_type = DamageType.Type.HOLY
+	super._ready()
+	add_to_group("radiant_barrier")
+	call_deferred("try_fire")
+
+func supports_area() -> bool:
+	return true
+
+
+func fire() -> void:
+	_activate_barrier()
+
+
+func _activate_barrier() -> void:
+	_barrier_active = true
+	_barrier_timer = get_effective_duration(BARRIER_DURATION)
+	queue_redraw()
+
+
+func _physics_process(delta: float) -> void:
+	if _barrier_active:
+		_barrier_timer -= delta
+		if _barrier_timer <= 0.0:
+			_barrier_active = false
+			queue_redraw()
+	if _wave_pulse > 0.0:
+		_wave_pulse = maxf(0.0, _wave_pulse - delta)
+		queue_redraw()
+
+
+## Called by the player's take_damage when this barrier is in the group. Returns
+## the damage that still gets through (0 when blocked). Only the first active
+## barrier that blocks consumes the hit.
+func block_hit(amount: int) -> int:
+	if not _barrier_active:
+		return amount
+	if amount <= 0:
+		return amount
+	# Absorb this hit fully and release a holy wave.
+	_barrier_active = false
+	_wave_pulse = 0.35
+	_release_holy_wave(amount)
+	return 0
+
+
+func _release_holy_wave(blocked_damage: int) -> void:
+	var wave_dmg: int = get_attack_damage(WAVE_DAMAGE)
+	# Stronger barriers scale the wave a bit with the blocked amount too.
+	wave_dmg += int(round(float(blocked_damage) * 0.25))
+	var origin: Vector2 = global_position
+	var eff_radius: float = WAVE_RADIUS * get_area_multiplier()
+
+	var targets: Array[Node] = get_tree().get_nodes_in_group("enemies")
+	for d: Node in get_tree().get_nodes_in_group("destructibles"):
+		targets.append(d)
+	for e: Node in targets:
+		if not is_instance_valid(e):
+			continue
+		var en: Node2D = e as Node2D
+		if origin.distance_to(en.global_position) <= eff_radius:
+			en.take_damage(wave_dmg, false, damage_type)
+			apply_lifesteal()
+			if en.has_method("apply_knockback"):
+				en.apply_knockback(origin, WAVE_KNOCKBACK)
+			if en.is_in_group("enemies") and en.has_method("has_died") and en.has_died():
+				apply_explosion_on_kill(en.global_position, wave_dmg)
+
+	# Expanding ring visual.
+	if is_instance_valid(self) and get_tree() and get_tree().current_scene:
+		var fx: Node2D = ExplosionEffectScript.new()
+		fx.name = "RadiantWaveFX"
+		fx.global_position = origin
+		fx.set("max_radius", eff_radius)
+		fx.set("color", Color(1.0, 0.95, 0.7, 0.9))
+		get_tree().current_scene.add_child(fx)
+
+
+func _draw() -> void:
+	if _barrier_active:
+		# Holy glow ring around the player while the barrier is up.
+		var a: float = 0.75
+		var pulse_a: float = 0.5 + 0.3 * sin(Time.get_ticks_msec() * 0.01)
+		draw_arc(Vector2.ZERO, 22.0, 0.0, TAU, 40, Color(1.0, 0.95, 0.7, a), 3.0)
+		draw_arc(Vector2.ZERO, 30.0, 0.0, TAU, 40, Color(1.0, 0.95, 0.7, pulse_a), 1.5)
+	if _wave_pulse > 0.0:
+		var t: float = 1.0 - (_wave_pulse / 0.35)
+		draw_arc(Vector2.ZERO, 22.0 + t * 60.0, 0.0, TAU, 40, Color(1.0, 0.9, 0.6, (1.0 - t) * 0.8), 3.0)

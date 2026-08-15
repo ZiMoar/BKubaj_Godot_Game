@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://b2chromwpn0n"]
+
+[ext_resource type="Script" uid="uid://ddgfl1gmlqm0d" path="res://src/entities/player/weapons/chromatic_bolt/chromatic_bolt_weapon.gd" id="1_script"]
+
+[node name="chromatic_bolt_weapon" type="Node2D" unique_id=755407928]
+script = ExtResource("1_script")

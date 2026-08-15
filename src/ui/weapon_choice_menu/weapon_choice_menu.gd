@@ -10,6 +10,12 @@ const AUTO_WEAPON_POOL: Array[Dictionary] = [
 	{"scene": preload("res://src/entities/player/weapons/dagger_fan/dagger_fan_weapon.tscn"), "name": "Dagger Fan",      "cooldown": 1.8, "desc": "A piercing ring of daggers around you"},
 	{"scene": preload("res://src/entities/player/weapons/lightning/lightning_weapon.tscn"), "name": "Lightning Bolt",  "cooldown": 2.0, "desc": "Chain lightning strikes nearby enemies"},
 	{"scene": preload("res://src/entities/player/weapons/frost_nova/frost_nova_weapon.tscn"), "name": "Frost Nova",     "cooldown": 3.0, "desc": "Damages and slows enemies around you"},
+	{"scene": preload("res://src/entities/player/weapons/chromatic_bolt/chromatic_bolt_weapon.tscn"), "name": "Chromatic Bolt", "cooldown": 2.5, "desc": "Orb fires bolts of random damage type; slows and lingers"},
+	{"scene": preload("res://src/entities/player/weapons/poison_spray/poison_spray_weapon.tscn"), "name": "Poison Spray",   "cooldown": 3.2, "desc": "Continuous poison stream that lingers over the area", "compendium_desc": "Sprays a continuous stream of poison that lingers over the area. It deals no direct damage - it only inflicts the POISON ailment, guaranteed. Because the ailment can't miss, your Ailment Chance boosts this skill's poison strength instead."},
+	{"scene": preload("res://src/entities/player/weapons/radiant_barrier/radiant_barrier_weapon.tscn"), "name": "Radiant Barrier", "cooldown": 7.0, "desc": "Blocks the next hit and releases a holy wave"},
+	{"scene": preload("res://src/entities/player/weapons/hungry_skull/hungry_skull_weapon.tscn"), "name": "Hungry Skull",    "cooldown": 3.5, "desc": "A homing skull that chews enemies with necrotic damage"},
+	{"scene": preload("res://src/entities/player/weapons/magic_pulse/magic_pulse_weapon.tscn"), "name": "Magic Pulse",     "cooldown": 2.2, "desc": "Cone of arcane energy that pushes enemies back"},
+	{"scene": preload("res://src/entities/player/weapons/explosive_charge/explosive_charge_weapon.tscn"), "name": "Explosive Charge", "cooldown": 3.0, "desc": "Drops a bomb that explodes with fire — longer fuze, bigger boom"},
 ]
 
 @onready var title_label: Label = get_node_or_null("CenterContainer/Panel/Vertical/TitleLabel") as Label

@@ -33,6 +33,7 @@ var chain_count_bonus: int = 0
 var area_bonus: float = 0.0
 var repeat_bonus: int = 0            # extra volleys fired in succession per trigger
 var projectile_speed_bonus: float = 0.0  # fractional (+0.5 = +50% speed)
+var duration_bonus: float = 0.0          # fractional; negative = shorter durations (-0.2 = 20% shorter)
 var close_range_damage_bonus: float = 0.0  # dmg mult in the closest third of reach
 var far_range_damage_bonus: float = 0.0    # dmg mult beyond two-thirds of reach
 var explosion_on_kill_chance: float = 0.0  # chance a kill triggers an AOE
@@ -111,6 +112,12 @@ func get_effective_chain_count(base: int) -> int:
 func get_effective_projectile_speed(base_speed: float) -> float:
 	return maxf(0.0, base_speed * (1.0 + projectile_speed_bonus))
 
+
+# Effective ability/projectile duration (base + anvil bonus). A negative
+# duration_bonus means things end sooner (e.g. shorter bomb fuze).
+func get_effective_duration(base_duration: float) -> float:
+	return maxf(0.05, base_duration * (1.0 + duration_bonus))
+
 # Returns the number of times this weapon should fire per trigger (repeat).
 func get_fire_repeat_count() -> int:
 	return maxi(1, repeat_bonus + 1)
@@ -135,6 +142,9 @@ func supports_repeat() -> bool:
 	return true
 
 func supports_projectile_speed() -> bool:
+	return false
+
+func supports_duration() -> bool:
 	return false
 
 func supports_range_damage() -> bool:

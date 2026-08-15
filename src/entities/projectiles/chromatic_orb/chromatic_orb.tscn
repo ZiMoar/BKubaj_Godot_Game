@@ -1,0 +1,7 @@
+[gd_scene format=3 uid="uid://b2chromorb00n"]
+
+[ext_resource type="Script" path="res://src/entities/projectiles/chromatic_orb/chromatic_orb.gd" id="1_orb"]
+
+[node name="ChromaticOrb" type="Node2D"]
+z_index = 6
+script = ExtResource("1_orb")

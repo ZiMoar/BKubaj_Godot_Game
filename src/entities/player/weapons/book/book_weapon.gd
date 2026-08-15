@@ -9,6 +9,7 @@ func _ready() -> void:
 	weapon_name = "Orbiting Books"
 	trigger_type = TriggerType.AUTOMATIC
 	cooldown = 5.0
+	damage_type = DamageType.Type.ARCANE
 	super._ready()
 	
 	# Spawn books immediately on game load

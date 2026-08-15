@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://b2mgcpwpn00n"]
+
+[ext_resource type="Script" uid="uid://dvxjt1ef7026u" path="res://src/entities/player/weapons/magic_pulse/magic_pulse_weapon.gd" id="1_script"]
+
+[node name="magic_pulse_weapon" type="Node2D" unique_id=2130686304]
+script = ExtResource("1_script")

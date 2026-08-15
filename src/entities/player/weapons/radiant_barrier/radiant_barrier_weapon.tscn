@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://b2radbrr000n"]
+
+[ext_resource type="Script" uid="uid://cuyaefvkvts86" path="res://src/entities/player/weapons/radiant_barrier/radiant_barrier_weapon.gd" id="1_script"]
+
+[node name="radiant_barrier_weapon" type="Node2D" unique_id=1429091511]
+script = ExtResource("1_script")

@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://b2poisnpwpn0n"]
+
+[ext_resource type="Script" uid="uid://cpipqwb0qh84c" path="res://src/entities/player/weapons/poison_spray/poison_spray_weapon.gd" id="1_script"]
+
+[node name="poison_spray_weapon" type="Node2D" unique_id=1787524818]
+script = ExtResource("1_script")

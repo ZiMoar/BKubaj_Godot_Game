@@ -91,7 +91,9 @@ static func _weapons() -> Array[Dictionary]:
 		list.append({
 			"name": w["name"] as String,
 			"subtitle": "Automatic · %.1fs" % float(w["cooldown"]),
-			"desc": w["desc"] as String,
+			# The compendium can carry deeper mechanic notes via compendium_desc
+			# (kept off the in-game tooltip); fall back to the short desc.
+			"desc": (w["compendium_desc"] as String) if w.has("compendium_desc") else (w["desc"] as String),
 			"color": gold,
 		})
 	return list

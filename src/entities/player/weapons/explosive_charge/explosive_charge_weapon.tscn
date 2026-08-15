@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://b2expcwpn00n"]
+
+[ext_resource type="Script" uid="uid://c4wqcso50q75y" path="res://src/entities/player/weapons/explosive_charge/explosive_charge_weapon.gd" id="1_script"]
+
+[node name="explosive_charge_weapon" type="Node2D" unique_id=726231299]
+script = ExtResource("1_script")

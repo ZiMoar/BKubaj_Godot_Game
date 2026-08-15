@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://b2hgrywpn00n"]
+
+[ext_resource type="Script" uid="uid://up2cpgsthvsu" path="res://src/entities/player/weapons/hungry_skull/hungry_skull_weapon.gd" id="1_script"]
+
+[node name="hungry_skull_weapon" type="Node2D" unique_id=1532435668]
+script = ExtResource("1_script")

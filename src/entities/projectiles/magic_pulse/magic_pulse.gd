@@ -1,0 +1,83 @@
+class_name MagicPulseEffect
+extends Node2D
+
+## Short-lived cone of arcane energy fired by the Magic Pulse weapon. Immediately
+## damages and knocks back every enemy inside the cone on spawn, then plays a
+## quick fade-out.
+
+var direction: Vector2 = Vector2.RIGHT
+var damage: int = 0
+var is_critical: bool = false
+var range_px: float = 200.0
+var half_angle: float = 0.7  # radians
+var knockback: float = 260.0
+var source_player: Node = null
+var source_weapon: Node = null
+
+var _life: float = 0.28
+var _applied: bool = false
+
+
+func setup(weapon: Node, player: Node, aim_dir: Vector2, dmg: int, crit: bool, rng_px: float, knock: float) -> void:
+	source_weapon = weapon
+	source_player = player
+	direction = aim_dir.normalized()
+	if direction == Vector2.ZERO:
+		direction = Vector2.RIGHT
+	damage = dmg
+	is_critical = crit
+	range_px = rng_px
+	knockback = knock
+	rotation = direction.angle()
+	# Pulse damage is applied on the first physics frame, after the node has been
+	# parented, so the tree is valid.
+
+
+func _physics_process(delta: float) -> void:
+	if not _applied:
+		_applied = true
+		_apply_pulse()
+	_life -= delta
+	if _life <= 0.0:
+		queue_free()
+		return
+	queue_redraw()
+
+
+func _apply_pulse() -> void:
+	var enemies: Array[Node] = get_tree().get_nodes_in_group("enemies")
+	for e: Node in enemies:
+		if not is_instance_valid(e):
+			continue
+		var en: Node2D = e as Node2D
+		if not _in_cone(en.global_position):
+			continue
+		en.take_damage(damage, is_critical, DamageType.Type.ARCANE)
+		if source_player and source_player.has_method("apply_lifesteal"):
+			source_player.apply_lifesteal()
+		if en.has_method("apply_knockback"):
+			en.apply_knockback(global_position, knockback)
+		if source_weapon and en.is_in_group("enemies"):
+			if en.has_method("has_died") and en.has_died():
+				source_weapon.apply_explosion_on_kill(en.global_position, damage)
+
+
+func _in_cone(target: Vector2) -> bool:
+	var to: Vector2 = target - global_position
+	var dist: float = to.length()
+	if dist > range_px:
+		return false
+	var ang: float = wrapf(to.angle() - direction.angle(), -PI, PI)
+	return absf(ang) <= half_angle
+
+
+func _draw() -> void:
+	var fade: float = clampf(_life / 0.28, 0.0, 1.0)
+	var pts := PackedVector2Array()
+	pts.append(Vector2.ZERO)
+	var steps := 22
+	for i in range(steps + 1):
+		var a: float = -half_angle + (2.0 * half_angle) * float(i) / float(steps)
+		pts.append(Vector2(cos(a), sin(a)) * range_px)
+	draw_colored_polygon(pts, Color(0.85, 0.5, 1.0, 0.22 * fade))
+	draw_arc(Vector2.ZERO, range_px, -half_angle, half_angle, steps, Color(0.85, 0.55, 1.0, 0.6 * fade), 2.5)
