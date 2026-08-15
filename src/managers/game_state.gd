@@ -15,7 +15,6 @@ const RANGER_SCENE: PackedScene = preload("res://src/entities/player/classes/ran
 const MAGE_SCENE: PackedScene = preload("res://src/entities/player/classes/mage/mage.tscn")
 
 const CATACOMBS_MAP: PackedScene = preload("res://src/environment/maps/catacombs/catacombs.tscn")
-const NARROW_ARENA_MAP: PackedScene = preload("res://src/environment/maps/narrow_arena/narrow_arena.tscn")
 const TEST_MAP: PackedScene = preload("res://src/environment/maps/test_map/test_map.tscn")
 
 var _classes: Array[ClassBase] = []
@@ -30,7 +29,6 @@ func _ready() -> void:
 	register_class(RANGER_SCENE)
 	register_class(MAGE_SCENE)
 	register_map(CATACOMBS_MAP)
-	register_map(NARROW_ARENA_MAP)
 	register_map(TEST_MAP)
 	_register_class_ability_input()
 	_register_interact_input()
