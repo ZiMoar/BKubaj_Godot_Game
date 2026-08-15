@@ -58,8 +58,9 @@ position = Vector2(1100, 560)
 [node name="TestFacilities" type="Node2D" parent="." unique_id=1523276695]
 position = Vector2(1100, 760)
 script = ExtResource("7_facilities")
-anvil_position = Vector2(-220, 0)
-box_position = Vector2(220, 0)
+anvil_position = Vector2(-280, -100)
+box_position = Vector2(280, -100)
+relic_position = Vector2(-280, 100)
 
 [node name="TestLevelField" type="Area2D" parent="." unique_id=794731939]
 position = Vector2(1100, 1000)

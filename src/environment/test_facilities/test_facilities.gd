@@ -4,15 +4,16 @@ extends Node2D
 ## Test-map placeholder facilities: infinitely-respawning anvil, weapon box, and
 ## relic spawner — each pinned to a fixed spot. When one is collected it reappears
 ## after a short cooldown, giving the player a moment to step away before the next
-## one rolls in.
+## one rolls in. They sit in a wide triangle around the arena so the central
+## corridor (player spawn <-> dummy) stays open.
 
 const ANVIL_SCENE: PackedScene = preload("res://src/environment/anvil/anvil.tscn")
 const CHEST_SCENE: PackedScene = preload("res://src/environment/treasure_chest/treasure_chest.tscn")
 const RELIC_SCENE: PackedScene = preload("res://src/pickups/artefact_pickup/artefact_pickup.tscn")
 
-@export var anvil_position: Vector2 = Vector2(-300, 0)
-@export var box_position: Vector2 = Vector2(300, 0)
-@export var relic_position: Vector2 = Vector2(0, 60)
+@export var anvil_position: Vector2 = Vector2(-280, -100)
+@export var box_position: Vector2 = Vector2(280, -100)
+@export var relic_position: Vector2 = Vector2(-280, 100)
 @export var respawn_cooldown: float = 2.0
 
 var _anvil: Node = null
