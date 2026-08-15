@@ -118,6 +118,9 @@ func _update_buttons() -> void:
 
 
 func get_current_reroll_cost() -> int:
+	# Free rerolls on the test map (detected via TestFacilities presence).
+	if get_tree().get_first_node_in_group("test_facilities") != null:
+		return 0
 	return REROLL_BASE_COST * (1 << _rerolls_done)
 
 

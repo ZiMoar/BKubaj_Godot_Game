@@ -1,34 +1,42 @@
 class_name TestFacilities
 extends Node2D
 
-## Test-map placeholder facilities: an infinitely-respawning anvil and weapon box,
-## each pinned to a fixed spot. When one is collected it reappears after a short
-## cooldown, giving the player a moment to step away before the next one rolls in.
+## Test-map placeholder facilities: infinitely-respawning anvil, weapon box, and
+## relic spawner — each pinned to a fixed spot. When one is collected it reappears
+## after a short cooldown, giving the player a moment to step away before the next
+## one rolls in.
 
 const ANVIL_SCENE: PackedScene = preload("res://src/environment/anvil/anvil.tscn")
 const CHEST_SCENE: PackedScene = preload("res://src/environment/treasure_chest/treasure_chest.tscn")
+const RELIC_SCENE: PackedScene = preload("res://src/pickups/artefact_pickup/artefact_pickup.tscn")
 
 @export var anvil_position: Vector2 = Vector2(-300, 0)
 @export var box_position: Vector2 = Vector2(300, 0)
+@export var relic_position: Vector2 = Vector2(0, 60)
 @export var respawn_cooldown: float = 2.0
 
 var _anvil: Node = null
 var _box: Node = null
+var _relic: Node = null
 var _anvil_timer: float = 0.0
 var _box_timer: float = 0.0
+var _relic_timer: float = 0.0
 var _anvil_waiting: bool = false
 var _box_waiting: bool = false
+var _relic_waiting: bool = false
 
 
 func _ready() -> void:
+	add_to_group("test_facilities")
 	# Defer so we don't add_child while the arena root is still instancing children.
 	call_deferred("_spawn_anvil")
 	call_deferred("_spawn_box")
+	call_deferred("_spawn_relic")
 
 
 func _physics_process(delta: float) -> void:
-	# When the anvil/box is gone (collected), start the cooldown then respawn.
-	if _anvil_waiting and is_instance_valid(_anvil) == false:
+	# When the anvil/box/relic is gone (collected), start the cooldown then respawn.
+	if _anvil_waiting and not is_instance_valid(_anvil):
 		_anvil_timer -= delta
 		if _anvil_timer <= 0.0:
 			_anvil_waiting = false
@@ -38,6 +46,11 @@ func _physics_process(delta: float) -> void:
 		if _box_timer <= 0.0:
 			_box_waiting = false
 			_spawn_box()
+	if _relic_waiting and not is_instance_valid(_relic):
+		_relic_timer -= delta
+		if _relic_timer <= 0.0:
+			_relic_waiting = false
+			_spawn_relic()
 
 
 func _spawn_anvil() -> void:
@@ -56,3 +69,12 @@ func _spawn_box() -> void:
 	_box = box
 	_box_waiting = true
 	_box_timer = respawn_cooldown
+
+
+func _spawn_relic() -> void:
+	var relic: Node = RELIC_SCENE.instantiate()
+	relic.global_position = global_position + relic_position
+	get_parent().add_child(relic)
+	_relic = relic
+	_relic_waiting = true
+	_relic_timer = respawn_cooldown
