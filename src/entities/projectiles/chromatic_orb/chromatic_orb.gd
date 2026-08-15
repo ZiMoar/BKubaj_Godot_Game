@@ -23,8 +23,10 @@ var _age: float = 0.0
 var _bolt_timer: float = 0.0
 var _stopped: bool = false
 
-# Projectile scene preloaded to stay decoupled from the global class cache.
-const BoltScript: Script = preload("res://src/entities/projectiles/chromatic_bolt/chromatic_bolt.gd")
+# Projectile scene preloaded. NOTE: must use the PACKED SCENE (.tscn), not the
+# raw script, so the bolt's CollisionShape2D is present — a bolt created from
+# the script only has no shape and its body_entered/area_entered never fire.
+const BoltScene: PackedScene = preload("res://src/entities/projectiles/chromatic_bolt/chromatic_bolt.tscn")
 
 
 func setup(weapon: Node, player: Node, start_dir: Vector2, dmg: int, count: int) -> void:
@@ -80,9 +82,8 @@ func _fire_volley() -> void:
 		if target == null:
 			return
 
-		var bolt: Node2D = BoltScript.new()
+		var bolt: Node2D = BoltScene.instantiate()
 		bolt.name = "ChromaticBolt"
-		bolt.global_position = global_position
 
 		# Each bolt carries a RANDOM damage type.
 		var rnd_type: DamageType.Type = _random_damage_type()

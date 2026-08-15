@@ -13,7 +13,7 @@ const ORB_LIFETIME: float = 10.0
 const BOLT_INTERVAL: float = 0.6
 const BASE_BOLT_COUNT: int = 3
 const BASE_BOLT_DAMAGE: int = 16
-const COOLDOWN: float = 2.5
+const COOLDOWN: float = 4.0
 
 
 func _ready() -> void:

@@ -6,6 +6,8 @@ extends Node2D
 ## forward from the player toward the nearest enemy, re-applying the POISON
 ## ailment as it sweeps. This simulates a spraying motion rather than a single
 ## static field. Deals NO direct damage — it only inflicts poison, guaranteed.
+## The emitter follows the player so the spray always originates from the player's
+## current position even while they move.
 
 const PuffScript: Script = preload("res://src/entities/projectiles/poison_puff/poison_puff.gd")
 
@@ -30,11 +32,25 @@ func setup(weapon: Node, val: int, dur: float, interval: float, rng_px: float, a
 	_release_timer = 0.0
 
 
+## Follow the living player. If the weapon reports a player, snap to it every
+## frame so newly released puffs burst from the player, not from the fixed spot
+## where the emitter was first created.
+func _follow_player() -> void:
+	var player: Node = null
+	if source_weapon and source_weapon.has_method("get_player"):
+		player = source_weapon.get_player()
+	if player == null:
+		player = get_tree().get_first_node_in_group("player")
+	if player is Node2D:
+		global_position = (player as Node2D).global_position
+
+
 func _physics_process(delta: float) -> void:
 	_age += delta
 	if _age >= duration:
 		queue_free()
 		return
+	_follow_player()
 	_release_timer -= delta
 	if _release_timer <= 0.0:
 		_release_timer = release_interval
