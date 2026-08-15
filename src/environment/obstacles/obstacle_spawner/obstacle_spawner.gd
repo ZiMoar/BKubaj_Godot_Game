@@ -20,8 +20,8 @@ const CRUMBLE_SCENE: PackedScene = preload("res://src/environment/obstacles/crum
 const SPIKES_SCENE: PackedScene = preload("res://src/environment/obstacles/spikes/spikes.tscn")
 
 ## How many obstacles to attempt placing, chosen per arena.
-@export_range(0, 12) var min_obstacles: int = 3
-@export_range(0, 12) var max_obstacles: int = 5
+@export_range(0, 16) var min_obstacles: int = 10
+@export_range(0, 16) var max_obstacles: int = 10
 
 ## When false, this spawner does nothing. Used to keep a given arena free of
 ## random obstacles (e.g. the dedicated test map, which holds hand-placed
@@ -83,7 +83,11 @@ func _populate() -> void:
 
 func _clear_preset_obstacles(arena: Node) -> void:
 	for child in arena.get_children():
-		if child.is_in_group("obstacles") or child.is_in_group("destructibles") or child.is_in_group("hazards"):
+		# Identify baked presets by group (legacy) or by obstacle class, since the
+		# pillar/crumble/spike scenes don't declare groups. Replaces fixed presets
+		# with the fresh random set so an arena never doubles up its obstacles.
+		if child.is_in_group("obstacles") or child.is_in_group("destructibles") or child.is_in_group("hazards") \
+				or child is Pillar or child is CrumblingPillar or child is Spikes:
 			child.queue_free()
 
 

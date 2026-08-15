@@ -22,6 +22,7 @@ const ACTIONS: Dictionary = {
 	"primary_attack": "Primary Attack",
 	"secondary_attack": "Secondary Attack",
 	"class_ability": "Class Ability",
+	"interact": "Interact",
 }
 
 ## Negative keycode marker for a mouse button binding.

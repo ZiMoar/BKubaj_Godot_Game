@@ -77,6 +77,14 @@ var STAT_POOL: Array[Dictionary] = [
 		"weight": 1.0,
 		"apply": func(w: Weapon) -> void: w.explosion_on_kill_chance = minf(1.0, w.explosion_on_kill_chance + 0.25),
 	},
+	{
+		"id": "duration",
+		"title": "Duration",
+		"description": "+{value}% effect duration.",
+		"value": 20,
+		"weight": 1.0,
+		"apply": func(w: Weapon) -> void: w.duration_bonus += 0.20,
+	},
 ]
 
 ## Elemental anvil pool: ONLY damage-type conversion stats. This anvil is a
@@ -549,7 +557,7 @@ func _weapon_supports(weapon: Weapon, stat_id: String) -> bool:
 			return weapon.supports_repeat()
 		"projectile_speed", "projectile_speed_down":
 			return weapon.supports_projectile_speed()
-		"duration_shorten":
+		"duration", "duration_shorten":
 			return weapon.supports_duration()
 		"close_range_damage", "far_range_damage":
 			return weapon.supports_range_damage()

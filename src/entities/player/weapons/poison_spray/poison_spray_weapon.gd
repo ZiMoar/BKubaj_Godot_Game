@@ -9,7 +9,7 @@ extends Weapon
 
 const PoisonSprayScene: PackedScene = preload("res://src/entities/projectiles/poison_spray/poison_spray.tscn")
 
-const BASE_HIT_VALUE: int = 3
+const BASE_HIT_VALUE: int = 12
 const SPRAY_DURATION: float = 2.4
 const TICK_INTERVAL: float = 0.18
 const SPRAY_RANGE: float = 190.0

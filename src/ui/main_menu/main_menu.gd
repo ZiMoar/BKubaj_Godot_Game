@@ -32,6 +32,12 @@ func _build_keybinds_button() -> void:
 	var vertical: VBoxContainer = get_node_or_null("CenterContainer/Panel/Vertical") as VBoxContainer
 	if vertical == null:
 		return
+	# Copy the look of the other (scene-authored) buttons so the runtime-built
+	# KEYBINDS button is identical in design to PLAY / COMPENDIUM / QUIT.
+	var ref: Button = vertical.get_node_or_null("QuitButton") as Button
+	if ref == null:
+		ref = vertical.get_node_or_null("ArsenalButton") as Button
+
 	var btn := Button.new()
 	btn.custom_minimum_size = Vector2(0, 40)
 	btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -39,6 +45,15 @@ func _build_keybinds_button() -> void:
 	btn.pressed.connect(_on_keybinds_pressed)
 	# Place after the ArsenalButton if present, else before Quit.
 	btn.name = "KeybindsButton"
+	if ref:
+		btn.focus_mode = ref.focus_mode
+		for sb: String in ["normal", "hover", "pressed", "focus"]:
+			var style: StyleBox = ref.get_theme_stylebox(sb)
+			if style:
+				btn.add_theme_stylebox_override(sb, style)
+		for col: String in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
+			btn.add_theme_color_override(col, ref.get_theme_color(col))
+		btn.add_theme_font_size_override("font_size", ref.get_theme_font_size("font_size"))
 	vertical.add_child(btn)
 	var arsenal := vertical.get_node_or_null("ArsenalButton")
 	if arsenal != null:
