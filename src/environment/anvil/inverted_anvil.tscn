@@ -1,18 +1,18 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene format=3 uid="uid://cg4i3ei6aotdu"]
 
-[ext_resource type="Script" path="res://src/environment/anvil/inverted_anvil.gd" id="1_anvil"]
-[ext_resource type="Script" path="res://src/environment/anvil/anvil_visual.gd" id="2_visual"]
+[ext_resource type="Script" uid="uid://dlopuudf76isk" path="res://src/environment/anvil/inverted_anvil.gd" id="1_anvil"]
+[ext_resource type="Script" uid="uid://crd3hujgbtlvs" path="res://src/environment/anvil/anvil_visual.gd" id="2_visual"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_anvil"]
 size = Vector2(28, 22)
 
-[node name="InvertedAnvil" type="Area2D"]
+[node name="InvertedAnvil" type="Area2D" unique_id=2075682422]
 collision_layer = 0
 collision_mask = 2
 script = ExtResource("1_anvil")
 
-[node name="Visual" type="Node2D" parent="."]
+[node name="Visual" type="Node2D" parent="." unique_id=1603245263]
 script = ExtResource("2_visual")
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1640350320]
 shape = SubResource("RectangleShape2D_anvil")

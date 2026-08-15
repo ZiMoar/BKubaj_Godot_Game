@@ -235,6 +235,16 @@ const SIG_BORDER_COLOR: Color = Color(1.0, 0.84, 0.25)
 const SIG_TEXT_COLOR: Color = Color(1.0, 0.9, 0.4)
 const SIG_BG_COLOR: Color = Color(0.35, 0.28, 0.08, 0.92)
 
+## Elemental anvil mods get a blue outline so they read as damage-type reforges.
+const ELEM_BORDER_COLOR: Color = Color(0.4, 0.65, 0.95)
+const ELEM_TEXT_COLOR: Color = Color(0.72, 0.85, 1.0)
+const ELEM_BG_COLOR: Color = Color(0.08, 0.16, 0.35, 0.92)
+
+## Inverted anvil mods get a purple outline so they read as "give something up".
+const INV_BORDER_COLOR: Color = Color(0.75, 0.35, 0.6)
+const INV_TEXT_COLOR: Color = Color(1.0, 0.75, 0.95)
+const INV_BG_COLOR: Color = Color(0.28, 0.08, 0.3, 0.92)
+
 const REROLL_BASE_COST: int = 50
 
 
@@ -366,9 +376,9 @@ func _show_weapon_selection() -> void:
 	if subtitle_label:
 		match _anvil_kind:
 			AnvilKind.ELEMENTAL:
-				subtitle_label.text = "Choose a weapon to reforge its damage type."
+				subtitle_label.text = "Choose a weapon. Guarantees a damage-type reforge, plus standard upgrades."
 			AnvilKind.INVERTED:
-				subtitle_label.text = "Choose a weapon to trade away a stat."
+				subtitle_label.text = "Choose a weapon. Guarantees an inverted trade, plus standard upgrades."
 			_:
 				subtitle_label.text = "Choose a weapon to upgrade. Grants a signature choice!" if _is_golden else "Choose a weapon to upgrade."
 	weapon_list.visible = true
@@ -408,18 +418,21 @@ func _show_stat_selection() -> void:
 
 
 func _roll_stats(weapon: Weapon) -> Array[Dictionary]:
-	# Elemental and inverted anvils roll ONLY their own pool — no signatures.
-	if _anvil_kind == AnvilKind.ELEMENTAL:
-		return _roll_stats_normal(_filter_supported(weapon, ELEMENTAL_STAT_POOL))
-	if _anvil_kind == AnvilKind.INVERTED:
-		return _roll_stats_normal(_filter_supported(weapon, INVERTED_STAT_POOL))
-
-	var pool: Array[Dictionary] = []
+	# The normal anvil stat pool (filtered to what this weapon supports). Shared by
+	# all anvil kinds that can roll standard upgrades.
+	var normal_pool: Array[Dictionary] = []
 	for stat: Dictionary in STAT_POOL:
 		if _weapon_supports(weapon, stat["id"] as String):
-			pool.append(stat)
-	# Merge in the weapon's remaining (not-yet-taken) signature upgrades. They
-	# carry a much-reduced weight so they only rarely surface on normal anvils.
+			normal_pool.append(stat)
+
+	# Elemental / inverted anvils guarantee at least one mod from their own pool,
+	# but ALSO roll from the standard pool to fill out the rest of the choices.
+	if _anvil_kind == AnvilKind.ELEMENTAL:
+		return _roll_special(normal_pool, _filter_supported(weapon, ELEMENTAL_STAT_POOL))
+	if _anvil_kind == AnvilKind.INVERTED:
+		return _roll_special(normal_pool, _filter_supported(weapon, INVERTED_STAT_POOL))
+
+	# Remaining (not-yet-taken) signature upgrades for this weapon.
 	var sig_pool: Array[Dictionary] = []
 	for sig: Dictionary in weapon.get_signature_pool():
 		if weapon.has_signature(sig.get("id", "")):
@@ -428,18 +441,19 @@ func _roll_stats(weapon: Weapon) -> Array[Dictionary]:
 		entry["weight"] = weapon.get_signature_weight()
 		sig_pool.append(entry)
 
-	# If golden, guarantee at least one signature among the three choices.
+	# Golden anvil: exactly one signature guaranteed among the three choices.
 	if _is_golden:
 		if not sig_pool.is_empty():
-			return _roll_golden(pool, sig_pool)
-		# FAILSAFE: the weapon already owns all its signatures (can't roll more),
-		# so the golden anvil falls back to a normal 3-stat roll. No signature
-		# gets guaranteed — we just behave like a standard anvil.
-		return _roll_stats_normal(pool)
+			return _roll_golden(normal_pool, sig_pool)
+		# FAILSAFE: the weapon already owns all its signatures, so the golden anvil
+		# falls back to a normal 3-stat roll.
+		return _roll_stats_normal(normal_pool)
 
-	# Normal anvil: roll purely by weight (signatures included, rarely chosen).
-	var combined: Array[Dictionary] = pool + sig_pool
-	return _roll_stats_normal(combined)
+	# Normal anvil: signatures appear only ~1% of the time. When the 1% hits, one
+	# signature is guaranteed in the choices; otherwise pure standard stats.
+	if not sig_pool.is_empty() and rng.randf() < 0.01:
+		return _roll_golden(normal_pool, sig_pool)
+	return _roll_stats_normal(normal_pool)
 
 
 ## Picks 3 distinct stats purely by weight (no signature guarantee). Used for
@@ -450,6 +464,29 @@ func _roll_stats_normal(pool: Array[Dictionary]) -> Array[Dictionary]:
 		var index: int = _weighted_pick(pool)
 		choices.append(pool[index])
 		pool.remove_at(index)
+	return choices
+
+
+## Special anvils (elemental/inverted): guarantee at least one mod from their own
+## pool, then fill the remaining choices from a combined pool that also includes
+## the standard anvil stats — so they can roll normal mods too.
+func _roll_special(normal_pool: Array[Dictionary], special_pool: Array[Dictionary]) -> Array[Dictionary]:
+	var choices: Array[Dictionary] = []
+	# Guarantee one mod from the special pool.
+	if not special_pool.is_empty():
+		var s_idx: int = _weighted_pick(special_pool)
+		choices.append(special_pool[s_idx])
+		special_pool.remove_at(s_idx)
+	else:
+		# No special mod is supported (rare); just fall back to standard stats.
+		return _roll_stats_normal(normal_pool)
+	# Fill the remaining 2 choices from normal + leftover special stats.
+	var combined: Array[Dictionary] = normal_pool + special_pool
+	while choices.size() < 3 and not combined.is_empty():
+		var idx: int = _weighted_pick(combined)
+		choices.append(combined[idx])
+		combined.remove_at(idx)
+	choices.shuffle()
 	return choices
 
 
@@ -603,10 +640,15 @@ func _update_stat_buttons() -> void:
 			title_text = "✦ %s" % title_text
 		button.text = "%s\n%s" % [title_text, desc]
 		button.disabled = false
-		# Signature choices get a prominent golden border + gold text so they read
-		# as special at a glance; normal stats keep the standard purple tint.
+		# Signature choices get a prominent golden border so they read as special;
+		# elemental mods get a blue outline and inverted mods a purple outline;
+		# normal stats keep the standard purple tint (no border).
 		if _is_signature_entry(stat):
 			_apply_signature_style(button)
+		elif _is_elemental_entry(stat):
+			_apply_outline_style(button, ELEM_BORDER_COLOR, ELEM_BG_COLOR, ELEM_TEXT_COLOR)
+		elif _is_inverted_entry(stat):
+			_apply_outline_style(button, INV_BORDER_COLOR, INV_BG_COLOR, INV_TEXT_COLOR)
 		else:
 			button.modulate = Color(0.85, 0.7, 0.95)
 			button.add_theme_color_override("font_color", Color(0.9, 0.85, 1.0))
@@ -647,24 +689,30 @@ func button_clip(button: Button, cap_w: float) -> void:
 ## Styles a button as a special golden SIGNATURE upgrade with a gold border and
 ## gold text so players instantly spot that a signature mod rolled.
 func _apply_signature_style(button: Button) -> void:
+	_apply_outline_style(button, SIG_BORDER_COLOR, SIG_BG_COLOR, SIG_TEXT_COLOR)
+
+
+## Applies a colored outline (border) to a choice button, used to tell elemental
+## (blue) and inverted (purple) mods apart from normal and signature mods.
+func _apply_outline_style(button: Button, border_color: Color, bg_color: Color, text_color: Color) -> void:
 	button.modulate = Color.WHITE
 	var sb := StyleBoxFlat.new()
-	sb.bg_color = SIG_BG_COLOR
-	sb.border_color = SIG_BORDER_COLOR
+	sb.bg_color = bg_color
+	sb.border_color = border_color
 	sb.set_border_width_all(4)
 	sb.set_corner_radius_all(6)
 	var sb_hover := StyleBoxFlat.new()
-	sb_hover.bg_color = Color(0.5, 0.4, 0.12, 0.95)
-	sb_hover.border_color = Color(1.0, 0.94, 0.55)
+	sb_hover.bg_color = bg_color.lightened(0.2)
+	sb_hover.border_color = border_color.lightened(0.35)
 	sb_hover.set_border_width_all(4)
 	sb_hover.set_corner_radius_all(6)
 	button.add_theme_stylebox_override("normal", sb)
 	button.add_theme_stylebox_override("hover", sb_hover)
 	button.add_theme_stylebox_override("pressed", sb_hover)
 	button.add_theme_stylebox_override("focus", sb)
-	button.add_theme_color_override("font_color", SIG_TEXT_COLOR)
-	button.add_theme_color_override("font_hover_color", Color(1.0, 1.0, 0.85))
-	button.add_theme_color_override("font_pressed_color", Color(1.0, 1.0, 0.85))
+	button.add_theme_color_override("font_color", text_color)
+	button.add_theme_color_override("font_hover_color", text_color.lightened(0.3))
+	button.add_theme_color_override("font_pressed_color", text_color.lightened(0.3))
 
 
 ## A stat is a signature if it came from a weapon's signature pool. The simplest
@@ -675,6 +723,26 @@ func _is_signature_entry(stat: Dictionary) -> bool:
 		return false
 	for sig: Dictionary in _selected_weapon.get_signature_pool():
 		if sig.get("id", "") == stat.get("id", ""):
+			return true
+	return false
+
+
+## A stat is an ELEMENTAL mod if its id belongs to the elemental anvil pool.
+func _is_elemental_entry(stat: Dictionary) -> bool:
+	return _stat_in_pool(stat, ELEMENTAL_STAT_POOL)
+
+
+## A stat is an INVERTED mod if its id belongs to the inverted anvil pool.
+func _is_inverted_entry(stat: Dictionary) -> bool:
+	return _stat_in_pool(stat, INVERTED_STAT_POOL)
+
+
+func _stat_in_pool(stat: Dictionary, pool: Array[Dictionary]) -> bool:
+	var id: String = stat.get("id", "")
+	if id.is_empty():
+		return false
+	for s: Dictionary in pool:
+		if s.get("id", "") == id:
 			return true
 	return false
 

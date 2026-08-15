@@ -31,11 +31,10 @@ func _draw() -> void:
 		base = Color(0.2, 0.35, 0.6)
 		bar = Color(0.55, 0.8, 1.0)
 		hilite = Color(0.8, 0.92, 1.0)
-	elif kind == 2:  # Inverted — corrupt purple/red.
-		body = Color(0.75, 0.35, 0.6)
-		base = Color(0.45, 0.18, 0.4)
-		bar = Color(0.9, 0.45, 0.7)
-		hilite = Color(1.0, 0.7, 0.9)
+	# kind 2 (inverted) keeps the standard grey palette but is drawn upside down,
+	# so it reads as the same anvil flipped 180° from the standard (kind 0).
+	if kind == 2:
+		draw_set_transform(Vector2.ZERO, PI, Vector2.ONE)
 
 	# Base block (the anvil's flat bottom)
 	draw_rect(Rect2(-14, 6, 28, 8), base)
@@ -54,3 +53,7 @@ func _draw() -> void:
 
 	# Lighter highlight for readability
 	draw_rect(Rect2(-6, -3, 12, 3), hilite)
+
+	# Reset the canvas transform if we flipped the inverted anvil.
+	if kind == 2:
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
