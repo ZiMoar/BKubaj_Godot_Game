@@ -162,6 +162,7 @@ var STAT_POOL: Array[Dictionary] = [
 @onready var title_label: Label = get_node_or_null("CenterContainer/Panel/Vertical/TitleLabel") as Label
 @onready var subtitle_label: Label = get_node_or_null("CenterContainer/Panel/Vertical/SubtitleLabel") as Label
 @onready var weapon_list: VBoxContainer = get_node_or_null("CenterContainer/Panel/Vertical/WeaponScroll/WeaponList") as VBoxContainer
+@onready var weapon_scroll: ScrollContainer = get_node_or_null("CenterContainer/Panel/Vertical/WeaponScroll") as ScrollContainer
 @onready var stat_box: VBoxContainer = get_node_or_null("CenterContainer/Panel/Vertical/StatBox") as VBoxContainer
 @onready var choice_1: Button = get_node_or_null("CenterContainer/Panel/Vertical/StatBox/Choice1") as Button
 @onready var choice_2: Button = get_node_or_null("CenterContainer/Panel/Vertical/StatBox/Choice2") as Button
@@ -214,9 +215,18 @@ func _fit_panel_to_viewport() -> void:
 		cc.grow_vertical = Control.GROW_DIRECTION_BOTH
 	var panel: Control = get_node_or_null("CenterContainer/Panel") as Control
 	if panel:
-		var max_w: float = maxf(240.0, get_viewport_rect().size.x * 0.92)
-		panel.custom_minimum_size = Vector2(minf(panel.custom_minimum_size.x, max_w), panel.custom_minimum_size.y)
+		var vp: Vector2 = get_viewport_rect().size
+		var max_w: float = maxf(240.0, vp.x * 0.92)
+		# Cap BOTH width and height so a tall stat-selection stack (3 choice
+		# buttons + bottom row) never overflows the viewport's design height and
+		# pushes Reroll below the screen.
+		var max_h: float = maxf(200.0, vp.y * 0.9)
+		panel.custom_minimum_size = Vector2(
+			minf(panel.custom_minimum_size.x, max_w),
+			minf(panel.custom_minimum_size.y, max_h)
+		)
 		panel.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		panel.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	# Choice buttons should clip (ellipsis) rather than widen the panel, and be
 	# capped so long text can never push the panel off-screen.
 	var cap_w: float = maxf(220.0, get_viewport_rect().size.x * 0.85)
@@ -298,6 +308,8 @@ func _show_weapon_selection() -> void:
 	if subtitle_label:
 		subtitle_label.text = "Choose a weapon to upgrade. Grants a signature choice!" if _is_golden else "Choose a weapon to upgrade."
 	weapon_list.visible = true
+	if weapon_scroll:
+		weapon_scroll.visible = true
 	if stat_box:
 		stat_box.visible = false
 
@@ -319,6 +331,11 @@ func _show_stat_selection() -> void:
 		subtitle_label.text = "Choose an upgrade for %s." % _selected_weapon.weapon_name
 	if weapon_list:
 		weapon_list.visible = false
+	if weapon_scroll:
+		# The weapon list scroll region has a 120px min-height; hiding it while the
+		# stat choices are shown keeps the panel short enough to fit on-screen so
+		# the bottom row (Reroll) is never pushed below the viewport.
+		weapon_scroll.visible = false
 	if stat_box:
 		stat_box.visible = true
 
