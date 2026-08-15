@@ -92,7 +92,7 @@ func _apply_pulse_damage() -> void:
 			if hit_this_pulse.has(body_id):
 				continue
 			hit_this_pulse[body_id] = true
-			body.take_damage(final_damage, false, damage_type)
+			body.take_damage(final_damage, false, damage_type, false, get_ailment_effect_multiplier())
 			apply_lifesteal()
 			if body.is_in_group("enemies"):
 				if body.has_method("has_died") and body.has_died():
@@ -105,7 +105,7 @@ func _apply_pulse_damage() -> void:
 			if hit_this_pulse.has(parent_id):
 				continue
 			hit_this_pulse[parent_id] = true
-			parent.take_damage(final_damage, false, damage_type)
+			parent.take_damage(final_damage, false, damage_type, false, get_ailment_effect_multiplier())
 			apply_lifesteal()
 			if parent.is_in_group("enemies"):
 				if parent.has_method("has_died") and parent.has_died():

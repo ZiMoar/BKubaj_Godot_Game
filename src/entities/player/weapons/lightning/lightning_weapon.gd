@@ -117,10 +117,10 @@ func fire() -> void:
 			# Destructible props (pillars, crates) take (amount, is_critical).
 			e.take_damage(dealt, false)
 		else:
-			e.take_damage(dealt, false, damage_type)
+			e.take_damage(dealt, false, damage_type, false, get_ailment_effect_multiplier())
 		apply_lifesteal()
 		if e.has_method("apply_knockback"):
-			e.apply_knockback(prev, 90.0)
+			e.apply_knockback(prev, get_knockback(90.0))
 		if e.is_in_group("enemies") and e.has_method("has_died") and e.has_died():
 			apply_explosion_on_kill(e.global_position, dealt)
 		prev = e.global_position

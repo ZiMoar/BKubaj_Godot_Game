@@ -75,9 +75,9 @@ func _process_hit(node: Node) -> void:
 			return
 			
 		recently_hit[target] = hit_cooldown
-		target.take_damage(damage, is_critical, source_weapon.damage_type if source_weapon != null else DamageType.Type.PHYSICAL)
+		target.take_damage(damage, is_critical, source_weapon.damage_type if source_weapon != null else DamageType.Type.PHYSICAL, false, source_weapon.get_ailment_effect_multiplier() if source_weapon != null else 1.0)
 		if target.has_method("apply_knockback"):
-			target.apply_knockback(global_position, knockback_force)
+			target.apply_knockback(global_position, source_weapon.get_knockback(knockback_force) if source_weapon != null else knockback_force)
 		if source_player and source_player.has_method("apply_lifesteal"):
 			source_player.apply_lifesteal()
 		if source_weapon and target.is_in_group("enemies"):

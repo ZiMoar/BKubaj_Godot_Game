@@ -322,15 +322,19 @@ func _roll_ailment() -> bool:
 
 
 # Applies the ailment matching the given damage type to this enemy (and, for
-# shock, to a nearby different enemy).
-func _apply_ailment(damage_type: DamageType.Type, hit_damage: int) -> void:
+# shock, to a nearby different enemy). `effect_multiplier` (>1) boosts the
+# POTENCY of the ailment (Ailment Effect anvil stat): burn/poison/impale deal
+# more, slow is stronger, shock bounces harder. It does NOT affect ailment
+# chance — that stays the player's ailment_chance stat.
+func _apply_ailment(damage_type: DamageType.Type, hit_damage: int, effect_multiplier: float = 1.0) -> void:
 	match damage_type:
 		DamageType.Type.FIRE:
-			apply_burn(float(hit_damage))
+			apply_burn(float(hit_damage) * effect_multiplier)
 		DamageType.Type.LIGHTNING:
-			_apply_shock(float(hit_damage))
+			_apply_shock(float(hit_damage) * effect_multiplier)
 		DamageType.Type.COLD:
-			apply_slow(2.0, 0.45)
+			# Stronger slow: scale the slow factor (0.45 base) toward a hard cap.
+			apply_slow(2.0, clampf(0.45 * effect_multiplier, 0.05, 0.95))
 		DamageType.Type.ARCANE:
 			apply_crit_vulnerability()
 		DamageType.Type.NECROTIC:
@@ -338,9 +342,9 @@ func _apply_ailment(damage_type: DamageType.Type, hit_damage: int) -> void:
 		DamageType.Type.HOLY:
 			apply_brand()
 		DamageType.Type.POISON:
-			apply_poison(float(hit_damage))
+			apply_poison(float(hit_damage) * effect_multiplier)
 		DamageType.Type.PHYSICAL:
-			apply_impale(float(hit_damage))
+			apply_impale(float(hit_damage) * effect_multiplier)
 
 
 # LIGHTNING -> Shock: zap a DIFFERENT nearby enemy for 50% of the hit damage.
@@ -412,7 +416,7 @@ func _process_status_dots(delta: float) -> void:
 		burn_dps = 0.0
 
 
-func take_damage(amount: int, is_critical: bool = false, damage_type: DamageType.Type = DamageType.Type.PHYSICAL, suppress_ailment: bool = false) -> void:
+func take_damage(amount: int, is_critical: bool = false, damage_type: DamageType.Type = DamageType.Type.PHYSICAL, suppress_ailment: bool = false, ailment_multiplier: float = 1.0) -> void:
 	# IMPALE release: stored impale damage is added onto THIS next hit, then cleared.
 	var dealt: float = float(amount)
 	var plr: Node = get_tree().get_first_node_in_group("player")
@@ -472,7 +476,7 @@ func take_damage(amount: int, is_critical: bool = false, damage_type: DamageType
 	# ticks / shock bounces, which pass suppress_ailment = true).
 	if not suppress_ailment and not _is_dead:
 		if _roll_ailment():
-			_apply_ailment(damage_type, final_amount)
+			_apply_ailment(damage_type, final_amount, ailment_multiplier)
 
 	# Show HP bar on hit
 	if hp_bar:

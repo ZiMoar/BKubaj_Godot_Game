@@ -57,7 +57,7 @@ func _hit(node: Node) -> void:
 			var ailments: int = node.count_active_ailments()
 			if ailments > 0:
 				dealt += int(round(float(dealt) * 0.20 * float(ailments)))
-		node.take_damage(dealt, is_critical, damage_type)
+		node.take_damage(dealt, is_critical, damage_type, false, source_weapon.get_ailment_effect_multiplier() if source_weapon != null else 1.0)
 		if source_player and source_player.has_method("apply_lifesteal"):
 			source_player.apply_lifesteal()
 		if source_weapon and node.is_in_group("enemies"):

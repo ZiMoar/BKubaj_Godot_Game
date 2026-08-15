@@ -55,7 +55,7 @@ func fire() -> void:
 		if origin.distance_to(en.global_position) <= eff_radius:
 			# Whether the target was already slowed BEFORE this nova's slow hits.
 			var was_slowed: bool = en.get("slow_timer") != null and float(en.get("slow_timer")) > 0.0
-			en.take_damage(dmg, false, damage_type)
+			en.take_damage(dmg, false, damage_type, false, get_ailment_effect_multiplier())
 			apply_lifesteal()
 			if en.has_method("apply_slow"):
 				en.apply_slow(slow_duration, slow_factor)

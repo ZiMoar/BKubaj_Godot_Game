@@ -85,6 +85,22 @@ var STAT_POOL: Array[Dictionary] = [
 		"weight": 1.0,
 		"apply": func(w: Weapon) -> void: w.duration_bonus += 0.20,
 	},
+	{
+		"id": "knockback",
+		"title": "Knockback",
+		"description": "+{value}% enemy pushback.",
+		"value": 40,
+		"weight": 1.0,
+		"apply": func(w: Weapon) -> void: w.knockback_bonus += 0.40,
+	},
+	{
+		"id": "ailment_effect",
+		"title": "Ailment Effect",
+		"description": "+{value}% ailment potency (burn/poison/slow/impale/shock).",
+		"value": 30,
+		"weight": 1.0,
+		"apply": func(w: Weapon) -> void: w.ailment_effect_bonus += 0.30,
+	},
 ]
 
 ## Elemental anvil pool: ONLY damage-type conversion stats. This anvil is a
@@ -560,7 +576,9 @@ func _weapon_supports(weapon: Weapon, stat_id: String) -> bool:
 		"duration", "duration_shorten":
 			return weapon.supports_duration()
 		"close_range_damage", "far_range_damage":
-			return weapon.supports_range_damage()
+			# Close/Far Range are available to EVERY weapon (no projectile/range
+			# restriction) — distance-based damage works on melee and ranged alike.
+			return true
 		"area_down":
 			return weapon.supports_area()
 		"projectile_count_down":
@@ -570,7 +588,12 @@ func _weapon_supports(weapon: Weapon, stat_id: String) -> bool:
 		"chain_down":
 			return weapon.supports_chain()
 		"explosion_on_kill":
-			return weapon.supports_explosion_on_kill()
+			# Explosion on Kill works on any weapon that can land a kill.
+			return true
+		"knockback":
+			return weapon.supports_knockback()
+		"ailment_effect":
+			return weapon.supports_ailment_effect()
 		"element_fire", "element_lightning", "element_cold", "element_arcane", "element_necrotic", "element_holy", "element_poison":
 			# Re-forging offered only for elements the weapon does NOT already hold.
 			return weapon.damage_type != _element_damage_type(stat_id)

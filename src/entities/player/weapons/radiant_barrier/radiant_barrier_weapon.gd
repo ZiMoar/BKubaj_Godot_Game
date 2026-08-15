@@ -102,10 +102,10 @@ func _release_holy_wave(blocked_damage: int) -> void:
 			continue
 		var en: Node2D = e as Node2D
 		if origin.distance_to(en.global_position) <= eff_radius:
-			en.take_damage(wave_dmg, false, damage_type)
+			en.take_damage(wave_dmg, false, damage_type, false, get_ailment_effect_multiplier())
 			apply_lifesteal()
 			if en.has_method("apply_knockback"):
-				en.apply_knockback(origin, WAVE_KNOCKBACK)
+				en.apply_knockback(origin, get_knockback(WAVE_KNOCKBACK))
 			if en.is_in_group("enemies") and en.has_method("has_died") and en.has_died():
 				apply_explosion_on_kill(en.global_position, wave_dmg)
 

@@ -54,7 +54,7 @@ func _apply_pulse() -> void:
 		var en: Node2D = e as Node2D
 		if not _in_cone(en.global_position):
 			continue
-		en.take_damage(damage, is_critical, DamageType.Type.ARCANE)
+		en.take_damage(damage, is_critical, DamageType.Type.ARCANE, false, source_weapon.get_ailment_effect_multiplier() if source_weapon != null else 1.0)
 		if source_player and source_player.has_method("apply_lifesteal"):
 			source_player.apply_lifesteal()
 		if en.has_method("apply_knockback"):

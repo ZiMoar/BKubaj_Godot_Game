@@ -42,6 +42,11 @@ var explosion_damage_ratio: float = 0.6    # as a fraction of the killing hit
 ## Flat multiplicative damage bonus (e.g. inverted anvil "Fewer Projectiles"
 ## compensates with +25% damage each projectile removed).
 var damage_percent_bonus: float = 0.0
+## Pushback applied to enemies on this weapon's hits (+0.5 = +50% knockback).
+var knockback_bonus: float = 0.0
+## Boosts the potency of the ailments this weapon's hits inflict (burn/poison/
+## impale damage, slow strength, shock bounce), independent of ailment CHANCE.
+var ailment_effect_bonus: float = 0.0
 
 ## Signature upgrades this weapon has taken this run (each once). Signatures are
 ## transformative per-weapon upgrades granted by the (rare) golden anvil, and can
@@ -104,6 +109,17 @@ func get_effective_cooldown() -> float:
 func get_area_multiplier() -> float:
 	return maxf(0.25, 1.0 + area_bonus)
 
+# Knockback stat: scales the push force of this weapon's hits. Multiplies the
+# base force a weapon already applies via enemy.apply_knockback().
+func get_knockback(base_force: float) -> float:
+	return base_force * (1.0 + knockback_bonus)
+
+# Ailment Effect stat: scales the potency of ailments this weapon inflicts
+# (burn/poison/impale damage, slow strength, shock bounce). Independent of the
+# chance-based ailment_chance stat; this only boosts how strong the effect is.
+func get_ailment_effect_multiplier() -> float:
+	return maxf(0.25, 1.0 + ailment_effect_bonus)
+
 # Effective projectile count (base + anvil bonus).
 func get_effective_projectile_count(base: int) -> int:
 	return maxi(1, base + projectile_count_bonus)
@@ -156,9 +172,15 @@ func supports_duration() -> bool:
 	return false
 
 func supports_range_damage() -> bool:
-	return false
+	return true
 
 func supports_explosion_on_kill() -> bool:
+	return true
+
+func supports_knockback() -> bool:
+	return true
+
+func supports_ailment_effect() -> bool:
 	return true
 
 # --- Signature upgrades ------------------------------------------------
@@ -266,7 +288,7 @@ func _explode_at(origin: Vector2, kill_damage: int) -> void:
 			continue
 		var en: Node2D = e as Node2D
 		if origin.distance_to(en.global_position) <= eff_radius:
-			en.take_damage(dmg, false, damage_type)
+			en.take_damage(dmg, false, damage_type, false, get_ailment_effect_multiplier())
 
 
 ## Spawns a short-lived expanding-ring visual so explosions are clearly visible.

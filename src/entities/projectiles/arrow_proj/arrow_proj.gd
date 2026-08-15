@@ -68,11 +68,11 @@ func _hit(node: Node) -> void:
 		if source_weapon and (source_weapon.close_range_damage_bonus > 0.0 or source_weapon.far_range_damage_bonus > 0.0) and node is Node2D:
 			dealt = maxi(1, int(round(float(dealt) * source_weapon.get_range_damage_multiplier((source_weapon.global_position - (node as Node2D).global_position).length()))))
 
-		node.take_damage(dealt, false, source_weapon.damage_type if source_weapon != null else DamageType.Type.PHYSICAL)
+		node.take_damage(dealt, false, source_weapon.damage_type if source_weapon != null else DamageType.Type.PHYSICAL, false, source_weapon.get_ailment_effect_multiplier() if source_weapon != null else 1.0)
 		if source_player and source_player.has_method("apply_lifesteal"):
 			source_player.apply_lifesteal()
 		if node.has_method("apply_knockback"):
-			node.apply_knockback(global_position, 150.0)
+			node.apply_knockback(global_position, source_weapon.get_knockback(150.0) if source_weapon != null else 150.0)
 		if source_weapon and node.is_in_group("enemies"):
 			if node.has_method("has_died") and node.has_died():
 				source_weapon.apply_explosion_on_kill(global_position, dealt)

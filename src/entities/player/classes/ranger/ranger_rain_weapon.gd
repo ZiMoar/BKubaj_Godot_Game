@@ -54,10 +54,10 @@ func fire() -> void:
 			continue
 		var enemy: Node2D = node as Node2D
 		if enemy.global_position.distance_to(center) <= eff_radius:
-			enemy.take_damage(total, false, damage_type)
+			enemy.take_damage(total, false, damage_type, false, get_ailment_effect_multiplier())
 			apply_lifesteal()
 			if enemy.has_method("apply_knockback"):
-				enemy.apply_knockback(center, 220.0)
+				enemy.apply_knockback(center, get_knockback(220.0))
 			if enemy.is_in_group("enemies"):
 				if enemy.has_method("has_died") and enemy.has_died():
 					if bow:

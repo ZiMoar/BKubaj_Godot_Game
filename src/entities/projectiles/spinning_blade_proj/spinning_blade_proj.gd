@@ -45,11 +45,11 @@ func _on_body_entered(body: Node2D) -> void:
 		if _recently_hit.has(id):
 			return
 		_recently_hit[id] = HIT_COOLDOWN
-		body.take_damage(damage, false, source_weapon.damage_type if source_weapon != null else DamageType.Type.PHYSICAL)
+		body.take_damage(damage, false, source_weapon.damage_type if source_weapon != null else DamageType.Type.PHYSICAL, false, source_weapon.get_ailment_effect_multiplier() if source_weapon != null else 1.0)
 		if source_player and source_player.has_method("apply_lifesteal"):
 			source_player.apply_lifesteal()
 		if body.has_method("apply_knockback"):
-			body.apply_knockback(global_position, 80.0)
+			body.apply_knockback(global_position, source_weapon.get_knockback(80.0) if source_weapon != null else 80.0)
 		if source_weapon and body.is_in_group("enemies"):
 			if body.has_method("has_died") and body.has_died():
 				source_weapon.apply_explosion_on_kill(global_position, damage)
@@ -62,7 +62,7 @@ func _on_area_entered(area: Area2D) -> void:
 		if _recently_hit.has(id):
 			return
 		_recently_hit[id] = HIT_COOLDOWN
-		parent.take_damage(damage, false, source_weapon.damage_type if source_weapon != null else DamageType.Type.PHYSICAL)
+		parent.take_damage(damage, false, source_weapon.damage_type if source_weapon != null else DamageType.Type.PHYSICAL, false, source_weapon.get_ailment_effect_multiplier() if source_weapon != null else 1.0)
 		if source_player and source_player.has_method("apply_lifesteal"):
 			source_player.apply_lifesteal()
 		if source_weapon and parent.is_in_group("enemies"):
