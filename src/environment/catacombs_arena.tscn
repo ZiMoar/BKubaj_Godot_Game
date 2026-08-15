@@ -3,7 +3,7 @@
 [ext_resource type="PackedScene" uid="uid://ch71iywhtq2is" path="res://src/entities/player/player/player.tscn" id="1_u6xee"]
 [ext_resource type="PackedScene" path="res://src/entities/enemies/spawners/skeleton_spawner/skeleton_spawner.tscn" id="2_skel_spawner"]
 [ext_resource type="PackedScene" path="res://src/ui/hud/hud.tscn" id="4_hud"]
-[ext_resource type="Script" uid="uid://dwd47lt1h3cpo" path="res://src/environment/grid_background.gd" id="5_grid"]
+[ext_resource type="Script" path="res://src/environment/backgrounds/crypt_background.gd" id="5_grid"]
 [ext_resource type="Script" uid="uid://byx0vv2w1j4cr" path="res://src/managers/xp_orb_spatial_manager.gd" id="6_xp_orb_spatial"]
 [ext_resource type="PackedScene" path="res://src/entities/enemies/spawners/skeleton_brute_spawner/skeleton_brute_spawner.tscn" id="7_brute_spawner"]
 [ext_resource type="PackedScene" path="res://src/ui/pointers/chest_pointer/chest_pointer.tscn" id="9_chest_pointer"]
@@ -25,7 +25,7 @@ size = Vector2(2100, 32)
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_vert"]
 size = Vector2(32, 1140)
 
-[node name="TestArena" type="Node2D" unique_id=543670752]
+[node name="Catacombs" type="Node2D" unique_id=543670752]
 
 [node name="ChestPointer" parent="." unique_id=1400000001 instance=ExtResource("9_chest_pointer")]
 

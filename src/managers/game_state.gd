@@ -14,7 +14,7 @@ const KNIGHT_SCENE: PackedScene = preload("res://src/entities/player/classes/kni
 const RANGER_SCENE: PackedScene = preload("res://src/entities/player/classes/ranger/ranger.tscn")
 const MAGE_SCENE: PackedScene = preload("res://src/entities/player/classes/mage/mage.tscn")
 
-const TEST_ARENA_MAP: PackedScene = preload("res://src/environment/maps/test_arena/test_arena.tscn")
+const CATACOMBS_MAP: PackedScene = preload("res://src/environment/maps/catacombs/catacombs.tscn")
 const NARROW_ARENA_MAP: PackedScene = preload("res://src/environment/maps/narrow_arena/narrow_arena.tscn")
 const TEST_MAP: PackedScene = preload("res://src/environment/maps/test_map/test_map.tscn")
 
@@ -22,14 +22,14 @@ var _classes: Array[ClassBase] = []
 var selected_class_id: String = "knight"
 
 var _maps: Array[MapBase] = []
-var selected_map_id: String = "test_arena"
+var selected_map_id: String = "catacombs"
 
 
 func _ready() -> void:
 	register_class(KNIGHT_SCENE)
 	register_class(RANGER_SCENE)
 	register_class(MAGE_SCENE)
-	register_map(TEST_ARENA_MAP)
+	register_map(CATACOMBS_MAP)
 	register_map(NARROW_ARENA_MAP)
 	register_map(TEST_MAP)
 	_register_class_ability_input()
@@ -123,7 +123,7 @@ func set_selected_map(id: String) -> void:
 # the Player, we capture its full progression so the next stage can restore it.
 # ---------------------------------------------------------------------------
 
-const TEST_ARENA_PATH: String = "res://src/environment/test_arena.tscn"
+const CATACOMBS_PATH: String = "res://src/environment/catacombs_arena.tscn"
 const NARROW_ARENA_PATH: String = "res://src/environment/narrow_arena.tscn"
 const SHOP_ARENA_PATH: String = "res://src/environment/rooms/shop_arena.tscn"
 const SPECIAL_ANVIL_ARENA_PATH: String = "res://src/environment/rooms/special_anvil_arena.tscn"
@@ -295,7 +295,7 @@ func _random_noncombat_path() -> String:
 ## The next combat arena (alternates the classic fight maps for variety).
 func _combat_path() -> String:
 	if current_arena_path.ends_with(NARROW_ARENA_PATH):
-		return TEST_ARENA_PATH
+		return CATACOMBS_PATH
 	return NARROW_ARENA_PATH
 
 
