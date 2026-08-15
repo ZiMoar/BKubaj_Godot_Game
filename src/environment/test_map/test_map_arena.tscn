@@ -9,6 +9,8 @@
 [ext_resource type="Script" uid="uid://cp5xbt1thsfk3" path="res://src/environment/test_facilities/test_facilities.gd" id="7_facilities"]
 [ext_resource type="Script" uid="uid://3a4q8jkdsfse" path="res://src/environment/test_level_field/test_level_field.gd" id="8_level_field"]
 [ext_resource type="PackedScene" path="res://src/environment/test_map/test_map_door.tscn" id="9_door"]
+[ext_resource type="PackedScene" path="res://src/environment/obstacles/obstacle_spawner/obstacle_spawner.tscn" id="10_obstacle"]
+[ext_resource type="PackedScene" path="res://src/environment/obstacles/spikes/spikes.tscn" id="11_spikes"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_horiz"]
 size = Vector2(2300, 32)
@@ -58,9 +60,6 @@ position = Vector2(1100, 560)
 [node name="TestFacilities" type="Node2D" parent="." unique_id=1523276695]
 position = Vector2(1100, 760)
 script = ExtResource("7_facilities")
-anvil_position = Vector2(-280, -100)
-box_position = Vector2(280, -100)
-relic_position = Vector2(-280, 100)
 
 [node name="TestLevelField" type="Area2D" parent="." unique_id=794731939]
 position = Vector2(1100, 1000)
@@ -72,6 +71,12 @@ shape = SubResource("RectangleShape2D_lvl")
 
 [node name="StageDoor" parent="." unique_id=96865849 instance=ExtResource("9_door")]
 position = Vector2(1100, 70)
+
+[node name="ObstacleSpawner" parent="." instance=ExtResource("10_obstacle")]
+enabled = false
+
+[node name="Spikes" parent="." instance=ExtResource("11_spikes")]
+position = Vector2(1100, 1150)
 
 [node name="Player" parent="." unique_id=494284683 instance=ExtResource("1_player")]
 position = Vector2(1100, 900)

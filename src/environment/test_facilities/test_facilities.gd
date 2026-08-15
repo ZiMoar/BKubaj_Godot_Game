@@ -1,103 +1,77 @@
 class_name TestFacilities
 extends Node2D
 
-## Test-map placeholder facilities: infinitely-respawning anvil, weapon box, and
-## relic spawner — each pinned to a fixed spot. When one is collected it reappears
-## after a short cooldown, giving the player a moment to step away before the next
-## one rolls in. They sit in a wide triangle around the arena so the central
-## corridor (player spawn <-> dummy) stays open.
+## Test-map placeholder facilities: infinitely-respawning pickup slots, each
+## pinned to a fixed spot. When one is collected it reappears after a short
+## cooldown, giving the player a moment to step away before the next one
+## reappears. Slots are laid out in two tidy rows — top = the four anvils,
+## bottom = the four pickups — so the central corridor (player spawn <-> dummy)
+## stays open.
 
-const ANVIL_SCENE: PackedScene = preload("res://src/environment/anvil/anvil.tscn")
-const CHEST_SCENE: PackedScene = preload("res://src/environment/treasure_chest/treasure_chest.tscn")
-const RELIC_SCENE: PackedScene = preload("res://src/pickups/artefact_pickup/artefact_pickup.tscn")
+## Scene path for each slot type.
+const SCENES := {
+	"anvil": "res://src/environment/anvil/anvil.tscn",
+	"golden_anvil": "res://src/environment/anvil/anvil.tscn",
+	"elemental_anvil": "res://src/environment/anvil/elemental_anvil.tscn",
+	"inverted_anvil": "res://src/environment/anvil/inverted_anvil.tscn",
+	"box": "res://src/environment/treasure_chest/treasure_chest.tscn",
+	"relic": "res://src/pickups/artefact_pickup/artefact_pickup.tscn",
+	"cursed_relic": "res://src/pickups/artefact_pickup/artefact_pickup.tscn",
+	"winged_boots": "res://src/pickups/winged_boots/winged_boots.tscn",
+}
 
-@export var anvil_position: Vector2 = Vector2(-280, -100)
-@export var box_position: Vector2 = Vector2(280, -100)
-@export var relic_position: Vector2 = Vector2(-280, 100)
-@export var golden_anvil_position: Vector2 = Vector2(280, 100)
+## slot_id -> position relative to this node. Organized as a 2x4 grid: anvils on
+## the top row, pickups on the bottom row, spaced ~240px apart so nothing overlaps.
+@export var slots: Dictionary = {
+	"elemental_anvil": Vector2(-360, -120),
+	"anvil": Vector2(-120, -120),
+	"inverted_anvil": Vector2(120, -120),
+	"golden_anvil": Vector2(360, -120),
+	"relic": Vector2(-360, 120),
+	"cursed_relic": Vector2(-120, 120),
+	"box": Vector2(120, 120),
+	"winged_boots": Vector2(360, 120),
+}
 @export var respawn_cooldown: float = 2.0
 
-var _anvil: Node = null
-var _box: Node = null
-var _relic: Node = null
-var _golden_anvil: Node = null
-var _anvil_timer: float = 0.0
-var _box_timer: float = 0.0
-var _relic_timer: float = 0.0
-var _golden_anvil_timer: float = 0.0
-var _anvil_waiting: bool = false
-var _box_waiting: bool = false
-var _relic_waiting: bool = false
-var _golden_anvil_waiting: bool = false
+var _nodes: Dictionary = {}   # slot_id -> live pickup node
+var _waiting: Dictionary = {} # slot_id -> bool (collected, waiting to respawn)
+var _timers: Dictionary = {}  # slot_id -> float countdown
 
 
 func _ready() -> void:
 	add_to_group("test_facilities")
-	# Defer so we don't add_child while the arena root is still instancing children.
-	call_deferred("_spawn_anvil")
-	call_deferred("_spawn_box")
-	call_deferred("_spawn_relic")
-	call_deferred("_spawn_golden_anvil")
+	# Defer so we don't add_child onto the arena root while it's still instancing
+	# its own children (adds to the parent would otherwise be rejected).
+	for slot_id: String in slots:
+		_nodes[slot_id] = null
+		_waiting[slot_id] = false
+		_timers[slot_id] = respawn_cooldown
+		call_deferred("_spawn_slot", slot_id)
 
 
 func _physics_process(delta: float) -> void:
-	# When the anvil/box/relic is gone (collected), start the cooldown then respawn.
-	if _anvil_waiting and not is_instance_valid(_anvil):
-		_anvil_timer -= delta
-		if _anvil_timer <= 0.0:
-			_anvil_waiting = false
-			_spawn_anvil()
-	if _box_waiting and not is_instance_valid(_box):
-		_box_timer -= delta
-		if _box_timer <= 0.0:
-			_box_waiting = false
-			_spawn_box()
-	if _relic_waiting and not is_instance_valid(_relic):
-		_relic_timer -= delta
-		if _relic_timer <= 0.0:
-			_relic_waiting = false
-			_spawn_relic()
-	if _golden_anvil_waiting and not is_instance_valid(_golden_anvil):
-		_golden_anvil_timer -= delta
-		if _golden_anvil_timer <= 0.0:
-			_golden_anvil_waiting = false
-			_spawn_golden_anvil()
+	# Respawn a slot once its pickup has been collected and the cooldown elapsed.
+	for slot_id: String in _waiting.keys():
+		if not _waiting[slot_id]:
+			continue
+		if not is_instance_valid(_nodes.get(slot_id)):
+			_timers[slot_id] = float(_timers.get(slot_id, respawn_cooldown)) - delta
+			if _timers[slot_id] <= 0.0:
+				_waiting[slot_id] = false
+				_spawn_slot(slot_id)
 
 
-func _spawn_anvil() -> void:
-	var anvil: Node = ANVIL_SCENE.instantiate()
-	anvil.global_position = global_position + anvil_position
-	get_parent().add_child(anvil)
-	_anvil = anvil
-	_anvil_waiting = true
-	_anvil_timer = respawn_cooldown
-
-
-func _spawn_box() -> void:
-	var box: Node = CHEST_SCENE.instantiate()
-	box.global_position = global_position + box_position
-	get_parent().add_child(box)
-	_box = box
-	_box_waiting = true
-	_box_timer = respawn_cooldown
-
-
-func _spawn_relic() -> void:
-	var relic: Node = RELIC_SCENE.instantiate()
-	relic.global_position = global_position + relic_position
-	get_parent().add_child(relic)
-	_relic = relic
-	_relic_waiting = true
-	_relic_timer = respawn_cooldown
-
-
-## Golden anvil: guarantees a signature upgrade in the menu. Must set is_golden
-## BEFORE add_child so the visual picks it up in _ready().
-func _spawn_golden_anvil() -> void:
-	var anvil: Node = ANVIL_SCENE.instantiate()
-	anvil.set("is_golden", true)
-	anvil.global_position = global_position + golden_anvil_position
-	get_parent().add_child(anvil)
-	_golden_anvil = anvil
-	_golden_anvil_waiting = true
-	_golden_anvil_timer = respawn_cooldown
+## Instantiates a fresh pickup for the given slot at its pinned position.
+func _spawn_slot(slot_id: String) -> void:
+	var inst: Node = (load(SCENES[slot_id]) as PackedScene).instantiate()
+	# Set variant flags BEFORE add_child so _ready()/_set_visual() pick them up.
+	if slot_id == "golden_anvil":
+		inst.set("is_golden", true)
+	elif slot_id == "cursed_relic":
+		inst.set("cursed", true)
+	inst.global_position = global_position + (slots[slot_id] as Vector2)
+	get_parent().add_child(inst)
+	_nodes[slot_id] = inst
+	_waiting[slot_id] = true
+	_timers[slot_id] = respawn_cooldown

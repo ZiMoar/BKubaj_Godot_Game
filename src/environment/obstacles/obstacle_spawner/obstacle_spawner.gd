@@ -23,6 +23,12 @@ const SPIKES_SCENE: PackedScene = preload("res://src/environment/obstacles/spike
 @export_range(0, 12) var min_obstacles: int = 3
 @export_range(0, 12) var max_obstacles: int = 5
 
+## When false, this spawner does nothing. Used to keep a given arena free of
+## random obstacles (e.g. the dedicated test map, which holds hand-placed
+## hazards instead). game_state.gd detects an existing "ObstacleSpawner" node and
+## won't add a second live one.
+@export var enabled: bool = true
+
 ## Center-to-center spacing so obstacles never touch or form a wall.
 @export var min_spacing: float = 150.0
 ## How far in from the walls obstacles must stay.
@@ -34,6 +40,8 @@ const SPIKES_SCENE: PackedScene = preload("res://src/environment/obstacles/spike
 
 
 func _ready() -> void:
+	if not enabled:
+		return
 	# Defer until this frame's tree is fully settled so the arena root, its walls
 	# and Floor are all in place and registered.
 	call_deferred("_populate")
