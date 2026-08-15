@@ -191,6 +191,38 @@ func _ready() -> void:
 	rng.randomize()
 	visible = false
 	_bind_buttons()
+	# Constrain the menu to the viewport so long stat/choice text can't push the
+	# panel off-screen. We center it and cap its width (done in code so the .tscn
+	# offsets don't fight the runtime theme).
+	_fit_panel_to_viewport()
+
+
+## Re-centers the anvil menu and caps its panel width to the viewport, so long
+## choice descriptions never make the menu wider than the screen.
+func _fit_panel_to_viewport() -> void:
+	var cc: Control = get_node_or_null("CenterContainer") as Control
+	if cc:
+		cc.anchor_left = 0.0
+		cc.anchor_top = 0.0
+		cc.anchor_right = 1.0
+		cc.anchor_bottom = 1.0
+		cc.offset_left = 0.0
+		cc.offset_top = 0.0
+		cc.offset_right = 0.0
+		cc.offset_bottom = 0.0
+		cc.grow_horizontal = Control.GROW_DIRECTION_BOTH
+		cc.grow_vertical = Control.GROW_DIRECTION_BOTH
+	var panel: Control = get_node_or_null("CenterContainer/Panel") as Control
+	if panel:
+		var max_w: float = maxf(240.0, get_viewport_rect().size.x * 0.92)
+		panel.custom_minimum_size = Vector2(minf(panel.custom_minimum_size.x, max_w), panel.custom_minimum_size.y)
+		panel.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	# Choice buttons should clip (ellipsis) rather than widen the panel, and be
+	# capped so long text can never push the panel off-screen.
+	var cap_w: float = maxf(220.0, get_viewport_rect().size.x * 0.85)
+	for b: Button in [choice_1, choice_2, choice_3]:
+		if b:
+			button_clip(b, cap_w)
 
 
 func _bind_buttons() -> void:
@@ -200,8 +232,13 @@ func _bind_buttons() -> void:
 		choice_2.pressed.connect(_on_stat_pressed.bind(1))
 	if choice_3 and not choice_3.pressed.is_connected(_on_stat_pressed.bind(2)):
 		choice_3.pressed.connect(_on_stat_pressed.bind(2))
-	if back_button and not back_button.pressed.is_connected(_on_back_pressed):
-		back_button.pressed.connect(_on_back_pressed)
+	# The Back button is intentionally DISABLED (both normal and golden anvils):
+	# once you pick a weapon to upgrade, you commit to an upgrade. Prevents
+	# farming the menu to re-roll weapon picks for free.
+	if back_button:
+		back_button.visible = false
+		back_button.disabled = true
+		back_button.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	if reroll_button and not reroll_button.pressed.is_connected(_on_reroll_pressed):
 		reroll_button.pressed.connect(_on_reroll_pressed)
 
@@ -457,7 +494,10 @@ func _update_stat_buttons() -> void:
 		var is_sig: bool = _is_signature_entry(stat)
 		var title_text: String = stat["title"] as String
 		if is_sig:
-			title_text = "[color=#FFD700]✦[/color] %s" % title_text
+			# Plain gold-star glyph (Button.text does NOT parse [color] bbcode, so
+			# we must not put a bbcode tag in a plain label). The golden look
+			# comes from the border/text style applied by _apply_signature_style.
+			title_text = "✦ %s" % title_text
 		button.text = "%s\n%s" % [title_text, desc]
 		button.disabled = false
 		# Signature choices get a prominent golden border + gold text so they read
@@ -486,6 +526,19 @@ func _on_stat_pressed(index: int) -> void:
 	var apply: Callable = stat["apply"] as Callable
 	apply.call(_selected_weapon)
 	upgrade_applied.emit(_selected_weapon, stat["id"] as String)
+
+
+## Configures a Button to ellipsize overflow text instead of growing the panel.
+## clip_text stops the button's minimum size from tracking the full text width,
+## so the panel can't be pushed off-screen by a long description. cap_w is only
+## used as a sane floor for the button's minimum if sized from the .tscn.
+func button_clip(button: Button, cap_w: float) -> void:
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	button.clip_text = true
+	button.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	button.autowrap_mode = TextServer.AUTOWRAP_OFF
+	if button.custom_minimum_size.x < 1.0:
+		button.custom_minimum_size = Vector2(cap_w, button.custom_minimum_size.y)
 
 
 ## Styles a button as a special golden SIGNATURE upgrade with a gold border and

@@ -13,6 +13,9 @@ var max_fuse: float = 2.0
 var radius: float = 90.0
 var source_player: Node = null
 var source_weapon: Node = null
+## Guards against infinite recursion: a cluster sub-charge must NOT spawn its own
+## cluster of charges (only the original bomb does). Set true on cluster children.
+var is_cluster: bool = false
 
 var _age: float = 0.0
 var _exploded: bool = false
@@ -73,7 +76,10 @@ func _explode() -> void:
 
 	# Cluster Bomb: instead of just expiring, scatter several smaller secondary
 	# charges in a ring that detonate a moment later with a reduced blast.
-	if source_weapon and source_weapon.has_method("has_signature") and source_weapon.has_signature("cluster_bomb") \
+	# Only the ORIGINAL bomb clusters — cluster sub-charges are marked is_cluster
+	# so they never recurse into another cluster (which would be infinite).
+	if not is_cluster \
+			and source_weapon and source_weapon.has_method("has_signature") and source_weapon.has_signature("cluster_bomb") \
 			and get_tree() and get_tree().current_scene:
 		var cluster_count: int = 4
 		var step: float = TAU / float(cluster_count)
@@ -83,6 +89,7 @@ func _explode() -> void:
 		for k: int in range(cluster_count):
 			var mini_charge: Node = ClusterScene.instantiate()
 			mini_charge.name = "ClusterCharge"
+			mini_charge.set("is_cluster", true)
 			var offset: Vector2 = Vector2.RIGHT.rotated(step * k + _age) * (radius * 0.55)
 			var mini_pos: Vector2 = origin + offset
 			mini_charge.global_position = mini_pos
