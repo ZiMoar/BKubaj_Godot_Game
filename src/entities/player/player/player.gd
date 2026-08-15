@@ -103,6 +103,10 @@ var _mobility_velocity: Vector2 = Vector2.ZERO
 var _mobility_time_left: float = 0.0
 var _mobility_cd_remaining: float = 0.0
 var _mobility_id: String = ""
+# Momentum relic: window (s) of +50% damage after a dash/teleport.
+var _momentum_timer: float = 0.0
+const MOMENTUM_WINDOW: float = 1.0
+const MOMENTUM_DAMAGE_MULT: float = 1.50
 
 # --- Artefact system ---
 const MAX_ARTEFACT_SLOTS: int = 5
@@ -112,7 +116,6 @@ const ARTEFACT_LIFESTEAL_CRIT: String = "lifesteal_crit"
 const ARTEFACT_LIFESTEAL_TO_DAMAGE: String = "lifesteal_to_damage"
 const ARTEFACT_MAXHP_TO_ARMOR: String = "maxhp_to_armor"
 const ARTEFACT_REGEN_TO_ATTACK_SPEED: String = "regen_to_attack_speed"
-const ARTEFACT_THORNS_TO_DAMAGE: String = "thorns_to_damage"
 # Cross-interaction scaling factors for the artefact effects.
 const IRON_HEART_ARMOR_RATIO: float = 0.20
 const REGEN_TO_ATTACK_SPEED_FACTOR: float = 5.0
@@ -218,8 +221,9 @@ func get_attack_damage(base_damage: float) -> int:
 	# Cross-stat artefacts scale outgoing damage off defensive/utility stats.
 	if has_artefact(ARTEFACT_LIFESTEAL_TO_DAMAGE):
 		damage *= 1.0 + lifesteal_flat * LIFESTEAL_TO_DAMAGE_PER_UNIT
-	if has_artefact(ARTEFACT_THORNS_TO_DAMAGE):
-		damage *= 1.0 + thorns_flat * THORNS_TO_DAMAGE_PER_UNIT
+	# Momentum relic: +50% damage while the post-dash window is active.
+	if has_artefact("momentum") and _momentum_timer > 0.0:
+		damage *= MOMENTUM_DAMAGE_MULT
 	return max(0, int(round(damage)))
 
 func get_map_difficulty() -> float:
@@ -398,9 +402,6 @@ func get_gold() -> int:
 
 func get_gold_multiplier() -> float:
 	var mult: float = 1.0 + maxf(0.0, greed_percent_bonus)
-	# Golden Touch artefact.
-	if has_artefact("golden_touch"):
-		mult += 0.5
 	return mult
 
 
@@ -525,6 +526,8 @@ func _physics_process(delta: float) -> void:
 	_process_class_ability_input(delta)
 	_process_regen(delta)
 	_process_lifesteal_cooldown(delta)
+	if _momentum_timer > 0.0:
+		_momentum_timer = maxf(0.0, _momentum_timer - delta)
 
 # --- Movement & Aiming ---
 func handle_movement() -> void:
@@ -621,6 +624,8 @@ func _start_dash(cfg: Dictionary, direction: Vector2) -> void:
 	_mobility_time_left = float(cfg.get("duration", 0.25))
 	if cfg.get("invincible", true):
 		start_mobility_invincibility(float(cfg.get("duration", 0.25)) + 0.1)
+	if has_artefact("momentum"):
+		_momentum_timer = MOMENTUM_WINDOW
 
 func _do_teleport(cfg: Dictionary, direction: Vector2) -> void:
 	var range_: float = float(cfg.get("range", 240.0))
@@ -637,6 +642,8 @@ func _do_teleport(cfg: Dictionary, direction: Vector2) -> void:
 	global_position = target
 	if cfg.get("invincible", true):
 		start_mobility_invincibility(0.25)
+	if has_artefact("momentum"):
+		_momentum_timer = MOMENTUM_WINDOW
 	_apply_mobility_shove()
 
 func start_mobility_invincibility(duration: float) -> void:
@@ -734,7 +741,12 @@ func take_damage(amount: int, source: Node = null) -> void:
 			return
 		_source_last_hit[source] = now
 
-	if randf() < clamp(evasion_chance, 0.0, 1.0):
+	# Effective evasion: Ghost Step relic adds +20% while a dash charge is ready.
+	var eff_evasion: float = clamp(evasion_chance, 0.0, 1.0)
+	if has_artefact("ghost_step") and is_class_ability_ready():
+		eff_evasion = clampf(eff_evasion + 0.20, 0.0, 1.0)
+
+	if randf() < eff_evasion:
 		trigger_evasion()
 		return
 
@@ -794,7 +806,9 @@ func _start_invincibility_effect(duration: float, flash_color: Color) -> void:
 
 func die() -> void:
 	if revive_remaining > 0:
-		revive_remaining -= 1
+		# Second Wind relic: 50% chance the revive stack is NOT consumed.
+		if not has_artefact("second_wind") or randf() >= 0.5:
+			revive_remaining -= 1
 		current_health = max(1, int(round(current_max_health() * maxf(0.01, revive_health_percent))))
 		if hp_bar:
 			hp_bar.value = current_health

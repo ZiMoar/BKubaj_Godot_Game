@@ -68,6 +68,11 @@ const BURN_MAX_TICKS: int = 30
 
 # COLD -> Slow (reuses slow_timer / slow_factor; see apply_slow).
 
+# LIGHTNING -> Shock: brief "shocked" flag set on the bounced target. Powers
+# the Static Conduit relic (extra crit damage vs shocked enemies).
+var shock_timer: float = 0.0
+const SHOCK_DURATION: float = 1.5
+
 # ARCANE -> Crit vulnerability: while active, non-crit hits have a chance to be
 # upgraded into crits. CRIT_VULN_TIMER also serves as the icon active flag.
 var crit_vuln_timer: float = 0.0
@@ -99,6 +104,9 @@ const MAX_POISON_STACKS: int = 10
 # stored damage on the NEXT hit the enemy takes.
 var impale_pool: float = 0.0
 const IMPALE_PCT: float = 0.30  # store 30% of the inflicting hit
+# Crimson Echo relic: impale is released over TWO hits instead of one lump.
+var _impale_echo_hits_left: int = 0
+var _impale_echo_per_hit: float = 0.0
 
 @onready var hp_bar: Control = get_node_or_null("HPBar")
 
@@ -238,6 +246,9 @@ func apply_poison(hit_damage: float) -> void:
 # PHYSICAL -> Impale: store a % of the hit; released on the NEXT hit taken.
 func apply_impale(hit_damage: float) -> void:
 	impale_pool += hit_damage * IMPALE_PCT
+	# Reset the echo split so the next release re-divides the fresh pool.
+	_impale_echo_hits_left = 0
+	_impale_echo_per_hit = 0.0
 
 
 # ARCANE -> Crit vulnerability: raise the chance incoming hits become crits.
@@ -253,6 +264,11 @@ func apply_decay() -> void:
 # HOLY -> Brand: enemy takes increased damage from all sources.
 func apply_brand() -> void:
 	brand_timer = maxf(brand_timer, BRAND_DURATION)
+
+
+# LIGHTNING -> Shock: mark this enemy as briefly Shocked (Static Conduit relic).
+func mark_shocked() -> void:
+	shock_timer = SHOCK_DURATION
 
 
 # Rolls the player's ailment chance. Returns true if the current hit's damage
@@ -299,6 +315,10 @@ func _apply_shock(hit_damage: float) -> void:
 			best = e as Node2D
 	if best != null and best.has_method("take_damage"):
 		best.take_damage(maxi(1, int(round(hit_damage * 0.5))), false, DamageType.Type.LIGHTNING, true)
+		# Mark the bounced target as Shocked (brief flag for Static Conduit relic:
+		# extra crit damage against enemies that were just shocked).
+		if best.has_method("mark_shocked"):
+			best.mark_shocked()
 
 
 func get_effective_speed(delta: float) -> float:
@@ -328,6 +348,8 @@ func _process_status_dots(delta: float) -> void:
 				take_damage(maxi(1, int(round(poison_tick_dps))), false, DamageType.Type.POISON, true)
 				poison_timer = POISON_TICK_INTERVAL
 		if poison_duration <= 0.0:
+			if poison_stacks > 0 and _release_poison_burst():
+				pass  # Corrosive Burst relic handled the expiry explosion.
 			poison_stacks = 0
 			poison_tick_dps = 0.0
 
@@ -338,6 +360,8 @@ func _process_status_dots(delta: float) -> void:
 		brand_timer = maxf(0.0, brand_timer - delta)
 	if crit_vuln_timer > 0.0:
 		crit_vuln_timer = maxf(0.0, crit_vuln_timer - delta)
+	if shock_timer > 0.0:
+		shock_timer = maxf(0.0, shock_timer - delta)
 
 	# Cleanup: burn reset when fully expired (impale has no timer / pool persists).
 	if burn_timer <= 0.0 and burn_ticks_remaining <= 0:
@@ -347,9 +371,22 @@ func _process_status_dots(delta: float) -> void:
 func take_damage(amount: int, is_critical: bool = false, damage_type: DamageType.Type = DamageType.Type.PHYSICAL, suppress_ailment: bool = false) -> void:
 	# IMPALE release: stored impale damage is added onto THIS next hit, then cleared.
 	var dealt: float = float(amount)
+	var plr: Node = get_tree().get_first_node_in_group("player")
 	if impale_pool > 0.0:
-		dealt += impale_pool
-		impale_pool = 0.0
+		# Crimson Echo relic: impale is paid out over TWO hits, each half the pool.
+		var echo: bool = plr != null and plr.has_method("has_artefact") and plr.has_artefact("crimson_echo")
+		if echo and _impale_echo_hits_left <= 0 and impale_pool > 0.0:
+			_impale_echo_hits_left = 2
+			_impale_echo_per_hit = impale_pool / 2.0
+		if _impale_echo_hits_left > 0:
+			dealt += _impale_echo_per_hit
+			_impale_echo_hits_left -= 1
+			if _impale_echo_hits_left <= 0:
+				impale_pool = 0.0
+				_impale_echo_per_hit = 0.0
+		else:
+			dealt += impale_pool
+			impale_pool = 0.0
 
 	# BRAND (holy): while active, this enemy takes increased damage from all sources.
 	if brand_timer > 0.0:
@@ -362,6 +399,13 @@ func take_damage(amount: int, is_critical: bool = false, damage_type: DamageType
 		var pl: Node = get_tree().get_first_node_in_group("player")
 		if pl != null and pl.has_method("get_critical_multiplier"):
 			dealt *= float(pl.get_critical_multiplier())
+
+	# Relic hooks: Cold Blooded (+30% vs slowed) and Static Conduit (+50% crit dmg
+	# vs shocked). Both read the player's current artefact loadout live.
+	if slow_timer > 0.0 and plr != null and plr.has_method("has_artefact") and plr.has_artefact("cold_blooded"):
+		dealt *= 1.30
+	if is_critical and shock_timer > 0.0 and plr != null and plr.has_method("has_artefact") and plr.has_artefact("static_conduit"):
+		dealt *= 1.50
 
 	var final_amount: int = maxi(1, int(round(dealt)))
 	current_health -= final_amount
@@ -434,10 +478,34 @@ func _spawn_damage_number(amount: int, is_critical: bool = false) -> void:
 
 func die() -> void:
 	_is_dead = true
+	_spread_ailments_on_death()
 	_register_kill()
 	_drop_xp()
 	_drop_gold()
 	queue_free()
+
+
+## Cinder Propagation + Brand of Ruin relics: spreading statuses to nearby
+## enemies when an afflicted enemy dies. Player's live artefact loadout is read.
+func _spread_ailments_on_death() -> void:
+	var plr: Node = get_tree().get_first_node_in_group("player")
+	if plr == null or not plr.has_method("has_artefact"):
+		return
+	var spread_burn: bool = burn_dps > 0.0 and plr.has_artefact("cinder_propagation")
+	var spread_brand: bool = brand_timer > 0.0 and plr.has_artefact("brand_of_ruin")
+	if not spread_burn and not spread_brand:
+		return
+	var origin: Vector2 = global_position
+	var spread_radius: float = 90.0
+	for e: Node in get_tree().get_nodes_in_group("enemies"):
+		if not is_instance_valid(e) or e == self:
+			continue
+		var en: Node2D = e as Node2D
+		if origin.distance_to(en.global_position) <= spread_radius:
+			if spread_burn and en.has_method("apply_burn"):
+				en.apply_burn(burn_dps / BURN_TICK_PCT)
+			if spread_brand and en.has_method("apply_brand"):
+				en.apply_brand()
 
 
 ## Reports a player-caused kill to the run stats (GameState) for the summary.
@@ -461,6 +529,24 @@ func die_without_drop() -> void:
 ## is still valid until end of frame).
 func has_died() -> bool:
 	return _is_dead
+
+
+## Corrosive Burst relic: when this enemy's poison expires, deal the stored DoT
+## as a one-time AOE burst around it. Returns true if the relic fired.
+func _release_poison_burst() -> bool:
+	var plr: Node = get_tree().get_first_node_in_group("player")
+	if plr == null or not plr.has_method("has_artefact") or not plr.has_artefact("corrosive_burst"):
+		return false
+	var burst_dmg: int = maxi(1, int(round(poison_tick_dps * POISON_TICK_INTERVAL * 2.0)))
+	var origin: Vector2 = global_position
+	var burst_radius: float = 85.0
+	for e: Node in get_tree().get_nodes_in_group("enemies"):
+		if not is_instance_valid(e) or e == self:
+			continue
+		var en: Node2D = e as Node2D
+		if origin.distance_to(en.global_position) <= burst_radius and en.has_method("take_damage"):
+			en.take_damage(burst_dmg, false, DamageType.Type.POISON, true)
+	return true
 
 func apply_knockback(source_position: Vector2, force: float) -> void:
 	var push_force = force - weight

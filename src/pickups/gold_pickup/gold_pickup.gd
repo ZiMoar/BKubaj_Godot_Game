@@ -91,9 +91,6 @@ func start_attraction(player: Node2D) -> void:
 func _collect() -> void:
 	if target_player and target_player.has_method("add_gold"):
 		var base: int = max(1, gold_value)
-		# Midas Bulwark artefact: gold pickups are worth bonus = 20% of Armor.
-		if target_player.has_method("has_artefact") and target_player.has_artefact("armor_to_gold"):
-			base += int(round(float(target_player.armor) * 0.2))
 		target_player.add_gold(base)
 	queue_free()
 
