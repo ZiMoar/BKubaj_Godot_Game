@@ -251,4 +251,16 @@ static func _legend() -> Array[Dictionary]:
 			"desc": "Collectable runes that restore 25%, 50% or 100% of your max health. Rarer versions restore more.",
 			"color": Color(0.35, 0.9, 0.5),
 		},
+		{
+			"name": "Shop",
+			"subtitle": "Spend gold at pedestals",
+			"desc": "A merchant who lets you spend gold to spawn items: a +1 level, an anvil, a special reward (elemental/inverted anvil, Winged Boots, or golden anvil), and healing. Bigger heals are more cost-effective.",
+			"color": Color(0.95, 0.78, 0.3),
+		},
+		{
+			"name": "Golden Anvil",
+			"subtitle": "Guaranteed signature upgrade",
+			"desc": "The rarest anvil. Guarantees a signature upgrade for your weapon. Occasionally found in shops or special rooms.",
+			"color": Color(0.95, 0.72, 0.22),
+		},
 	]

@@ -33,6 +33,7 @@ func _ready() -> void:
 	register_map(NARROW_ARENA_MAP)
 	register_map(TEST_MAP)
 	_register_class_ability_input()
+	_register_interact_input()
 	# Apply any saved player keybinds to the live InputMap so every scene (menu
 	# or arena) starts with the player's configured bindings.
 	KeybindSettings.apply_saved()
@@ -48,6 +49,17 @@ func _register_class_ability_input() -> void:
 	var ev := InputEventKey.new()
 	ev.physical_keycode = KEY_SPACE
 	InputMap.action_add_event("class_ability", ev)
+
+
+## Register the E-key "interact" input, used by shop pedestals / room interactables.
+## Registered in code (not project.godot) for the same editor-revert reason.
+func _register_interact_input() -> void:
+	if InputMap.has_action("interact"):
+		return
+	InputMap.add_action("interact")
+	var ev := InputEventKey.new()
+	ev.physical_keycode = KEY_E
+	InputMap.action_add_event("interact", ev)
 
 
 func register_class(scene: PackedScene) -> void:

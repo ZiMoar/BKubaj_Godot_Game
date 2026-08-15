@@ -16,6 +16,7 @@ var rng := RandomNumberGenerator.new()
 var current_choices: Array[String] = []
 var _current_player: Player = null
 var _rerolls_done: int = 0
+var _is_cursed: bool = false
 
 ## Artefact rerolls are the most expensive.
 const REROLL_BASE_COST: int = 300
@@ -39,16 +40,23 @@ func _bind_buttons() -> void:
 		reroll_button.pressed.connect(_on_reroll_pressed)
 
 
-func open_for_player(player: Player) -> void:
+func open_for_player(player: Player, cursed_only: bool = false) -> void:
 	if player == null:
 		return
 	if not player.has_method("get_artefact_count") or not player.has_method("get_artefact_slot_capacity"):
 		return
-	if player.get_artefact_count() >= player.get_artefact_slot_capacity():
+	# Cursed relics use their own slot pool, so cap-check against curses.
+	if cursed_only:
+		if not player.has_method("get_cursed_artefact_count") or not player.has_method("get_cursed_artefact_slot_capacity"):
+			return
+		if player.get_cursed_artefact_count() >= player.get_cursed_artefact_slot_capacity():
+			return
+	elif player.get_artefact_count() >= player.get_artefact_slot_capacity():
 		return
 
 	visible = true
 	_current_player = player
+	_is_cursed = cursed_only
 	_rerolls_done = 0
 	current_choices = _pick_choices(player)
 	_update_labels()
@@ -60,11 +68,14 @@ func close_menu() -> void:
 	visible = false
 
 
-# Pick up to 3 random artefacts the player does not already own.
+# Pick up to 3 random artefacts the player does not already own. When cursed_only
+# is set, restrict to cursed relics (uses the cursed slot pool).
 func _pick_choices(player: Player, exclude_start: Array[String] = []) -> Array[String]:
 	var pool: Array[String] = []
 	for id: String in ARTEFACTS.all_ids():
 		if not player.has_artefact(id) and not id in exclude_start:
+			if _is_cursed and not ARTEFACTS.is_cursed(id):
+				continue
 			pool.append(id)
 
 	var choices: Array[String] = []
@@ -78,9 +89,9 @@ func _pick_choices(player: Player, exclude_start: Array[String] = []) -> Array[S
 
 func _update_labels() -> void:
 	if title_label:
-		title_label.text = "Artefact Relic!"
+		title_label.text = "Cursed Relic!" if _is_cursed else "Artefact Relic!"
 	if subtitle_label:
-		subtitle_label.text = "Choose an artefact to equip."
+		subtitle_label.text = "Strong, but at a cost." if _is_cursed else "Choose an artefact to equip."
 
 
 func _update_buttons() -> void:

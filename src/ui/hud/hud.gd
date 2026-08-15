@@ -396,17 +396,23 @@ func _on_dash_upgrade_selected(upgrade_id: String) -> void:
 
 # --- Artefact Choice (Boss Relic) ---
 
-func show_artefact_choice() -> void:
+func show_artefact_choice(cursed_only: bool = false) -> void:
 	if artefact_choice_menu == null or current_player == null:
 		# fall back to looking the player up in case HUD initialised early
 		current_player = get_tree().get_first_node_in_group("player") as Player
 		if artefact_choice_menu == null or current_player == null:
 			return
-	if current_player.get_artefact_count() >= current_player.get_artefact_slot_capacity():
-		return
+	if cursed_only:
+		var c_count: int = current_player.get_cursed_artefact_count() if current_player.has_method("get_cursed_artefact_count") else 0
+		var c_cap: int = current_player.get_cursed_artefact_slot_capacity() if current_player.has_method("get_cursed_artefact_slot_capacity") else 0
+		if c_count >= c_cap:
+			return
+	else:
+		if current_player.get_artefact_count() >= current_player.get_artefact_slot_capacity():
+			return
 
 	get_tree().paused = true
-	artefact_choice_menu.open_for_player(current_player)
+	artefact_choice_menu.open_for_player(current_player, cursed_only)
 
 
 func _on_artefact_choice_selected(artefact_id: String) -> void:
