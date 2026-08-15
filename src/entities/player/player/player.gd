@@ -150,6 +150,8 @@ func _ready() -> void:
 
 	# Apply the chosen class's starting stat overrides BEFORE computing HP.
 	_apply_class_starting_stats()
+	# Swap in this class's pixel-art sprite (defaults to a tinted placeholder).
+	_apply_class_sprite()
 	# Continuing a run? Restore the carried-over progression (stats, weapons,
 	# artefacts, gold) captured from the previous stage's player.
 	var run_state: Node = get_node_or_null("/root/GameState")
@@ -333,6 +335,32 @@ func _apply_class_starting_stats() -> void:
 		return
 	if cls.has_method("apply_starting_stats"):
 		cls.apply_starting_stats(self)
+
+
+## Per-class pixel-art sprite paths, keyed by class_id.
+const CLASS_SPRITE_PATHS := {
+	"knight": "res://assets/Knight.png",
+	"mage": "res://assets/Mage.png",
+	"ranger": "res://assets/ranger.png",
+}
+
+
+## Assigns the selected class's sprite to the player's Sprite2D. Falls back to
+## the tinted placeholder if no matching class art exists.
+func _apply_class_sprite() -> void:
+	if sprite == null:
+		return
+	var cls: ClassBase = _get_selected_class()
+	var path: String = ""
+	if cls != null and CLASS_SPRITE_PATHS.has(cls.class_id):
+		path = CLASS_SPRITE_PATHS[cls.class_id]
+	if not path.is_empty() and ResourceLoader.exists(path):
+		var tex: Texture2D = load(path) as Texture2D
+		if tex != null:
+			sprite.texture = tex
+			sprite.modulate = Color.WHITE
+			# 24px art with a 16-px collision box: render slightly larger.
+			sprite.scale = Vector2(0.9, 0.9)
 
 
 ## Equips the class-defined Primary + Secondary weapons from the selected class.
