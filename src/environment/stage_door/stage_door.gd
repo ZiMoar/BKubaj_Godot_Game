@@ -87,6 +87,10 @@ func _advance_stage() -> void:
 	var xp_mgr: Node = get_tree().get_first_node_in_group("team_xp_manager") as Node
 	if run_state.has_method("advance_stage"):
 		run_state.advance_stage(player, xp_mgr)
-		var next_path: String = run_state.get_next_arena_path()
+		# advance_stage() already computed + stored the next arena path (for
+		# non-combat rooms that pick is random). Read the stored value instead of
+		# calling get_next_arena_path() again, which would re-roll a *different*
+		# random room and desync from the one GameState recorded.
+		var next_path: String = run_state.current_arena_path
 		if not next_path.is_empty():
 			get_tree().change_scene_to_file(next_path)

@@ -24,6 +24,11 @@ func get_spawn_point() -> Vector2:
 	return Vector2(0, 105)
 
 
+## Where the exit door should sit (near the top wall, inside the room).
+func get_exit_point() -> Vector2:
+	return Vector2(0, -90)
+
+
 func _spawn_free_anvil() -> void:
 	var roll: float = rng.randf()
 	var anvil: Node2D

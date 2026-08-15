@@ -1,0 +1,21 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://src/environment/rooms/room_arena.gd" id="1_ra"]
+[ext_resource type="PackedScene" path="res://src/entities/player/player/player.tscn" id="2_player"]
+[ext_resource type="PackedScene" path="res://src/ui/hud/hud.tscn" id="3_hud"]
+[ext_resource type="Script" path="res://src/managers/xp_orb_spatial_manager.gd" id="5_xp"]
+[ext_resource type="PackedScene" path="res://src/managers/team_xp_manager/team_xp_manager.tscn" id="6_txp"]
+
+[node name="RoomArena" type="Node2D"]
+script = ExtResource("1_ra")
+room_scene = null
+
+[node name="XPOrbSpatialManager" type="Node" parent="."]
+script = ExtResource("5_xp")
+
+[node name="TeamXPManager" parent="." instance=ExtResource("6_txp")]
+
+[node name="HUD" parent="." instance=ExtResource("3_hud")]
+
+[node name="Player" parent="." instance=ExtResource("2_player")]
+position = Vector2(0, 105)

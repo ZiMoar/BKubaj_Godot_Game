@@ -1,0 +1,9 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="PackedScene" path="res://src/environment/rooms/room_arena.tscn" id="1_base"]
+[ext_resource type="PackedScene" path="res://src/environment/special_anvil_room/special_anvil_room.tscn" id="2_room"]
+
+[node name="SpecialAnvilArena" type="Node2D"]
+
+[node name="RoomArena" parent="." instance=ExtResource("1_base")]
+room_scene = ExtResource("2_room")

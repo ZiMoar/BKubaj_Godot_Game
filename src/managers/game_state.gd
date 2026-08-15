@@ -125,6 +125,9 @@ func set_selected_map(id: String) -> void:
 
 const TEST_ARENA_PATH: String = "res://src/environment/test_arena.tscn"
 const NARROW_ARENA_PATH: String = "res://src/environment/narrow_arena.tscn"
+const SHOP_ARENA_PATH: String = "res://src/environment/rooms/shop_arena.tscn"
+const SPECIAL_ANVIL_ARENA_PATH: String = "res://src/environment/rooms/special_anvil_arena.tscn"
+const RELIC_ARENA_PATH: String = "res://src/environment/rooms/relic_arena.tscn"
 const STAGE_DOOR_SCENE: PackedScene = preload("res://src/environment/stage_door/stage_door.tscn")
 const STAGE_CONTROLLER_SCENE: PackedScene = preload("res://src/environment/stage_controller/stage_controller.tscn")
 const OBSTACLE_SPAWNER_SCENE: PackedScene = preload("res://src/environment/obstacles/obstacle_spawner/obstacle_spawner.tscn")
@@ -270,6 +273,27 @@ func end_run() -> void:
 
 
 func get_next_arena_path() -> String:
+	# Room 1 is always the classic fight map (chosen at the map menu). After that,
+	# EVEN rooms are non-combat (random shop / anvil / relic, equal weight) and
+	# ODD rooms are combat. `stage` is already the *next* room number here because
+	# advance_stage() bumps it before asking for the next path.
+	if stage % 2 == 0:
+		return _random_noncombat_path()
+	return _combat_path()
+
+
+## A random non-combat room, each with equal weight.
+func _random_noncombat_path() -> String:
+	var rooms: Array[String] = [
+		SHOP_ARENA_PATH,
+		SPECIAL_ANVIL_ARENA_PATH,
+		RELIC_ARENA_PATH,
+	]
+	return rooms[randi() % rooms.size()]
+
+
+## The next combat arena (alternates the classic fight maps for variety).
+func _combat_path() -> String:
 	if current_arena_path.ends_with(NARROW_ARENA_PATH):
 		return TEST_ARENA_PATH
 	return NARROW_ARENA_PATH

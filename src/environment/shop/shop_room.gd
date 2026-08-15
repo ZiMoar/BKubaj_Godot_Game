@@ -39,6 +39,11 @@ func get_spawn_point() -> Vector2:
 	return Vector2(0, 130)
 
 
+## Where the exit door should sit (near the top wall, inside the room).
+func get_exit_point() -> Vector2:
+	return Vector2(0, -120)
+
+
 ## Position slots for the pedestals (left to right across the floor).
 func _slot_positions() -> Array[Vector2]:
 	return [

@@ -12,3 +12,8 @@ func _ready() -> void:
 ## Where a freshly-entered player should stand (just inside the bottom door).
 func get_spawn_point() -> Vector2:
 	return Vector2(0, 105)
+
+
+## Where the exit door should sit (near the top wall, inside the room).
+func get_exit_point() -> Vector2:
+	return Vector2(0, -90)
