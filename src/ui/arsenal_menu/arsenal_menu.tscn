@@ -84,7 +84,7 @@ theme_override_colors/font_color = Color(1, 0.84, 0.35, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 3
 theme_override_font_sizes/font_size = 26
-text = "Arsenal & Bestiary"
+text = "Compendium"
 horizontal_alignment = 1
 
 [node name="Tabs" type="HBoxContainer" parent="Center/Panel/Vertical" unique_id=1000000007]

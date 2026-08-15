@@ -136,7 +136,7 @@ theme_override_styles/normal = SubResource("StyleBoxFlat_btn_normal")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_btn_pressed")
 theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
 theme_override_styles/focus = SubResource("StyleBoxFlat_btn_hover")
-text = "ARSENAL"
+text = "COMPENDIUM"
 
 [node name="QuitButton" type="Button" parent="CenterContainer/Panel/Vertical" unique_id=414528540]
 custom_minimum_size = Vector2(0, 40)

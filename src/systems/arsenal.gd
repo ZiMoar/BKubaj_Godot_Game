@@ -1,7 +1,7 @@
 class_name Arsenal
 extends RefCounted
 
-## Central Arsenal / Bestiary catalog — the single source of truth for the
+## Central Compendium catalog — the single source of truth for the
 ## in-menu browser showing every weapon, relic, and enemy the player can meet.
 ##
 ## The browser (ArsenalMenu) reads this class; adding a new weapon/relic/enemy
@@ -163,8 +163,7 @@ static func _enemies() -> Array[Dictionary]:
 # --- Mechanics / legend -----------------------------------------------------
 
 static func _legend() -> Array[Dictionary]:
-	var dmg: GDScript = load("res://src/core/damage_type.gd")
-	var t: Dictionary = dmg.get_constant("Type")
+	var t := DamageType.Type
 	return [
 		{
 			"name": "Damage Types & Ailments",

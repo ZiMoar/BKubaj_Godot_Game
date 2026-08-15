@@ -20,7 +20,7 @@ enum Type {
 }
 
 
-## Short display label for a damage type, e.g. "FIRE". Used by the arsenal
+## Short display label for a damage type, e.g. "FIRE". Used by the compendium
 ## legend and the weapon slot HUD so builds read clearly at a glance.
 static func display_name(type: Type) -> String:
 	match type:

@@ -1,7 +1,7 @@
 class_name ArsenalMenu
 extends Control
 
-## Arsenal / Bestiary browser. Reads Arsenal.entries() for each category and
+## Compendium browser. Reads Arsenal.entries() for each category and
 ## shows a scrollable list on the left with a detail panel on the right.
 ## Launched from the main menu (not in-game).
 
@@ -47,7 +47,7 @@ func _on_tab_pressed(cat: String) -> void:
 func _show_category(cat: String) -> void:
 	_current_category = cat
 	if title_label:
-		title_label.text = "Arsenal & Bestiary — %s" % Arsenal.category_title(cat)
+		title_label.text = "Compendium — %s" % Arsenal.category_title(cat)
 	_clear_detail()
 	_populate_list(Arsenal.entries(cat))
 
