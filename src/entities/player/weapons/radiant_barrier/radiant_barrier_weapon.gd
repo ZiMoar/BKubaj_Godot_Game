@@ -53,14 +53,14 @@ func _physics_process(delta: float) -> void:
 
 
 ## Called by the player's take_damage when this barrier is in the group. Returns
-## the damage that still gets through (0 when blocked). Only the first active
+## the damage that still gets through (0 when blocked). Any hit while active is
+## consumed — including a 0-damage "ghost" hit (e.g. the test dummy), so the
+## shield drops on the first contact, not the second. Only the first active
 ## barrier that blocks consumes the hit.
 func block_hit(amount: int) -> int:
 	if not _barrier_active:
 		return amount
-	if amount <= 0:
-		return amount
-	# Absorb this hit fully and release a holy wave.
+	# Absorb this hit fully (even a 0-damage ghost hit) and release a holy wave.
 	_barrier_active = false
 	_wave_pulse = 0.35
 	_release_holy_wave(amount)
