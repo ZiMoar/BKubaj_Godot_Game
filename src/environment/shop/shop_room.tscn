@@ -7,6 +7,7 @@
 script = ExtResource("1_shop")
 
 [node name="Floor" type="ColorRect" parent="."]
+z_index = -1
 offset_left = -300.0
 offset_top = -180.0
 offset_right = 300.0
@@ -14,7 +15,7 @@ offset_bottom = 180.0
 color = Color(0.18, 0.16, 0.14, 1)
 
 [node name="Shopkeeper" type="Node2D" parent="."]
-position = Vector2(0, -60)
+position = Vector2(0, -95)
 script = ExtResource("2_shopkeeper")
 
 [node name="NameLabel" type="Label" parent="Shopkeeper"]

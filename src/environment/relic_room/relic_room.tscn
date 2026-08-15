@@ -7,6 +7,7 @@
 script = ExtResource("1_rel")
 
 [node name="Floor" type="ColorRect" parent="."]
+z_index = -1
 offset_left = -240.0
 offset_top = -150.0
 offset_right = 240.0

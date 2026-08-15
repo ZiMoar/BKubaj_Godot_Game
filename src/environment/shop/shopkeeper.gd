@@ -6,10 +6,13 @@ extends Node2D
 
 func _ready() -> void:
 	queue_redraw()
+	# Bob relative to the shopkeeper's resting position (set in the scene), so the
+	# tween never yanks him out of place and onto the item row below.
+	var base_y: float = position.y
 	var tween: Tween = create_tween()
 	tween.set_loops()
-	tween.tween_property(self, "position:y", 2.0, 1.6).set_trans(Tween.TRANS_SINE)
-	tween.tween_property(self, "position:y", -2.0, 1.6).set_trans(Tween.TRANS_SINE)
+	tween.tween_property(self, "position:y", base_y + 2.0, 1.6).set_trans(Tween.TRANS_SINE)
+	tween.tween_property(self, "position:y", base_y - 2.0, 1.6).set_trans(Tween.TRANS_SINE)
 
 
 func _draw() -> void:
