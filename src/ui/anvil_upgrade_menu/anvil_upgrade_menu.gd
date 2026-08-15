@@ -628,6 +628,7 @@ func _update_stat_buttons() -> void:
 		if i >= _current_stats.size():
 			button.text = "-"
 			button.disabled = true
+			_reset_choice_style(button)
 			continue
 		var stat: Dictionary = _current_stats[i]
 		var desc: String = (stat["description"] as String).replace("{value}", "%d" % int(stat["value"]))
@@ -640,6 +641,12 @@ func _update_stat_buttons() -> void:
 			title_text = "✦ %s" % title_text
 		button.text = "%s\n%s" % [title_text, desc]
 		button.disabled = false
+		# Clear any styling a PREVIOUS roll/kind left on this reused button node
+		# (e.g. the elemental blue or inverted purple border/focus/pressed colors).
+		# Without this, a normal stat that lands in a slot which earlier held an
+		# elemental mod can keep a blue border — colors leaking onto mods that
+		# shouldn't have them. Must happen BEFORE applying the new branch style.
+		_reset_choice_style(button)
 		# Signature choices get a prominent golden border so they read as special;
 		# elemental mods get a blue outline and inverted mods a purple outline;
 		# normal stats keep the standard purple tint (no border).
@@ -653,9 +660,20 @@ func _update_stat_buttons() -> void:
 			button.modulate = Color(0.85, 0.7, 0.95)
 			button.add_theme_color_override("font_color", Color(0.9, 0.85, 1.0))
 			button.add_theme_color_override("font_hover_color", Color.WHITE)
-			button.add_theme_stylebox_override("normal", null)
-			button.add_theme_stylebox_override("hover", null)
-			button.add_theme_stylebox_override("pressed", null)
+
+
+## Removes every style/font override a choice button may carry from an
+## elemental, inverted, or signature roll, so reusing the button for a different
+## kind of mod never leaks a stale border or text color. Called on every stat
+## button before its current branch style is applied.
+func _reset_choice_style(button: Button) -> void:
+	if button == null:
+		return
+	button.modulate = Color.WHITE
+	for sb in ["normal", "hover", "pressed", "focus"]:
+		button.remove_theme_stylebox_override(sb)
+	for fc in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
+		button.remove_theme_color_override(fc)
 
 
 func _on_stat_pressed(index: int) -> void:
