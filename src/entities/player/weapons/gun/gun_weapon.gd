@@ -1,5 +1,10 @@
 extends Weapon
 
+## DEPRECATED. The Pistol is not offered anywhere (it's a generic starter-class
+## primary that predates the three specialized class builds). The class + scene
+## are kept for future weapon ideas, but no live gameplay path picks this weapon.
+## Do not wire it back in without a reason.
+
 @export var bullet_scene: PackedScene
 @export var knockback_force: float = 14.0
 @export var damage: int = 6

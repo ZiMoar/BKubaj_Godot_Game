@@ -37,6 +37,12 @@ var current_health: int
 var can_deal_damage: bool = true
 var target_player: Node2D = null
 var knockback_velocity: Vector2 = Vector2.ZERO
+## FROZEN (Deep Freeze signature): enemy is frozen solid — can't move and takes
+## bonus damage for the duration. Applied only to enemies ALREADY slowed, and
+## only at a chance (rolled by the Frost Nova signature).
+var frozen_timer: float = 0.0
+const FROZEN_DURATION: float = 1.2
+const FROZEN_DAMAGE_MULT: float = 2.0
 var hp_value_label: Label = null
 var slow_timer: float = 0.0
 var slow_factor: float = 1.0
@@ -221,6 +227,11 @@ func apply_slow(duration: float, factor: float) -> void:
 	slow_factor = minf(slow_factor, clampf(factor, 0.05, 1.0))
 
 
+## Freezes the enemy solid for the fixed FROZEN_DURATION (Deep Freeze).
+func apply_freeze() -> void:
+	frozen_timer = FROZEN_DURATION
+
+
 # --- Ailment application methods (called from _apply_ailment) --------------
 
 # FIRE -> Burn: discrete ticks, each BURN_TICK_PCT of the hit that applied it.
@@ -352,6 +363,9 @@ func _apply_shock(hit_damage: float) -> void:
 
 
 func get_effective_speed(delta: float) -> float:
+	if frozen_timer > 0.0:
+		frozen_timer = maxf(0.0, frozen_timer - delta)
+		return 0.0
 	if slow_timer > 0.0:
 		slow_timer = maxf(0.0, slow_timer - delta)
 		return speed * slow_factor
@@ -421,6 +435,10 @@ func take_damage(amount: int, is_critical: bool = false, damage_type: DamageType
 	# BRAND (holy): while active, this enemy takes increased damage from all sources.
 	if brand_timer > 0.0:
 		dealt *= BRAND_DAMAGE_MULT
+
+	# FROZEN (Deep Freeze): frozen enemies take bonus damage.
+	if frozen_timer > 0.0:
+		dealt *= FROZEN_DAMAGE_MULT
 
 	# CRIT VULNERABILITY (arcane): a non-crit hit has a chance to be upgraded into
 	# a crit. Needs the player's crit multiplier for the damage bump.
@@ -678,6 +696,8 @@ func _process_body_contacts() -> void:
 
 # NECROTIC decay reduces the enemy's outgoing contact damage.
 func _get_outgoing_contact_damage() -> int:
+	if frozen_timer > 0.0:
+		return 0
 	var dmg: float = float(contact_damage)
 	if decay_timer > 0.0:
 		dmg *= DECAY_DAMAGE_MULT

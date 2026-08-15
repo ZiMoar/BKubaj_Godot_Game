@@ -34,6 +34,19 @@ func supports_duration() -> bool:
 	return true
 
 
+## Explosive Charge's signature upgrades (granted by the rare golden anvil).
+func get_signature_pool() -> Array[Dictionary]:
+	return [
+		{
+			"id": "cluster_bomb",
+			"title": "Cluster Bomb",
+			"description": "Bombs explode into several smaller secondary charges that scatter and go off a moment later.",
+			"value": 1,
+			"apply": func(_w: Weapon) -> void: pass,
+		},
+	]
+
+
 func fire() -> void:
 	var count: int = get_effective_projectile_count(BASE_BOMB_COUNT)
 	var dmg: int = get_attack_damage(BASE_DAMAGE)

@@ -30,6 +30,19 @@ func supports_duration() -> bool:
 	return true
 
 
+## Hungry Skull's signature upgrades (granted by the rare golden anvil).
+func get_signature_pool() -> Array[Dictionary]:
+	return [
+		{
+			"id": "fissure",
+			"title": "Fissure",
+			"description": "When an attached skull's prey dies, it splits into a smaller skull that seeks a new target.",
+			"value": 1,
+			"apply": func(_w: Weapon) -> void: pass,
+		},
+	]
+
+
 func fire() -> void:
 	var count: int = get_effective_projectile_count(BASE_SKULL_COUNT)
 	var enemies: Array[Node] = get_tree().get_nodes_in_group("enemies")

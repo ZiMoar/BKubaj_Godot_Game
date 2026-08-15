@@ -19,6 +19,8 @@ var _exploded: bool = false
 
 # Preloaded so it stays decoupled from the global class cache.
 const ExplosionEffectScript: Script = preload("res://src/effects/explosion_effect/explosion_effect.gd")
+# Cluster Bomb: same scene reused for the smaller secondary charges.
+const ClusterScene: PackedScene = preload("res://src/entities/projectiles/explosive_charge/explosive_charge.tscn")
 
 
 func setup(pos: Vector2, dmg: int, crit: bool, fuse_len: float, radius_px: float, player: Node, weapon: Node) -> void:
@@ -68,6 +70,25 @@ func _explode() -> void:
 			if source_weapon and en.is_in_group("enemies"):
 				if en.has_method("has_died") and en.has_died():
 					source_weapon.apply_explosion_on_kill(en.global_position, dmg)
+
+	# Cluster Bomb: instead of just expiring, scatter several smaller secondary
+	# charges in a ring that detonate a moment later with a reduced blast.
+	if source_weapon and source_weapon.has_method("has_signature") and source_weapon.has_signature("cluster_bomb") \
+			and get_tree() and get_tree().current_scene:
+		var cluster_count: int = 4
+		var step: float = TAU / float(cluster_count)
+		var sub_radius: float = radius * 0.55
+		var sub_dmg: int = maxi(1, int(round(float(damage) * 0.45)))
+		var sub_fuse: float = 0.35
+		for k: int in range(cluster_count):
+			var mini_charge: Node = ClusterScene.instantiate()
+			mini_charge.name = "ClusterCharge"
+			var offset: Vector2 = Vector2.RIGHT.rotated(step * k + _age) * (radius * 0.55)
+			var mini_pos: Vector2 = origin + offset
+			mini_charge.global_position = mini_pos
+			if mini_charge.has_method("setup"):
+				mini_charge.setup(mini_pos, sub_dmg, is_critical, sub_fuse, sub_radius, source_player, source_weapon)
+			get_tree().current_scene.add_child(mini_charge)
 
 	if get_tree() and get_tree().current_scene:
 		var fx: Node2D = ExplosionEffectScript.new()

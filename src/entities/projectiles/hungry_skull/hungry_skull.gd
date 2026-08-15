@@ -22,6 +22,11 @@ var _attack_timer: float = 0.0
 
 enum State { HOMING, ATTACHED }
 var state: State = State.HOMING
+## Fissure (signature): when this skull's prey dies, it splits into a smaller
+## skull that seeks a new target. Tracks how many splits this skull has spawned.
+var _fissures_spawned: int = 0
+const FISSURE_MAX: int = 2
+const FissureSkullScene: PackedScene = preload("res://src/entities/projectiles/hungry_skull/hungry_skull.tscn")
 
 
 func _ready() -> void:
@@ -80,6 +85,7 @@ func _attached_process(delta: float) -> void:
 	var target := _attached
 	# Detach & re-home if the target is gone or dead.
 	if target == null or not is_instance_valid(target) or (target.has_method("has_died") and target.has_died()):
+		_try_fissure()
 		_attached = null
 		state = State.HOMING
 		return
@@ -102,6 +108,36 @@ func _attack() -> void:
 		if source_weapon and target.is_in_group("enemies"):
 			if target.has_method("has_died") and target.has_died():
 				source_weapon.apply_explosion_on_kill(global_position, damage)
+
+
+## Fissure: when the attached prey dies, this skull splits into a smaller skull
+## that seeks a new target (up to FISSURE_MAX times total). Only if the owning
+## weapon has the signature.
+func _try_fissure() -> void:
+	if source_weapon == null or not source_weapon.has_method("has_signature") or not source_weapon.has_signature("fissure"):
+		return
+	if _fissures_spawned >= FISSURE_MAX:
+		return
+	_fissures_spawned += 1
+
+	var enemies: Array[Node] = get_tree().get_nodes_in_group("enemies")
+	if enemies.is_empty():
+		return
+	# Only split spawns once per prey death (the parent re-homes normally).
+	if get_tree() == null or get_tree().current_scene == null:
+		return
+	var split: Node = FissureSkullScene.instantiate()
+	split.name = "FissureSkull"
+	split.global_position = global_position
+	var split_dmg: int = maxi(1, int(round(float(damage) * 0.6)))
+	if split.has_method("setup"):
+		# Shorter duration, slower — a smaller, weaker secondary skull.
+		split.setup(global_position, split_dmg, is_critical, source_player, source_weapon, speed * 0.85, maxf(2.0, lifetime * 0.6))
+	split.scale = Vector2(0.6, 0.6)
+	var t: Node2D = _nearest_enemy()
+	if t != null:
+		split.look_at(t.global_position)
+	get_tree().current_scene.add_child(split)
 
 
 func _nearest_enemy() -> Node2D:
