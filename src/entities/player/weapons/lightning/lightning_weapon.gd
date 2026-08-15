@@ -113,7 +113,11 @@ func fire() -> void:
 			dealt = maxi(1, int(round(float(dealt) * chain_ramp_multiplier(hops_remaining))))
 		if close_range_damage_bonus > 0.0 or far_range_damage_bonus > 0.0:
 			dealt = maxi(1, int(round(float(dealt) * get_range_damage_multiplier(e.global_position.distance_to(origin)))))
-		e.take_damage(dealt, false, damage_type)
+		if e.is_in_group("destructibles"):
+			# Destructible props (pillars, crates) take (amount, is_critical).
+			e.take_damage(dealt, false)
+		else:
+			e.take_damage(dealt, false, damage_type)
 		apply_lifesteal()
 		if e.has_method("apply_knockback"):
 			e.apply_knockback(prev, 90.0)
