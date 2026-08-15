@@ -58,16 +58,19 @@ horizontal_alignment = 1
 custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
 text = "Choice 1"
+autowrap_mode = 3
 
 [node name="Choice2" type="Button" parent="CenterContainer/Panel/Vertical" unique_id=1577513447]
 custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
 text = "Choice 2"
+autowrap_mode = 3
 
 [node name="Choice3" type="Button" parent="CenterContainer/Panel/Vertical" unique_id=629646026]
 custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
 text = "Choice 3"
+autowrap_mode = 3
 
 [node name="RerollButton" type="Button" parent="CenterContainer/Panel/Vertical" unique_id=108715432]
 custom_minimum_size = Vector2(0, 36)
