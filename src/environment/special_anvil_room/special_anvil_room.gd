@@ -14,7 +14,14 @@ var rng := RandomNumberGenerator.new()
 
 func _ready() -> void:
 	rng.randomize()
+	# Enclose this room with complete visible + physical walls and a door.
+	RoomWalls.build(self, Rect2(-240, -150, 480, 300), 24.0, 80.0, "bottom")
 	_spawn_free_anvil()
+
+
+## Where a freshly-entered player should stand (just inside the bottom door).
+func get_spawn_point() -> Vector2:
+	return Vector2(0, 105)
 
 
 func _spawn_free_anvil() -> void:

@@ -28,7 +28,15 @@ var rng := RandomNumberGenerator.new()
 
 func _ready() -> void:
 	rng.randomize()
+	# Build our own complete enclosed walls (visible + physical) with a door at
+	# the bottom so this room reads as a real box, not a flat tile on a map.
+	RoomWalls.build(self, Rect2(-300, -180, 600, 360), 24.0, 110.0, "bottom")
 	_build_shop()
+
+
+## Where a freshly-entered player should stand (just inside the bottom door).
+func get_spawn_point() -> Vector2:
+	return Vector2(0, 130)
 
 
 ## Position slots for the pedestals (left to right across the floor).

@@ -1,26 +1,25 @@
 [gd_scene load_steps=3 format=3]
 
-[ext_resource type="PackedScene" path="res://src/environment/relic_room/relic_pedestal.tscn" id="1_pedestal"]
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_wall"]
-size = Vector2(640, 24)
+[ext_resource type="Script" path="res://src/environment/relic_room/relic_room.gd" id="1_rel"]
+[ext_resource type="PackedScene" path="res://src/environment/relic_room/relic_pedestal.tscn" id="2_pedestal"]
 
 [node name="RelicRoom" type="Node2D"]
+script = ExtResource("1_rel")
 
 [node name="Floor" type="ColorRect" parent="."]
-offset_left = -300.0
-offset_top = -200.0
-offset_right = 300.0
-offset_bottom = 200.0
+offset_left = -240.0
+offset_top = -150.0
+offset_right = 240.0
+offset_bottom = 150.0
 color = Color(0.16, 0.15, 0.18, 1)
 
 [node name="TitleLabel" type="Label" parent="."]
 offset_left = -150.0
-offset_top = -180.0
+offset_top = -140.0
 offset_right = 150.0
-offset_bottom = -156.0
+offset_bottom = -116.0
 text = "RELIC"
 horizontal_alignment = 1
 
-[node name="Pedestal" parent="." instance=ExtResource("1_pedestal")]
+[node name="Pedestal" parent="." instance=ExtResource("2_pedestal")]
 position = Vector2(0, 0)
