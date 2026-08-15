@@ -19,6 +19,10 @@ var _retarget_range_sq: float = 40000.0  # squared; only home within ~200px
 var _age: float = 0.0
 var _lifetime: float = 3.0
 var _hit_enemy: bool = false  # guards against body+area double-hit on the same overlap
+## Anomaly Shot: an oversized bolt that pierces enemies (keeps flying) instead
+## of expiring on the first hit. When > 0, it pierces until it runs out of hits.
+var pierce_left: int = 0
+var _already_hit: Dictionary = {}
 
 
 func _ready() -> void:
@@ -26,7 +30,7 @@ func _ready() -> void:
 	area_entered.connect(_on_area_entered)
 
 
-func setup(start_pos: Vector2, aim_dir: Vector2, bolt_speed: float, bolt_damage: int, crit: bool, player: Player, weapon: Node = null) -> void:
+func setup(start_pos: Vector2, aim_dir: Vector2, bolt_speed: float, bolt_damage: int, crit: bool, player: Player, weapon: Node = null, pierce: int = 0) -> void:
 	global_position = start_pos
 	dir = aim_dir.normalized()
 	if dir == Vector2.ZERO:
@@ -36,6 +40,7 @@ func setup(start_pos: Vector2, aim_dir: Vector2, bolt_speed: float, bolt_damage:
 	is_critical = crit
 	source_player = player
 	source_weapon = weapon
+	pierce_left = maxi(0, pierce)
 	rotation = dir.angle()
 
 
@@ -93,9 +98,13 @@ func _on_area_entered(area: Area2D) -> void:
 
 
 func _hit(node: Node) -> void:
-	if _hit_enemy:
+	if _hit_enemy and pierce_left <= 0:
 		return
 	if node and (node.is_in_group("enemies") or node.is_in_group("destructibles")) and node.has_method("take_damage"):
+		var nid: int = node.get_instance_id()
+		if _already_hit.has(nid):
+			return
+		_already_hit[nid] = true
 		_hit_enemy = true
 		var dealt: int = damage
 		if source_weapon and (source_weapon.close_range_damage_bonus > 0.0 or source_weapon.far_range_damage_bonus > 0.0) and node is Node2D:
@@ -108,4 +117,7 @@ func _hit(node: Node) -> void:
 		if source_weapon and node.is_in_group("enemies"):
 			if node.has_method("has_died") and node.has_died():
 				source_weapon.apply_explosion_on_kill(global_position, dealt)
+		if pierce_left > 0:
+			pierce_left -= 1
+			return
 	queue_free()

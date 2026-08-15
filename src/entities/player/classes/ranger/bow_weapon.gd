@@ -39,6 +39,29 @@ func supports_range_damage() -> bool:
 	return true
 
 
+func supports_explosion_on_kill() -> bool:
+	return false
+
+
+## Longbow's signature upgrades (granted by the rare golden anvil).
+func get_signature_pool() -> Array[Dictionary]:
+	return [
+		{
+			"id": "dancing_arrows",
+			"title": "Dancing Arrows",
+			"description": "Convert all pierce bonuses to chain. Each chain-hit deals +20% damage.",
+			"value": 20,
+			"apply": func(_w: Weapon) -> void: pass,
+		},
+	]
+
+
+## Under "Dancing Arrows", pierce is traded for chain and each chain won't
+## happen — see get_fire payload below. Returns the total pierce to spend.
+func _get_dancing_pierce() -> int:
+	return get_effective_pierce(pierce_total)
+
+
 func fire() -> void:
 	if arrow_scene == null:
 		return
@@ -64,12 +87,21 @@ func fire() -> void:
 	var eff_chain_range: float = chain_range * get_area_multiplier()
 	var eff_speed: float = get_effective_projectile_speed(arrow_speed)
 
+	# Dancing Arrows: pierce is converted into chain, and the arrow ramps +20%
+	# damage after each chain-hop.
+	var dancing: bool = has_signature("dancing_arrows")
+	var dmg_per_chain: int = 0
+	if dancing:
+		total_chain += total_pierce
+		total_pierce = 0
+		dmg_per_chain = maxi(1, int(round(float(arrow_damage) * 0.20)))
+
 	for i: int in range(arrow_count):
 		var arrow = arrow_scene.instantiate()
-		# Equally distribute the arrows across the total spread, centered on base_dir.
 		var t: float = float(i) / float(arrow_count - 1) if arrow_count > 1 else 0.5
 		var dir: Vector2 = base_dir.rotated(-total_spread * 0.5 + total_spread * t)
 		if arrow.has_method("setup"):
 			arrow.setup(global_position, dir, eff_speed, arrow_damage, arrow_is_critical, get_player(), total_pierce, total_chain, eff_chain_range, self)
+			arrow.set("damage_per_chain", dmg_per_chain)
 			arrow.scale *= get_area_multiplier()
 		get_tree().current_scene.add_child(arrow)

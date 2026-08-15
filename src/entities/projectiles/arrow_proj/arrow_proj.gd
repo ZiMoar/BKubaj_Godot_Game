@@ -12,6 +12,10 @@ var pierce_left: int = 0
 var chain_left: int = 0
 var chain_range: float = 200.0
 var source_weapon: Node = null
+## Flat damage added per chain-hop (Dancing Arrows signature).
+var damage_per_chain: int = 0
+## Number of chain-hops already made; multiplies damage_per_chain.
+var _chain_damage_ramp: int = 0
 var _lifetime: float = 2.0
 var _already_hit: Dictionary = {}
 
@@ -59,6 +63,8 @@ func _hit(node: Node) -> void:
 		_already_hit[id] = true
 
 		var dealt: int = damage
+		if damage_per_chain > 0:
+			dealt += damage_per_chain * _chain_damage_ramp
 		if source_weapon and (source_weapon.close_range_damage_bonus > 0.0 or source_weapon.far_range_damage_bonus > 0.0) and node is Node2D:
 			dealt = maxi(1, int(round(float(dealt) * source_weapon.get_range_damage_multiplier((source_weapon.global_position - (node as Node2D).global_position).length()))))
 
@@ -79,6 +85,7 @@ func _hit(node: Node) -> void:
 			var next: Node2D = _find_chain_target()
 			if next != null:
 				chain_left -= 1
+				_chain_damage_ramp += 1
 				dir = (next.global_position - global_position).normalized()
 				rotation = dir.angle()
 				_lifetime = maxf(_lifetime, 0.5)

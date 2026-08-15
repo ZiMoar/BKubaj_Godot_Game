@@ -1005,6 +1005,7 @@ func capture_run_state() -> Dictionary:
 				"far_range_damage_bonus": w.far_range_damage_bonus,
 				"explosion_on_kill_chance": w.explosion_on_kill_chance,
 				"damage_type": int(w.damage_type),
+				"signature_ids": (w.signature_ids as Array[String]).duplicate(),
 			})
 	stats["weapons"] = weapons
 	return stats
@@ -1039,6 +1040,7 @@ func restore_run_state(snap: Dictionary) -> void:
 			weapon.far_range_damage_bonus = wdata.get("far_range_damage_bonus", 0.0)
 			weapon.explosion_on_kill_chance = wdata.get("explosion_on_kill_chance", 0.0)
 			weapon.damage_type = int(wdata.get("damage_type", int(weapon.damage_type))) as DamageType.Type
+			weapon.signature_ids = (wdata.get("signature_ids", []) as Array).duplicate()
 			if weapon.trigger_type == Weapon.TriggerType.AUTOMATIC:
 				weapon.call_deferred("try_fire")
 	weapons_changed.emit()

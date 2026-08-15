@@ -74,6 +74,9 @@ func _spawn_anvil() -> void:
 			return
 
 	var anvil: Node2D = anvil_scene.instantiate() as Node2D
+	# 5% of anvils are golden — they guarantee a signature upgrade choice.
+	if anvil.has_method("set"):
+		anvil.set("is_golden", randf() < 0.05)
 	anvil.global_position = _random_arena_position()
 	get_tree().current_scene.add_child(anvil)
 	_active_anvils.append(anvil)

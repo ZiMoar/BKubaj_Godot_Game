@@ -16,6 +16,11 @@ extends Weapon
 ## Seconds between each bolt in the volley sequence (mirrors Repeat spacing).
 const STAGGER_TIME: float = 0.08
 
+## Anomaly Shot counter — every SIG_CYCLE-th volley becomes a single big bolt.
+const ANOMALY_CYCLE: int = 4
+
+var _volley_count: int = 0
+
 
 func _ready() -> void:
 	weapon_name = "Arcane Bolts"
@@ -32,6 +37,19 @@ func supports_projectile_speed() -> bool:
 
 func supports_range_damage() -> bool:
 	return true
+
+
+## Arcane Bolts' signature upgrades (granted by the rare golden anvil).
+func get_signature_pool() -> Array[Dictionary]:
+	return [
+		{
+			"id": "anomaly_shot",
+			"title": "Anomaly Shot",
+			"description": "Every 4th volley becomes one massive piercing bolt. Its damage scales with your projectile count.",
+			"value": 1,
+			"apply": func(_w: Weapon) -> void: pass,
+		},
+	]
 
 
 # Fires a single bolt with a deviation that grows with its index in the volley
@@ -63,6 +81,14 @@ func fire() -> void:
 	if aim == Vector2.ZERO:
 		aim = Vector2.RIGHT
 
+	# Anomaly Shot: every 4th volley is replaced by one massive piercing bolt.
+	if has_signature("anomaly_shot"):
+		_volley_count += 1
+		if _volley_count >= ANOMALY_CYCLE:
+			_volley_count = 0
+			_fire_anomaly(aim)
+			return
+
 	# Fire the volley as a sequence (mirrors the anvil Repeat mechanic):
 	# the first bolt leaves immediately; each following bolt fires shortly
 	# after (0.08 s apart) with a larger allowed deviation.
@@ -73,3 +99,26 @@ func fire() -> void:
 		if not is_instance_valid(self):
 			return
 		_fire_bolt(i, aim)
+
+
+## Anomaly Shot: a single oversized bolt that pierces through enemies. Its
+## damage scales with the weapon's effective projectile count (stacking).
+func _fire_anomaly(aim: Vector2) -> void:
+	if bolt_scene == null:
+		return
+	var eff_speed: float = get_effective_projectile_speed(bolt_speed)
+
+	# Damage scales with projectile count: more bolts = bigger anomaly.
+	var projectiles: int = get_effective_projectile_count(bolt_count)
+	var anomaly_damage: int = get_attack_damage(base_damage * float(projectiles) * 1.5)
+	var is_crit: bool = roll_critical_hit()
+	if is_crit:
+		anomaly_damage = int(round(float(anomaly_damage) * get_critical_multiplier()))
+
+	var bolt: Area2D = bolt_scene.instantiate() as Area2D
+	get_tree().current_scene.add_child(bolt)
+	if bolt.has_method("setup"):
+		# Large pierce pool so it tears through a whole wave.
+		bolt.setup(global_position, aim, eff_speed, anomaly_damage, is_crit, get_player(), self, 30)
+		bolt.scale *= get_area_multiplier()
+		bolt.scale *= 2.5

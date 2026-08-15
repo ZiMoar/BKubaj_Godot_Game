@@ -338,11 +338,11 @@ func _on_weapon_choice_selected(weapon_scene: PackedScene) -> void:
 
 # --- Anvil Upgrade (upgrade a specific weapon's stats) ---
 
-func show_anvil_upgrade() -> void:
+func show_anvil_upgrade(golden: bool = false) -> void:
 	if anvil_upgrade_menu == null or current_player == null:
 		return
 	get_tree().paused = true
-	anvil_upgrade_menu.open_menu()
+	anvil_upgrade_menu.open_menu(golden)
 
 
 func _on_anvil_upgrade_applied(_weapon: Weapon, _stat_id: String) -> void:

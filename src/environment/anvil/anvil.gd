@@ -7,11 +7,17 @@ extends Area2D
 
 @onready var sprite: Node2D = $Visual
 
+## Golden anvils (rare spawn) guarantee a signature upgrade in the choice menu.
+var is_golden: bool = false
+
 var _collected: bool = false
 
 
 func _ready() -> void:
 	body_entered.connect(_on_body_entered)
+	# Make the visual reflect whether this is a golden (signature) anvil.
+	if sprite and sprite.has_method("set"):
+		sprite.set("golden", is_golden)
 	# Subtle bob so the anvil clearly reads as a pickup.
 	var tween: Tween = create_tween()
 	tween.set_loops()
@@ -33,5 +39,5 @@ func _on_body_entered(body: Node2D) -> void:
 		hud = root.get_node_or_null("HUD") as HUD
 
 	if hud and hud.has_method("show_anvil_upgrade"):
-		hud.show_anvil_upgrade()
+		hud.show_anvil_upgrade(is_golden)
 		queue_free()

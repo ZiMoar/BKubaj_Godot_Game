@@ -152,6 +152,20 @@ func _repair_shield() -> void:
 	shield_hp = max_shield_hp
 
 
+## Repairs the shield by a fraction of its max HP (up to full). Used by the
+## "Defensive Stance" signature (sword hits restore shield life). Works whether
+## the shield is up or down, as long as it isn't stuck in a recharge.
+func repair_shield(fraction: float) -> void:
+	if _recharge_remaining > 0.0:
+		return
+	var p = get_player()
+	if max_shield_hp <= 0.0 and p != null:
+		max_shield_hp = maxf(10.0, float(p.current_max_health()) * shield_hp_ratio)
+	shield_hp = minf(max_shield_hp, shield_hp + max_shield_hp * clampf(fraction, 0.0, 1.0))
+	if _hp_bar:
+		_update_hp_bar()
+
+
 func _update_hp_bar() -> void:
 	if _hp_bar == null:
 		return

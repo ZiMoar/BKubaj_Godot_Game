@@ -174,6 +174,8 @@ var _current_player: Player = null
 var _selected_weapon: Weapon = null
 var _current_stats: Array[Dictionary] = []
 var _rerolls_done: int = 0
+## Golden anvils (5% of spawns) guarantee at least one signature upgrade choice.
+var _is_golden: bool = false
 
 const REROLL_BASE_COST: int = 50
 
@@ -198,10 +200,11 @@ func _bind_buttons() -> void:
 		reroll_button.pressed.connect(_on_reroll_pressed)
 
 
-func open_menu() -> void:
+func open_menu(golden: bool = false) -> void:
 	_current_player = get_tree().get_first_node_in_group("player") as Player
 	if _current_player == null:
 		return
+	_is_golden = golden
 	visible = true
 	_show_weapon_selection()
 
@@ -248,9 +251,9 @@ func _show_weapon_selection() -> void:
 		weapon_list.add_child(btn)
 
 	if title_label:
-		title_label.text = "The Anvil"
+		title_label.text = "Golden Anvil" if _is_golden else "The Anvil"
 	if subtitle_label:
-		subtitle_label.text = "Choose a weapon to upgrade."
+		subtitle_label.text = "Choose a weapon to upgrade. Grants a signature choice!" if _is_golden else "Choose a weapon to upgrade."
 	weapon_list.visible = true
 	if stat_box:
 		stat_box.visible = false
@@ -285,12 +288,47 @@ func _roll_stats(weapon: Weapon) -> Array[Dictionary]:
 	for stat: Dictionary in STAT_POOL:
 		if _weapon_supports(weapon, stat["id"] as String):
 			pool.append(stat)
+	# Merge in the weapon's remaining (not-yet-taken) signature upgrades. They
+	# carry a much-reduced weight so they only rarely surface on normal anvils.
+	var sig_pool: Array[Dictionary] = []
+	for sig: Dictionary in weapon.get_signature_pool():
+		if weapon.has_signature(sig.get("id", "")):
+			continue
+		var entry := sig.duplicate()
+		entry["weight"] = weapon.get_signature_weight()
+		sig_pool.append(entry)
 
+	# If golden, guarantee at least one signature among the three choices.
+	if _is_golden and not sig_pool.is_empty():
+		return _roll_golden(pool, sig_pool)
+
+	# Normal anvil: roll purely by weight (signatures included, rarely chosen).
+	var combined: Array[Dictionary] = pool + sig_pool
 	var choices: Array[Dictionary] = []
-	while choices.size() < 3 and not pool.is_empty():
-		var index: int = _weighted_pick(pool)
-		choices.append(pool[index])
-		pool.remove_at(index)
+	while choices.size() < 3 and not combined.is_empty():
+		var index: int = _weighted_pick(combined)
+		choices.append(combined[index])
+		combined.remove_at(index)
+	return choices
+
+
+## Golden anvil: exactly one guaranteed signature choice, plus two normal stats.
+func _roll_golden(pool: Array[Dictionary], sig_pool: Array[Dictionary]) -> Array[Dictionary]:
+	var choices: Array[Dictionary] = []
+	# 1 guaranteed signature (weighted pick among remaining signatures).
+	var sig_idx: int = _weighted_pick(sig_pool)
+	choices.append(sig_pool[sig_idx])
+	sig_pool.remove_at(sig_idx)
+	# 2 normal stats (no signatures to keep the choice clean and distinct).
+	var normal_pool: Array[Dictionary] = pool.duplicate()
+	var count: int = 0
+	while count < 2 and not normal_pool.is_empty():
+		var index: int = _weighted_pick(normal_pool)
+		choices.append(normal_pool[index])
+		normal_pool.remove_at(index)
+		count += 1
+	# Shuffle so the signature isn't always first.
+	choices.shuffle()
 	return choices
 
 
@@ -408,9 +446,27 @@ func _on_stat_pressed(index: int) -> void:
 	if index < 0 or index >= _current_stats.size() or _selected_weapon == null:
 		return
 	var stat: Dictionary = _current_stats[index]
+	# Signature entries carry an "id"; route them through apply_signature so the
+	# weapon records it as taken (once-per-run), then emit with a sig prefix.
+	if stat.has("id") and _is_signature_entry(stat):
+		_selected_weapon.apply_signature(stat)
+		upgrade_applied.emit(_selected_weapon, "signature:" + str(stat["id"]))
+		return
 	var apply: Callable = stat["apply"] as Callable
 	apply.call(_selected_weapon)
 	upgrade_applied.emit(_selected_weapon, stat["id"] as String)
+
+
+## A stat is a signature if it came from a weapon's signature pool. The simplest
+## robust check: signature ids are never valid normal stat ids, and we flag them
+## by looking it up in the weapon's signature pool.
+func _is_signature_entry(stat: Dictionary) -> bool:
+	if _selected_weapon == null:
+		return false
+	for sig: Dictionary in _selected_weapon.get_signature_pool():
+		if sig.get("id", "") == stat.get("id", ""):
+			return true
+	return false
 
 
 func _on_back_pressed() -> void:

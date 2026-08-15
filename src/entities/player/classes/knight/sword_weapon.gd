@@ -88,6 +88,37 @@ func _apply_combo_shape(is_stab: bool) -> void:
 	col_poly.polygon = pts
 	draw_poly.polygon = pts
 
+func supports_explosion_on_kill() -> bool:
+	return false
+
+
+## Sword's signature upgrades (granted by the rare golden anvil).
+func get_signature_pool() -> Array[Dictionary]:
+	return [
+		{
+			"id": "defensive_stance",
+			"title": "Defensive Stance",
+			"description": "Sword hits restore +8% of the Tower Shield's HP.",
+			"value": 8,
+			"apply": func(_w: Weapon) -> void: pass,
+		},
+	]
+
+
+## Restores a bit of the Tower Shield's HP after a sword hit (Defensive Stance).
+func _signature_restore_shield() -> void:
+	if not has_signature("defensive_stance"):
+		return
+	var player: Node = get_player()
+	if player == null:
+		return
+	# Find the Knight's Tower Shield secondary weapon.
+	for w: Node in player.get_node_or_null("Weapons").get_children():
+		if w is Weapon and w.trigger_type == Weapon.TriggerType.SECONDARY and w.has_method("repair_shield"):
+			w.repair_shield(0.08)
+			return
+
+
 func _on_slash_hit(node: Node) -> void:
 	var target = node.get_parent() if node is Area2D else node
 	if target and (target.is_in_group("enemies") or target.is_in_group("destructibles")) and target.has_method("take_damage"):
@@ -97,6 +128,8 @@ func _on_slash_hit(node: Node) -> void:
 			if target.has_method("apply_knockback"):
 				target.apply_knockback(global_position, knockback_force)
 			apply_lifesteal()
+			_signature_restore_shield()
 			if target.is_in_group("enemies"):
 				if target.has_method("has_died") and target.has_died():
 					apply_explosion_on_kill(target.global_position, current_attack_damage)
+

@@ -40,6 +40,11 @@ var explosion_on_kill_chance: float = 0.0  # chance a kill triggers an AOE
 var explosion_radius: float = 95.0
 var explosion_damage_ratio: float = 0.6    # as a fraction of the killing hit
 
+## Signature upgrades this weapon has taken this run (each once). Signatures are
+## transformative per-weapon upgrades granted by the (rare) golden anvil, and can
+## also rarely roll from normal anvils at a reduced weight.
+var signature_ids: Array[String] = []
+
 func _ready() -> void:
 	base_cooldown = cooldown
 	# Check if a CooldownTimer child already exists; if not, create one safely
@@ -152,6 +157,38 @@ func supports_range_damage() -> bool:
 
 func supports_explosion_on_kill() -> bool:
 	return true
+
+# --- Signature upgrades ------------------------------------------------
+# Each weapon defines its own signature upgrades by overriding get_signature_pool().
+# A signature is a transformative, one-time-per-run upgrade (the golden anvil's
+# special offering). They carry the same shape as anvil stat entries, but with a
+# much-reduced weight so they roll rarely from normal anvils.
+
+## Signature pool entries this weapon offers. Each entry:
+## { "id", "title", "description", "value", "apply": Callable }
+## Base returns empty; subclasses override with their own list.
+func get_signature_pool() -> Array[Dictionary]:
+	return []
+
+func get_signature_ids_owned() -> Array[String]:
+	return signature_ids
+
+func has_signature(sig_id: String) -> bool:
+	return signature_ids.has(sig_id)
+
+## Weight signatures roll at on normal anvils (10x smaller than normal stats=1.0).
+func get_signature_weight() -> float:
+	return 0.1
+
+## Applies one signature and records it as taken (once-per-run).
+func apply_signature(entry: Dictionary) -> void:
+	var id: String = entry.get("id", "")
+	if id.is_empty() or has_signature(id):
+		return
+	signature_ids.append(id)
+	var apply: Callable = entry.get("apply", Callable())
+	if apply.is_valid():
+		apply.call(self)
 
 func get_attack_damage(base_damage: float) -> int:
 	var player = get_player()
