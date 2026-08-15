@@ -2,6 +2,7 @@ class_name Player
 extends CharacterBody2D
 
 signal health_changed(current_hp: int, max_hp: int)
+signal shield_changed(current_shield: float, max_shield: float)
 signal weapons_changed()
 signal artefacts_changed()
 signal gold_changed(current_gold: int)
@@ -65,6 +66,13 @@ const ARTEFACTS: Script = preload("res://src/systems/artefact.gd")
 @export var shield_placeholder: float = 0.0
 
 var current_health: int
+# Shield is a second HP bar that depletes before health. Fewer, dedicated
+# sources grant it (e.g. necrotic soul pickups, regen overheal relic). It
+# persists until depleted. Cap defaults to 50% of max health and can be raised
+# by relic/source bonuses (shield_cap_ratio_bonus) in the future.
+var current_shield: float = 0.0
+var shield_cap_ratio_bonus: float = 0.0
+const SHIELD_CAP_RATIO_BASE: float = 0.5
 var is_invincible: bool = false
 var current_move_input: Vector2 = Vector2.ZERO
 var revive_remaining: int = 0
@@ -215,6 +223,11 @@ func roll_critical_hit() -> bool:
 func roll_ailment() -> bool:
 	return randf() < clamp(ailment_chance, 0.0, 1.0)
 
+
+## Returns the raw ailment chance (0..1) so callers can apply their own boosts.
+func roll_ailment_result() -> float:
+	return clamp(ailment_chance, 0.0, 1.0)
+
 func get_attack_damage(base_damage: float) -> int:
 	var flat_applied = maxf(0.0, base_damage + might_flat_bonus)
 	var damage = flat_applied * get_might_multiplier()
@@ -276,6 +289,29 @@ func heal(amount: float) -> void:
 		hp_bar.value = current_health
 	health_changed.emit(current_health, current_max_health())
 	_update_hp_value_label()
+
+
+## Shield cap: defaults to 50% of max health; bonuses can raise it.
+func get_shield_cap() -> float:
+	return float(current_max_health()) * (SHIELD_CAP_RATIO_BASE + maxf(0.0, shield_cap_ratio_bonus))
+
+
+## Grants shield up to the cap. Clamped; never exceeds cap.
+func add_shield(amount: float) -> void:
+	if amount <= 0.0 or current_health <= 0:
+		return
+	current_shield = minf(get_shield_cap(), current_shield + amount)
+	shield_changed.emit(current_shield, get_shield_cap())
+	_update_shield_display()
+
+
+func _update_shield_display() -> void:
+	if not has_node("ShieldBar"):
+		return
+	var sb: ProgressBar = get_node("ShieldBar") as ProgressBar
+	sb.max_value = maxf(1.0, get_shield_cap())
+	sb.value = clampf(current_shield, 0.0, sb.max_value)
+	sb.visible = current_shield > 0.0
 
 const MAX_AUTO_WEAPONS: int = 3
 
@@ -518,6 +554,8 @@ func _on_magnet_area_entered(area: Area2D) -> void:
 		area.start_attraction(self)
 	elif area is GoldPickup and not area.is_being_collected:
 		area.start_attraction(self)
+	elif area.is_in_group("soul_pickups") and not area.is_being_collected:
+		area.start_attraction(self)
 
 func _physics_process(delta: float) -> void:
 	handle_movement()
@@ -687,7 +725,17 @@ func _process_regen(delta: float) -> void:
 
 	var regen_amount = int(floor(hp_regen_bank))
 	hp_regen_bank -= regen_amount
-	current_health = min(current_max_health(), current_health + regen_amount)
+	var max_hp: int = current_max_health()
+	# Regen Overload relic: excess regen (healing past full HP) converts to shield
+	# instead of being wasted. Only per-second regen, not active heals.
+	if has_artefact("regen_to_shield") and regen_amount > 0:
+		var deficit: int = maxi(0, max_hp - current_health)
+		var overheal: float = maxf(0.0, float(regen_amount) - float(deficit))
+		if overheal > 0.0:
+			current_health = min(max_hp, current_health + regen_amount)
+			add_shield(overheal)
+			regen_amount -= int(round(overheal))
+	current_health = min(max_hp, current_health + regen_amount)
 	if hp_bar:
 		hp_bar.value = current_health
 	health_changed.emit(current_health, current_max_health())
@@ -761,7 +809,16 @@ func take_damage(amount: int, source: Node = null) -> void:
 	# Flat armor uses the same diminishing-returns formula as attack speed:
 	# 100/(100+armor). armor=100 -> 50% damage taken, armor=300 -> 25%.
 	var mitigated_damage = maxf(0.0, float(amount) * get_damage_reduction_multiplier())
-		
+
+	# Shield absorbs the (already mitigated) damage before it hits health, acting
+	# as a second HP bar that depletes first.
+	if current_shield > 0.0:
+		var absorbed: float = minf(current_shield, mitigated_damage)
+		current_shield -= absorbed
+		mitigated_damage -= absorbed
+		shield_changed.emit(current_shield, get_shield_cap())
+		_update_shield_display()
+
 	current_health = max(0, current_health - int(round(mitigated_damage)))
 	if hp_bar:
 		hp_bar.value = current_health

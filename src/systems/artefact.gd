@@ -99,6 +99,24 @@ const ARTEFACT_POOL: Array[Dictionary] = [
 		"desc": "Revives have a 50% chance to not be consumed.",
 		"color": Color(0.8, 0.7, 0.95),
 	},
+	{
+		"id": "unstable_mind",
+		"name": "Unstable Mind",
+		"desc": "Critically Vulnerable enemies have +50% chance to catch your ailments.",
+		"color": Color(0.85, 0.6, 0.9),
+	},
+	{
+		"id": "soul_harvest",
+		"name": "Soul Harvest",
+		"desc": "Enemies leave behind souls. Collecting one grants a Shield equal to 5% of your Max Health.",
+		"color": Color(0.45, 0.9, 0.75),
+	},
+	{
+		"id": "regen_to_shield",
+		"name": "Regen Overload",
+		"desc": "HP Regen that would heal you past full health instead grants Shield.",
+		"color": Color(0.5, 0.8, 1.0),
+	},
 ]
 
 

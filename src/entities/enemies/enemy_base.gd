@@ -25,6 +25,7 @@ extends CharacterBody2D
 
 var xp_orb_scene: PackedScene = preload("res://src/pickups/xp_orb/xp_orb.tscn")
 var gold_pickup_scene: PackedScene = preload("res://src/pickups/gold_pickup/gold_pickup.tscn")
+var soul_pickup_scene: PackedScene = preload("res://src/pickups/soul_pickup/soul_pickup.tscn")
 
 const StatusIconScript: Script = preload("res://src/ui/status_icons/status_icon_overlay.gd")
 
@@ -277,7 +278,12 @@ func _roll_ailment() -> bool:
 	var pl: Node = get_tree().get_first_node_in_group("player")
 	if pl == null or not pl.has_method("roll_ailment"):
 		return false
-	return bool(pl.roll_ailment())
+	var chance: float = float(pl.roll_ailment_result())
+	# Unstable Mind relic: against Critically Vulnerable enemies, ailment chance is
+	# boosted by the same amount as the crit-vulnerability upgrade chance (0.5).
+	if crit_vuln_timer > 0.0 and pl.has_method("has_artefact") and pl.has_artefact("unstable_mind"):
+		chance += CRIT_VULN_UPGRADE_CHANCE
+	return randf() < clampf(chance, 0.0, 1.0)
 
 
 # Applies the ailment matching the given damage type to this enemy (and, for
@@ -479,10 +485,24 @@ func _spawn_damage_number(amount: int, is_critical: bool = false) -> void:
 func die() -> void:
 	_is_dead = true
 	_spread_ailments_on_death()
+	_drop_soul()
 	_register_kill()
 	_drop_xp()
 	_drop_gold()
 	queue_free()
+
+
+## Soul Harvest relic: drop a soul pickup that grants the player Shield.
+func _drop_soul() -> void:
+	var plr: Node = get_tree().get_first_node_in_group("player")
+	if plr == null or not plr.has_method("has_artefact") or not plr.has_artefact("soul_harvest"):
+		return
+	if not is_instance_valid(get_tree()) or get_tree().current_scene == null:
+		return
+	var soul: Node2D = soul_pickup_scene.instantiate() as Node2D
+	var ang: float = randf() * TAU
+	soul.global_position = global_position + Vector2(cos(ang), sin(ang)) * DROP_SCATTER_RADIUS
+	get_tree().current_scene.add_child(soul)
 
 
 ## Cinder Propagation + Brand of Ruin relics: spreading statuses to nearby
