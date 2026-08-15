@@ -29,8 +29,6 @@ func _spawn_free_anvil() -> void:
 		anvil = ANVIL_SCENE.instantiate()
 		anvil.set("is_golden", true)
 
-	if get_tree().current_scene != null:
-		get_tree().current_scene.add_child(anvil)
-	else:
-		add_child(anvil)
-	anvil.global_position = global_position
+	# Add as a child of the room (which owns the world coordinates), deferred so
+	# we never collide with the arena root's own child-setup phase.
+	add_child.call_deferred(anvil)

@@ -1,0 +1,53 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://src/environment/dev/dev_arena.gd" id="1_dev"]
+[ext_resource type="PackedScene" path="res://src/entities/player/player/player.tscn" id="2_player"]
+[ext_resource type="PackedScene" path="res://src/ui/hud/hud.tscn" id="3_hud"]
+[ext_resource type="Script" path="res://src/environment/grid_background.gd" id="4_grid"]
+[ext_resource type="Script" path="res://src/managers/xp_orb_spatial_manager.gd" id="5_xp_spatial"]
+[ext_resource type="PackedScene" path="res://src/managers/team_xp_manager/team_xp_manager.tscn" id="6_team_xp"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_horiz"]
+size = Vector2(2100, 32)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_vert"]
+size = Vector2(32, 1220)
+
+[node name="DevArena" type="Node2D"]
+script = ExtResource("1_dev")
+room_scene = null
+start_gold = 5000
+
+[node name="XPOrbSpatialManager" type="Node" parent="."]
+script = ExtResource("5_xp_spatial")
+
+[node name="TeamXPManager" parent="." instance=ExtResource("6_team_xp")]
+
+[node name="HUD" parent="." instance=ExtResource("3_hud")]
+
+[node name="Floor" type="Node2D" parent="."]
+z_index = -1
+script = ExtResource("4_grid")
+arena_center = Vector2(1000, 600)
+arena_size = Vector2(2000, 1200)
+
+[node name="Walls" type="StaticBody2D" parent="."]
+
+[node name="TopWall" type="CollisionShape2D" parent="Walls"]
+position = Vector2(1000, -16)
+shape = SubResource("RectangleShape2D_horiz")
+
+[node name="BottomWall" type="CollisionShape2D" parent="Walls"]
+position = Vector2(1000, 1216)
+shape = SubResource("RectangleShape2D_horiz")
+
+[node name="LeftWall" type="CollisionShape2D" parent="Walls"]
+position = Vector2(-16, 600)
+shape = SubResource("RectangleShape2D_vert")
+
+[node name="RightWall" type="CollisionShape2D" parent="Walls"]
+position = Vector2(2016, 600)
+shape = SubResource("RectangleShape2D_vert")
+
+[node name="Player" parent="." instance=ExtResource("2_player")]
+position = Vector2(1000, 900)

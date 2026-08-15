@@ -35,12 +35,15 @@ var _sold: bool = false
 
 @onready var price_label: Label = get_node_or_null("PriceLabel") as Label
 @onready var name_label: Label = get_node_or_null("NameLabel") as Label
+@onready var hint_label: Label = get_node_or_null("HintLabel") as Label
 
 
 func _ready() -> void:
 	body_entered.connect(_on_body_entered)
 	body_exited.connect(_on_body_exited)
 	_update_label()
+	if hint_label:
+		hint_label.visible = _player_present
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -109,11 +112,15 @@ func _item_color() -> Color:
 func _on_body_entered(body: Node2D) -> void:
 	if body.is_in_group("player"):
 		_player_present = true
+		if hint_label:
+			hint_label.visible = not _sold
 
 
 func _on_body_exited(body: Node2D) -> void:
 	if body.is_in_group("player"):
 		_player_present = false
+		if hint_label:
+			hint_label.visible = false
 
 
 func _try_buy() -> void:
@@ -131,6 +138,8 @@ func _try_buy() -> void:
 	item_purchased.emit(str(kind))
 	price_label.text = "SOLD"
 	name_label.text = ""
+	if hint_label:
+		hint_label.visible = false
 	queue_redraw()
 
 
