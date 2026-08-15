@@ -58,7 +58,15 @@ func _physics_process(delta: float) -> void:
 
 
 func _release_puff() -> void:
+	# Twin Spray: also spray in the opposite direction.
+	var twin: bool = source_weapon != null and source_weapon.has_method("has_signature") and source_weapon.has_signature("twin_spray")
 	var dir: Vector2 = _nearest_enemy_dir()
+	_spawn_puff(dir)
+	if twin:
+		_spawn_puff(-dir)
+
+
+func _spawn_puff(dir: Vector2) -> void:
 	var puff: Node2D = PuffScript.new()
 	puff.name = "PoisonPuff"
 	puff.global_position = global_position

@@ -177,6 +177,12 @@ var _rerolls_done: int = 0
 ## Golden anvils (5% of spawns) guarantee at least one signature upgrade choice.
 var _is_golden: bool = false
 
+## Golden border/destructive styling used to flag signature upgrade choices so a
+## player can tell at a glance that a signature mod rolled (vs a normal stat).
+const SIG_BORDER_COLOR: Color = Color(1.0, 0.84, 0.25)
+const SIG_TEXT_COLOR: Color = Color(1.0, 0.9, 0.4)
+const SIG_BG_COLOR: Color = Color(0.35, 0.28, 0.08, 0.92)
+
 const REROLL_BASE_COST: int = 50
 
 
@@ -437,9 +443,23 @@ func _update_stat_buttons() -> void:
 			continue
 		var stat: Dictionary = _current_stats[i]
 		var desc: String = (stat["description"] as String).replace("{value}", "%d" % int(stat["value"]))
-		button.text = "%s\n%s" % [stat["title"], desc]
+		var is_sig: bool = _is_signature_entry(stat)
+		var title_text: String = stat["title"] as String
+		if is_sig:
+			title_text = "[color=#FFD700]✦[/color] %s" % title_text
+		button.text = "%s\n%s" % [title_text, desc]
 		button.disabled = false
-		button.modulate = Color(0.85, 0.7, 0.95)
+		# Signature choices get a prominent golden border + gold text so they read
+		# as special at a glance; normal stats keep the standard purple tint.
+		if _is_signature_entry(stat):
+			_apply_signature_style(button)
+		else:
+			button.modulate = Color(0.85, 0.7, 0.95)
+			button.add_theme_color_override("font_color", Color(0.9, 0.85, 1.0))
+			button.add_theme_color_override("font_hover_color", Color.WHITE)
+			button.add_theme_stylebox_override("normal", null)
+			button.add_theme_stylebox_override("hover", null)
+			button.add_theme_stylebox_override("pressed", null)
 
 
 func _on_stat_pressed(index: int) -> void:
@@ -455,6 +475,29 @@ func _on_stat_pressed(index: int) -> void:
 	var apply: Callable = stat["apply"] as Callable
 	apply.call(_selected_weapon)
 	upgrade_applied.emit(_selected_weapon, stat["id"] as String)
+
+
+## Styles a button as a special golden SIGNATURE upgrade with a gold border and
+## gold text so players instantly spot that a signature mod rolled.
+func _apply_signature_style(button: Button) -> void:
+	button.modulate = Color.WHITE
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = SIG_BG_COLOR
+	sb.border_color = SIG_BORDER_COLOR
+	sb.set_border_width_all(4)
+	sb.set_corner_radius_all(6)
+	var sb_hover := StyleBoxFlat.new()
+	sb_hover.bg_color = Color(0.5, 0.4, 0.12, 0.95)
+	sb_hover.border_color = Color(1.0, 0.94, 0.55)
+	sb_hover.set_border_width_all(4)
+	sb_hover.set_corner_radius_all(6)
+	button.add_theme_stylebox_override("normal", sb)
+	button.add_theme_stylebox_override("hover", sb_hover)
+	button.add_theme_stylebox_override("pressed", sb_hover)
+	button.add_theme_stylebox_override("focus", sb)
+	button.add_theme_color_override("font_color", SIG_TEXT_COLOR)
+	button.add_theme_color_override("font_hover_color", Color(1.0, 1.0, 0.85))
+	button.add_theme_color_override("font_pressed_color", Color(1.0, 1.0, 0.85))
 
 
 ## A stat is a signature if it came from a weapon's signature pool. The simplest

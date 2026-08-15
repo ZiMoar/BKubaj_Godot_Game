@@ -33,6 +33,19 @@ func supports_duration() -> bool:
 	return true
 
 
+## Poison Spray's signature upgrades (granted by the rare golden anvil).
+func get_signature_pool() -> Array[Dictionary]:
+	return [
+		{
+			"id": "twin_spray",
+			"title": "Twin Spray",
+			"description": "The spray also emits in the opposite direction, poisoning enemies behind you too.",
+			"value": 1,
+			"apply": func(_w: Weapon) -> void: pass,
+		},
+	]
+
+
 func fire() -> void:
 	var player := get_player()
 	var hit_value: int = get_attack_damage(BASE_HIT_VALUE)

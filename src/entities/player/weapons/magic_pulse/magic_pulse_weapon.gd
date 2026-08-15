@@ -29,6 +29,19 @@ func supports_area() -> bool:
 	return true
 
 
+## Magic Pulse's signature upgrades (granted by the rare golden anvil).
+func get_signature_pool() -> Array[Dictionary]:
+	return [
+		{
+			"id": "vacuum_grasp",
+			"title": "Vacuum Grasp",
+			"description": "Pulses now PULL enemies toward the impact point instead of knocking them away, grouping them up.",
+			"value": 1,
+			"apply": func(_w: Weapon) -> void: pass,
+		},
+	]
+
+
 func fire() -> void:
 	var count: int = get_effective_projectile_count(BASE_PULSE_COUNT)
 	var aim: Vector2 = _nearest_enemy_dir()

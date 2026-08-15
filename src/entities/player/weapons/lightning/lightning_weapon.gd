@@ -27,6 +27,29 @@ func supports_range_damage() -> bool:
 	return true
 
 
+## Lightning Bolt's signature upgrades (granted by the rare golden anvil).
+func get_signature_pool() -> Array[Dictionary]:
+	return [
+		{
+			"id": "chain_ramp",
+			"title": "Chain Ramp",
+			"description": "Deals increased damage for each chain remaining — the first strike hits hardest.",
+			"value": 20,
+			"apply": func(_w: Weapon) -> void: pass,
+		},
+	]
+
+
+## Damage multiplier scaling with how many chain hops remain on this target.
+## First target (most hops remaining) gets the biggest boost; each hop drops it
+## by CHAIN_RAMP_STEP. Called from fire() when the signature is owned.
+func chain_ramp_multiplier(hops_remaining: int) -> float:
+	return 1.0 + CHAIN_RAMP_STEP * float(maxi(0, hops_remaining))
+
+
+const CHAIN_RAMP_STEP: float = 0.2   # +20% damage per chain remaining
+
+
 func fire() -> void:
 	if lightning_scene == null:
 		return
@@ -79,10 +102,15 @@ func fire() -> void:
 	var prev: Vector2 = origin
 	var local_points := PackedVector2Array()
 	local_points.append(Vector2.ZERO)
+	# Chain Ramp: track how many hops remain (including this one's successors).
+	var chain_ramp_owned: bool = has_signature("chain_ramp")
+	var hops_remaining: int = seq.size() - 1
 	for e: Node2D in seq:
 		if not is_instance_valid(e):
 			continue
 		var dealt: int = dmg
+		if chain_ramp_owned:
+			dealt = maxi(1, int(round(float(dealt) * chain_ramp_multiplier(hops_remaining))))
 		if close_range_damage_bonus > 0.0 or far_range_damage_bonus > 0.0:
 			dealt = maxi(1, int(round(float(dealt) * get_range_damage_multiplier(e.global_position.distance_to(origin)))))
 		e.take_damage(dealt, false, damage_type)
@@ -93,6 +121,7 @@ func fire() -> void:
 			apply_explosion_on_kill(e.global_position, dealt)
 		prev = e.global_position
 		local_points.append(e.global_position - origin)
+		hops_remaining = maxi(0, hops_remaining - 1)
 
 	_spawn_lightning(origin, local_points, crit)
 

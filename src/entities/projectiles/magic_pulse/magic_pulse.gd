@@ -45,6 +45,8 @@ func _physics_process(delta: float) -> void:
 
 
 func _apply_pulse() -> void:
+	# Vacuum Grasp: pull enemies toward the player instead of knocking away.
+	var pull: bool = source_weapon != null and source_weapon.has_method("has_signature") and source_weapon.has_signature("vacuum_grasp")
 	var enemies: Array[Node] = get_tree().get_nodes_in_group("enemies")
 	for e: Node in enemies:
 		if not is_instance_valid(e):
@@ -56,7 +58,15 @@ func _apply_pulse() -> void:
 		if source_player and source_player.has_method("apply_lifesteal"):
 			source_player.apply_lifesteal()
 		if en.has_method("apply_knockback"):
-			en.apply_knockback(global_position, knockback)
+			if pull:
+				# Push away from a point on the FAR side of the enemy relative to
+				# the player, which shoves it toward the player (a pull).
+				var away: Vector2 = (en.global_position - global_position)
+				if away.length_squared() < 0.01:
+					away = Vector2.RIGHT
+				en.apply_knockback(en.global_position + away.normalized(), knockback)
+			else:
+				en.apply_knockback(global_position, knockback)
 		if source_weapon and en.is_in_group("enemies"):
 			if en.has_method("has_died") and en.has_died():
 				source_weapon.apply_explosion_on_kill(en.global_position, damage)

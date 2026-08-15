@@ -31,6 +31,22 @@ func supports_area() -> bool:
 	return true
 
 
+## Radiant Barrier's signature upgrades (granted by the rare golden anvil).
+func get_signature_pool() -> Array[Dictionary]:
+	return [
+		{
+			"id": "righteous_rebound",
+			"title": "Righteous Rebound",
+			"description": "The holy wave's damage is greatly amplified by the amount the barrier blocked — big hits release devastating counter-blasts.",
+			"value": 100,
+			"apply": func(_w: Weapon) -> void: pass,
+		},
+	]
+
+
+const REBOUND_BLOCK_MULT: float = 1.5   # Righteous Rebound: +150% of blocked dmg to the wave
+
+
 func fire() -> void:
 	_activate_barrier()
 
@@ -69,8 +85,12 @@ func block_hit(amount: int) -> int:
 
 func _release_holy_wave(blocked_damage: int) -> void:
 	var wave_dmg: int = get_attack_damage(WAVE_DAMAGE)
-	# Stronger barriers scale the wave a bit with the blocked amount too.
-	wave_dmg += int(round(float(blocked_damage) * 0.25))
+	# Righteous Rebound: amplify the wave with the blocked amount much harder.
+	if has_signature("righteous_rebound"):
+		wave_dmg += int(round(float(blocked_damage) * REBOUND_BLOCK_MULT))
+	else:
+		# Stronger barriers scale the wave a bit with the blocked amount too.
+		wave_dmg += int(round(float(blocked_damage) * 0.25))
 	var origin: Vector2 = global_position
 	var eff_radius: float = WAVE_RADIUS * get_area_multiplier()
 
