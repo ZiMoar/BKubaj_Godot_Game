@@ -1,22 +1,26 @@
 class_name RunSummary
 extends Control
 
-## End-of-run summary screen. Reads the run stats captured in GameState
-## (kills, elapsed time, difficulty reached, gold) and shows them, then
-## returns the player to the main menu.
+## Defeat / end-of-run screen. Reads the run stats captured in GameState
+## (kills, elapsed time, difficulty reached, gold) and shows them, then lets
+## the player either retry the run with the same choices (same map + character)
+## or return to the main menu.
 
 const MAIN_MENU_SCENE: String = "res://src/ui/main_menu/main_menu.tscn"
 
 @onready var title_label: Label = get_node_or_null("Center/Panel/Vertical/TitleLabel") as Label
 @onready var stats_box: VBoxContainer = get_node_or_null("Center/Panel/Vertical/Stats") as VBoxContainer
+@onready var retry_button: Button = get_node_or_null("Center/Panel/Vertical/RetryButton") as Button
 @onready var menu_button: Button = get_node_or_null("Center/Panel/Vertical/MenuButton") as Button
 
 
 func _ready() -> void:
 	_populate()
+	if retry_button and not retry_button.pressed.is_connected(_on_retry_pressed):
+		retry_button.pressed.connect(_on_retry_pressed)
+		retry_button.grab_focus()
 	if menu_button and not menu_button.pressed.is_connected(_on_menu_pressed):
 		menu_button.pressed.connect(_on_menu_pressed)
-		menu_button.grab_focus()
 
 
 func _populate() -> void:
@@ -58,6 +62,20 @@ func _format_time(total_seconds: int) -> String:
 	var m: int = int(total_seconds / 60.0)
 	var s: int = total_seconds % 60
 	return "%d:%02d" % [m, s]
+
+
+## Retry: restart a fresh run on the same map, keeping the same character.
+## GameState.retry_run() preserves the selected class/map and returns the path
+## to the first combat arena to load into.
+func _on_retry_pressed() -> void:
+	var gs: Node = get_node_or_null("/root/GameState")
+	if gs and gs.has_method("retry_run"):
+		var path: String = gs.retry_run()
+		if not path.is_empty():
+			get_tree().change_scene_to_file(path)
+			return
+	# Fallback: if GameState isn't available, just restart the run directly.
+	get_tree().change_scene_to_file("res://src/environment/catacombs_arena.tscn")
 
 
 func _on_menu_pressed() -> void:

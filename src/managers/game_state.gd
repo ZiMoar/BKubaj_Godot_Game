@@ -246,6 +246,15 @@ func begin_run(arena_path: String) -> void:
 	run_started_at = Time.get_ticks_msec()
 
 
+## Restarts a brand-new run on the first combat arena, keeping the currently
+## selected class and map (the player's roster choices are left untouched).
+## Used by the Defeat screen's "Retry" button. Returns the arena path to load.
+func retry_run() -> String:
+	var path: String = _combat_path()
+	begin_run(path)
+	return path
+
+
 func register_enemy_kill() -> void:
 	if run_active:
 		run_kills += 1
