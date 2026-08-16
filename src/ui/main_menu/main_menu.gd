@@ -9,6 +9,7 @@ extends Control
 const CLASS_SELECT_SCENE: String = "res://src/ui/class_select_menu/class_select_menu.tscn"
 const ARSENAL_SCENE: String = "res://src/ui/arsenal_menu/arsenal_menu.tscn"
 const KEYBINDS_SCENE: String = "res://src/ui/keybind_menu/keybind_menu.tscn"
+const COOP_SCENE: String = "res://src/ui/coop_menu/coop_menu.tscn"
 
 @onready var start_button: Button = get_node_or_null("CenterContainer/Panel/Vertical/StartButton") as Button
 @onready var quit_button: Button = get_node_or_null("CenterContainer/Panel/Vertical/QuitButton") as Button
@@ -20,6 +21,7 @@ func _ready() -> void:
 	# scene that loads straight into gameplay).
 	KeybindSettings.apply_saved()
 	_build_keybinds_button()
+	_build_coop_button()
 
 	# Give keyboard focus to Start so Enter immediately begins a run.
 	if start_button:
@@ -58,6 +60,37 @@ func _build_keybinds_button() -> void:
 	var arsenal := vertical.get_node_or_null("ArsenalButton")
 	if arsenal != null:
 		vertical.move_child(btn, arsenal.get_index() + 1)
+
+
+func _build_coop_button() -> void:
+	# Insert a "PLAY CO-OP" button just before QUIT, styled like the others.
+	var vertical: VBoxContainer = get_node_or_null("CenterContainer/Panel/Vertical") as VBoxContainer
+	if vertical == null:
+		return
+	var ref: Button = vertical.get_node_or_null("ArsenalButton") as Button
+	if ref == null:
+		return
+	var btn := Button.new()
+	btn.custom_minimum_size = Vector2(0, 40)
+	btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	btn.text = "PLAY CO-OP"
+	btn.pressed.connect(_on_coop_pressed)
+	btn.name = "CoopButton"
+	for sb: String in ["normal", "hover", "pressed", "focus"]:
+		var style: StyleBox = ref.get_theme_stylebox(sb)
+		if style:
+			btn.add_theme_stylebox_override(sb, style)
+	for col: String in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
+		btn.add_theme_color_override(col, ref.get_theme_color(col))
+	btn.add_theme_font_size_override("font_size", ref.get_theme_font_size("font_size"))
+	vertical.add_child(btn)
+	var quit := vertical.get_node_or_null("QuitButton")
+	if quit != null:
+		vertical.move_child(btn, quit.get_index())
+
+
+func _on_coop_pressed() -> void:
+	get_tree().change_scene_to_file(COOP_SCENE)
 
 
 func _unhandled_input(event: InputEvent) -> void:

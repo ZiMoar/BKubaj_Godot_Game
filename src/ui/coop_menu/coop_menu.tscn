@@ -1,0 +1,60 @@
+[gd_scene format=3 uid="uid://beoo448vva1bv"]
+
+[ext_resource type="Script" uid="uid://c2om1b7pilgth" path="res://src/ui/coop_menu/coop_menu.gd" id="1_coop"]
+
+[sub_resource type="StyleBoxFlat" id="sb_panel"]
+content_margin_left = 20.0
+content_margin_top = 12.0
+content_margin_right = 20.0
+content_margin_bottom = 12.0
+bg_color = Color(0.07, 0.08, 0.11, 0.97)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.6, 0.5, 0.2, 0.9)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[node name="CoopMenu" type="Control" unique_id=1349065297]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_coop")
+
+[node name="Background" type="ColorRect" parent="." unique_id=1309060930]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.03, 0.03, 0.05, 1)
+
+[node name="Center" type="CenterContainer" parent="." unique_id=1642129600]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="PanelContainer" parent="Center" unique_id=1026388022]
+custom_minimum_size = Vector2(640, 356)
+layout_mode = 2
+theme_override_styles/panel = SubResource("sb_panel")
+
+[node name="Scroll" type="ScrollContainer" parent="Center/Panel" unique_id=53104252]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="Vertical" type="VBoxContainer" parent="Center/Panel/Scroll" unique_id=761724720]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 7

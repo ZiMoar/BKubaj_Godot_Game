@@ -418,12 +418,20 @@ func _update_shield_display() -> void:
 
 const MAX_AUTO_WEAPONS: int = 3
 
-## The class chosen in the main menu's class-selection screen (GameState
-## autoload). Returns the class node, or null if unavailable.
+## When networking is active, each Player instance is assigned the class the
+## *owning peer* chose (set by the MultiplayerController before spawn). Empty in
+## single-player, where GameState's selected class is used instead.
+var player_class_id: String = ""
+
+## The class for this specific player: the per-instance co-op override if set,
+## otherwise the class chosen in the main menu's class-selection screen
+## (GameState autoload). Returns the class node, or null if unavailable.
 func _get_selected_class() -> ClassBase:
 	var state: Node = get_node_or_null("/root/GameState")
 	if state == null:
 		return null
+	if not player_class_id.is_empty() and state.has_method("get_class_by_id"):
+		return state.get_class_by_id(player_class_id) as ClassBase
 	if state.has_method("get_selected_class"):
 		return state.get_selected_class() as ClassBase
 	return null
@@ -744,6 +752,12 @@ func _on_magnet_area_entered(area: Area2D) -> void:
 		area.start_attraction(self)
 
 func _physics_process(delta: float) -> void:
+	# In multiplayer, only the peer that OWNS this Player node simulates it
+	# (movement/aim/attack). Every other peer just receives the owner's synced
+	# position via its MultiplayerSynchronizer. With no network peer this guard
+	# is a no-op, so single-player is unchanged.
+	if multiplayer.has_multiplayer_peer() and not is_multiplayer_authority():
+		return
 	handle_movement()
 	handle_aiming()
 	handle_weapon_inputs()

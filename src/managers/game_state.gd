@@ -130,6 +130,7 @@ const STAGE_CONTROLLER_SCENE: PackedScene = preload("res://src/environment/stage
 const OBSTACLE_SPAWNER_SCENE: PackedScene = preload("res://src/environment/obstacles/obstacle_spawner/obstacle_spawner.tscn")
 const ANVIL_POINTER_SCENE: PackedScene = preload("res://src/ui/pointers/anvil_pointer/anvil_pointer.tscn")
 const CHEST_POINTER_SCENE: PackedScene = preload("res://src/ui/pointers/chest_pointer/chest_pointer.tscn")
+const MULTIPLAYER_CONTROLLER_SCRIPT: Script = preload("res://src/environment/multiplayer/multiplayer_controller.gd")
 const MIN_DIFFICULTY_PER_STAGE: float = 2.0
 
 var run_active: bool = false
@@ -181,6 +182,9 @@ func _maybe_setup_arena(scene: Node) -> void:
 		_add_chest_pointer(scene)
 	if scene.get_node_or_null("AnvilPointer") == null:
 		_add_anvil_pointer(scene)
+	# Co-op: if there's a live Net connection, add the per-peer player spawner.
+	if scene.get_node_or_null("MultiplayerController") == null:
+		_add_multiplayer_controller(scene)
 
 
 func _add_stage_door(scene: Node, floor_node: Node) -> void:
@@ -220,6 +224,19 @@ func _add_chest_pointer(scene: Node) -> void:
 	var pointer: CanvasLayer = CHEST_POINTER_SCENE.instantiate() as CanvasLayer
 	pointer.name = "ChestPointer"
 	scene.add_child(pointer)
+
+
+## Adds the multiplayer arena controller when a co-op session is live. It hides
+## the baked-in single Player and spawns one Player per connected peer. It no-ops
+## (removes itself) if networking isn't active, so single-player is unchanged.
+func _add_multiplayer_controller(scene: Node) -> void:
+	var net: Node = get_node_or_null("/root/Net")
+	if net == null or not net.active():
+		return
+	var ctrl: Node = Node.new()
+	ctrl.name = "MultiplayerController"
+	ctrl.set_script(MULTIPLAYER_CONTROLLER_SCRIPT)
+	scene.add_child(ctrl)
 
 
 func _find_floor(node: Node) -> Node:
