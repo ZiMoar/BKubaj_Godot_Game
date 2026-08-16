@@ -107,6 +107,11 @@ func _connect_net_signals() -> void:
 		net.peer_connected.connect(_on_peer_count_changed)
 	if not net.peer_left.is_connected(_on_peer_count_changed):
 		net.peer_left.connect(_on_peer_count_changed)
+	# A client only enters peer_classes once its class RPC arrives (classes_synced),
+	# so the host's "Players ready" count must refresh on that signal too, not just
+	# on the raw ENet connect.
+	if not net.classes_synced.is_connected(_on_peer_count_changed):
+		net.classes_synced.connect(_on_peer_count_changed)
 
 
 func _on_class_pressed(class_id: String) -> void:

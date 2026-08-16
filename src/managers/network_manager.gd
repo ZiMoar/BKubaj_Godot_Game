@@ -92,12 +92,21 @@ func leave() -> void:
 
 
 ## Host: kick off the run once players are connected. Starts GameState on the
-## first arena and tells every client to load the same arena scene.
+## first arena and tells every client to load the same arena scene. The run
+## start (begin_run) is ALSO relayed, so every machine's GameState runs a real
+## session (run_active, difficulty, stage, timer) — otherwise the client would
+## load the arena but sit in a "no run" state and nothing would actually happen.
 func host_start_run() -> void:
+	begin_run_relayed.rpc(CATACOMBS_ARENA_PATH)
+	load_arena.rpc()
+
+
+## Every peer starts a real run on the shared arena path (host + clients).
+@rpc("any_peer", "call_local", "reliable")
+func begin_run_relayed(arena_path: String) -> void:
 	var gs: Node = get_node_or_null("/root/GameState")
 	if gs and gs.has_method("begin_run"):
-		gs.begin_run(CATACOMBS_ARENA_PATH)
-	load_arena.rpc()
+		gs.begin_run(arena_path)
 
 
 ## Every peer (host + clients) loads the shared arena scene.
