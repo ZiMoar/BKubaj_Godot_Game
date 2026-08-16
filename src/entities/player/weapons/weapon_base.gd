@@ -25,6 +25,14 @@ var cooldown_timer: Timer
 var can_fire: bool = true
 var base_cooldown: float = 1.0
 
+## The Player that owns this weapon, resolved at _ready by walking up the tree.
+## Used to gate firing in co-op: only the player that actually OWNS the weapon
+## (the network authority) may fire it — otherwise every machine's copy of a
+## remote player's weapons would sneak out one stray volley from their initial
+## deferred try_fire and then sit silent, looking like "automatic weapons fire
+## once then stop."
+var autofire_owner: Player = null
+
 # Per-weapon stat bonuses granted by the Anvil. These are independent of the
 # player's global stats, so each weapon scales on its own.
 var projectile_count_bonus: int = 0
@@ -65,14 +73,37 @@ func _ready() -> void:
 	cooldown_timer.wait_time = base_cooldown
 	cooldown_timer.one_shot = true
 	cooldown_timer.timeout.connect(_on_cooldown_finished)
+	autofire_owner = _find_owner_player()
 
 func try_fire() -> void:
+	if not _may_autofire():
+		return
 	if can_fire:
 		_fire_with_repeat()
 		can_fire = false
 		var effective_cooldown = get_effective_cooldown()
 		cooldown_timer.start(effective_cooldown)
 		cooldown_started.emit(effective_cooldown)
+
+## The Player ancestor of this weapon (walks up the tree). Null when the weapon
+## isn't parented under a Player (e.g. developer/isolated scenes).
+func _find_owner_player() -> Player:
+	var n: Node = get_parent()
+	while n != null:
+		if n is Player:
+			return n as Player
+		n = n.get_parent()
+	return null
+
+## True when this weapon is allowed to fire. Single-player (no live network peer)
+## always fires; in co-op only the owning player may fire, so remote players'
+## weapon copies on this machine never shoot.
+func _may_autofire() -> bool:
+	if autofire_owner == null:
+		return true
+	if not autofire_owner.multiplayer.has_multiplayer_peer():
+		return true
+	return autofire_owner.is_multiplayer_authority()
 
 
 # Fires once, then (for Repeat) fires again a few times in quick succession.
