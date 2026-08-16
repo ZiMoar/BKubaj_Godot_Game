@@ -48,6 +48,12 @@ func _ready() -> void:
 	_players.name = "Players"
 	add_child(_players)
 
+	# Host-authoritative enemy sync. Exists on every machine with identical
+	# structure; the host spawns enemies through it and clients receive replicas.
+	var enemy_net: EnemyNet = EnemyNet.new()
+	enemy_net.name = "EnemyNet"
+	add_child(enemy_net)
+
 	# Build a Player for each peer already in the roster, then keep in step as
 	# the roster changes (new players join / leave mid-run).
 	_ensure_players()

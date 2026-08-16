@@ -112,6 +112,21 @@ func _spawn_pattern() -> void:
 func spawn_at_position(pos: Vector2) -> Node:
 	if enemy_scene == null:
 		return null
+	var net: Node = get_node_or_null("/root/Net")
+	var coop: bool = net != null and net.active()
+	if coop:
+		# Host-authoritative enemy sync: ONLY the host spawns enemies (rule #2).
+		# A client's timer spawner must not instantiate its own mobs — it receives
+		# the host's enemies via the MultiplayerSpawner. The enemy scene path is
+		# passed through so every machine instantiates the same enemy type.
+		if not multiplayer.is_server():
+			return null
+		var enemy_net: Node = get_tree().get_first_node_in_group("enemy_net")
+		if enemy_net != null and enemy_net.has_method("request_spawn"):
+			enemy_net.call("request_spawn", enemy_scene.resource_path, pos)
+			return null
+		# No EnemyNet (e.g. a special/event path that bypasses the spawner) ->
+		# fall through to plain local spawning.
 	var enemy = enemy_scene.instantiate()
 	if enemy is Node2D:
 		(enemy as Node2D).global_position = pos

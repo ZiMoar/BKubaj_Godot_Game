@@ -43,6 +43,15 @@ const GOLD_ROOM_DECAY: float = 0.12
 var current_health: int
 var can_deal_damage: bool = true
 var target_player: Node2D = null
+
+## Set by EnemyNet when this enemy was network-spawned by the HOST (>= 0).
+## -1 means a normal single-player enemy (or a boss/event enemy that isn't
+## replicated), which is never treated as a network node.
+var _enemy_net_id: int = -1
+
+## Host/EnemyNet stamps each replicated enemy with its shared network id.
+func set_enemy_net_id(id: int) -> void:
+	_enemy_net_id = id
 var knockback_velocity: Vector2 = Vector2.ZERO
 ## FROZEN (Deep Freeze signature): enemy is frozen solid — can't move and takes
 ## bonus damage for the duration. Applied only to enemies ALREADY slowed, and
@@ -173,6 +182,80 @@ func _ready() -> void:
 	_sep_params.collision_mask = collision_layer
 	_sep_params.collide_with_bodies = true
 	_sep_params.collide_with_areas = false
+
+	_apply_network_role()
+
+
+# --- Network role (host-authoritative enemies) -------------------------------
+#
+# In co-op, enemies are spawned ONLY by the host (peer 1) and replicated to
+# clients. The HOST's copy runs the full AI/physics and owns hp/death. A CLIENT's
+# copy is a frozen "replica": it must not simulate (it just renders the host's
+# position/hp, synced via MultiplayerSynchronizer) and any damage it takes is
+# forwarded to the host (this enemy's authoritative copy) as an RPC instead of
+# being committed locally.
+
+## True when this enemy is a co-op REPLICA: exists on a client, owned by the
+## host, so it must not simulate or commit damage locally.
+func _is_network_replica() -> bool:
+	if _enemy_net_id < 0:
+		return false
+	var net: Node = get_node_or_null("/root/Net")
+	if net == null or not net.active():
+		return false
+	return not is_multiplayer_authority()
+
+
+## Runs at the end of _ready. For a network-synced enemy, claims host authority
+## (called while the node is already in the tree, per the pattern that binds
+## correctly) and, on a client, turns the node into a frozen replica.
+func _apply_network_role() -> void:
+	var net: Node = get_node_or_null("/root/Net")
+	if _enemy_net_id < 0 or net == null or not net.active():
+		return  # single-player / non-replicated enemy: behave as normal
+	set_multiplayer_authority(1)
+	if not is_multiplayer_authority():
+		# Client replica: stop AI/physics/status ticks. Position, max_health and
+		# current_health arrive via the synchronizer; _process refreshes the bar.
+		set_physics_process(false)
+
+
+## Lightweight per-frame refresh used by replicas (their physics is off) to show
+## the health bar from the host-authoritative replicated hp. It returns
+## immediately everywhere else, so single-player and host behavior are unchanged.
+func _process(_delta: float) -> void:
+	if not _is_network_replica():
+		return
+	if hp_bar:
+		hp_bar.max_value = max_health
+		hp_bar.value = current_health
+		hp_bar.visible = current_health < max_health
+
+
+## A client's replica took a hit: tell the HOST (peer 1) to commit it to the
+## authoritative copy, and show cosmetic feedback so the attacker feels it land.
+func _forward_client_hit(amount: int, is_critical: bool, damage_type: DamageType.Type, suppress_ailment: bool, ailment_multiplier: float) -> void:
+	var n: Node = get_tree().get_first_node_in_group("enemy_net")
+	if n and multiplayer.has_multiplayer_peer():
+		n.rpc_id(1, "apply_enemy_hit", _enemy_net_id, maxi(1, amount), is_critical, int(damage_type), suppress_ailment, ailment_multiplier)
+	_spawn_damage_number(maxi(1, amount), is_critical)
+	var tween: Tween = create_tween()
+	tween.tween_property(self, "modulate", Color.RED, 0.05)
+	tween.tween_property(self, "modulate", Color.WHITE, 0.05)
+
+
+## In co-op, an enemy must only deal its contact damage to a player it contacts
+## locally on this machine — i.e. a player this machine actually simulates. This
+## stops the host's authoritative enemy from draining the HP of another player's
+## position-replicated ghost (which would be a local-only, non-authoritative
+## change to that player's real health).
+func _can_damage_player_locally(p: Node) -> bool:
+	var net: Node = get_node_or_null("/root/Net")
+	if net == null or not net.active():
+		return true
+	if p.is_in_group("player") and not p.is_multiplayer_authority():
+		return false
+	return true
 
 
 ## Simple enemy-enemy separation so a swarm fans out around the player instead
@@ -478,6 +561,13 @@ func _process_status_dots(delta: float) -> void:
 
 
 func take_damage(amount: int, is_critical: bool = false, damage_type: DamageType.Type = DamageType.Type.PHYSICAL, suppress_ailment: bool = false, ailment_multiplier: float = 1.0) -> void:
+	# Network replica: this machine does NOT own this enemy's hp. Forward the hit
+	# to the host's authoritative copy and show cosmetic feedback instead of
+	# committing the damage locally (the host's result replicates back out).
+	if _is_network_replica():
+		_forward_client_hit(amount, is_critical, damage_type, suppress_ailment, ailment_multiplier)
+		return
+
 	# IMPALE release: stored impale damage is added onto THIS next hit, then cleared.
 	var dealt: float = float(amount)
 	var plr: Node = get_tree().get_first_node_in_group("player")
@@ -777,7 +867,7 @@ func _random_scatter() -> Vector2:
 func _on_hitbox_touch(node: Node) -> void:
 	var target = node.get_parent() if node is Area2D else node
 	if target and (target.is_in_group("player") or target.has_method("take_damage")) and not target.is_in_group("enemies"):
-		if can_deal_damage:
+		if can_deal_damage and _can_damage_player_locally(target):
 			target.take_damage(_get_outgoing_contact_damage(), self)
 			_apply_thorns_to_attacker(target)
 			_start_damage_cooldown()
@@ -786,7 +876,7 @@ func _process_body_contacts() -> void:
 	for i in range(get_slide_collision_count()):
 		var collision = get_slide_collision(i)
 		var collider = collision.get_collider()
-		if collider and collider.is_in_group("player") and can_deal_damage:
+		if collider and collider.is_in_group("player") and can_deal_damage and _can_damage_player_locally(collider):
 			if collider.has_method("take_damage"):
 				collider.take_damage(_get_outgoing_contact_damage(), self)
 				_apply_thorns_to_attacker(collider)
