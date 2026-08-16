@@ -15,6 +15,7 @@ func _ready() -> void:
 	weapon_name = "Mana Overload"
 	trigger_type = TriggerType.SECONDARY
 	cooldown = recharge
+	damage_type = DamageType.Type.ARCANE
 	super._ready()
 	var aura := get_node_or_null("OverloadAura")
 	if aura:

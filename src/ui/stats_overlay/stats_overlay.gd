@@ -98,8 +98,11 @@ func _populate() -> void:
 	_add_section("Utility")
 	_add_stat("Move speed", "%+d%%" % int(round(float(player.get("move_speed_percent_bonus")) * 100.0)))
 	_add_stat("Gold", "%d" % int(player.get("gold")))
-	_add_stat("Luck", "%d%%" % int(round(float(player.get("luck")) * 100.0)))
-	_add_stat("Magnet", "on" if bool(player.get("magnet_enabled")) else "off")
+	_add_stat("Luck", "%d" % int(player.get("luck")))
+	if bool(player.get("magnet_enabled")):
+		_add_stat("Magnet", "%.0f px" % float(player.get("magnet_range")))
+	else:
+		_add_stat("Magnet", "off")
 	var growth: float = float(player.get("growth_percent_bonus"))
 	if growth != 0.0:
 		_add_stat("XP gain", "%+d%%" % int(round(growth * 100.0)))
@@ -157,6 +160,9 @@ func _add_weapon_block(weapon: Node) -> void:
 	name_l.add_theme_constant_override("outline_size", 1)
 	name_l.add_theme_font_size_override("font_size", 13)
 	stats_box.add_child(name_l)
+
+	if weapon.get("damage_type") != null:
+		_add_stat("Type", DamageType.display_name(int(weapon.get("damage_type"))))
 
 	var specs: Array = [
 		["Projectiles", "projectile_count_bonus", false],

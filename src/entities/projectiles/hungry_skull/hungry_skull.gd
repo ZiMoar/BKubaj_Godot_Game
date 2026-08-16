@@ -25,6 +25,11 @@ var state: State = State.HOMING
 ## Fissure (signature): when this skull's prey dies, it splits into a smaller
 ## skull that seeks a new target. Tracks how many splits this skull has spawned.
 var _fissures_spawned: int = 0
+## Only skulls fired directly by the weapon may split. Fissure splits are smaller
+## secondary skulls that do NOT split again — without this, every split (a fresh
+## skull) could itself split, giving unbounded exponential spread (the same
+## runaway the bomb upgrade used to have).
+var _can_fissure: bool = true
 const FISSURE_MAX: int = 2
 const FissureSkullScene: PackedScene = preload("res://src/entities/projectiles/hungry_skull/hungry_skull.tscn")
 
@@ -114,6 +119,8 @@ func _attack() -> void:
 ## that seeks a new target (up to FISSURE_MAX times total). Only if the owning
 ## weapon has the signature.
 func _try_fissure() -> void:
+	if not _can_fissure:
+		return
 	if source_weapon == null or not source_weapon.has_method("has_signature") or not source_weapon.has_signature("fissure"):
 		return
 	if _fissures_spawned >= FISSURE_MAX:
@@ -128,6 +135,7 @@ func _try_fissure() -> void:
 		return
 	var split: Node = FissureSkullScene.instantiate()
 	split.name = "FissureSkull"
+	split._can_fissure = false
 	split.global_position = global_position
 	var split_dmg: int = maxi(1, int(round(float(damage) * 0.6)))
 	if split.has_method("setup"):

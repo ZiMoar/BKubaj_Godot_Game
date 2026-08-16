@@ -377,6 +377,11 @@ func show_anvil_upgrade(golden: bool = false, kind: int = 0) -> void:
 func _on_anvil_upgrade_applied(_weapon: Weapon, _stat_id: String) -> void:
 	anvil_upgrade_menu.close_menu()
 	get_tree().paused = false
+	# Re-read every equipped weapon so the slot UI reflects stat changes made
+	# by the anvil (most importantly a damage-type conversion, which edits
+	# weapon.damage_type directly and emits no signal of its own).
+	if current_player:
+		_setup_weapon_slots(current_player)
 
 
 # --- Winged Boots (dash upgrade) ---

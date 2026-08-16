@@ -82,6 +82,11 @@ var current_move_input: Vector2 = Vector2.ZERO
 var revive_remaining: int = 0
 var hp_regen_bank: float = 0.0
 var difficulty_runtime_bonus: float = 0.0
+# Re-entrancy guard: Enlightened Greed (gold->XP) and Avarice (XP->gold) each
+# trigger the other's conversion, which would otherwise cascade add_gold ->
+# add_xp -> add_gold -> ... forever. When true, freshly-converted gold does not
+# feed back into gold->XP again, breaking the loop after one pass.
+var _in_gold_to_xp_conversion: bool = false
 var _lifesteal_cooldown_remaining: float = 0.0
 const LIFESTEAL_COOLDOWN: float = 0.3
 
@@ -649,10 +654,15 @@ func add_gold(raw_amount: int) -> void:
 	gold += amount
 	gold_changed.emit(gold)
 	# Enlightened Greed artefact: gold gained also grants XP.
-	if has_artefact("greed_to_xp"):
+	# Guarded so Avarice's XP->gold conversion (which calls add_gold again) does
+	# not feed straight back into gold->XP — without the guard the two relics
+	# combine into an infinite add_gold <-> add_xp loop.
+	if has_artefact("greed_to_xp") and not _in_gold_to_xp_conversion:
 		var mgr: Node = get_tree().get_first_node_in_group("team_xp_manager")
 		if mgr and mgr.has_method("add_xp"):
+			_in_gold_to_xp_conversion = true
 			mgr.add_xp(max(1, int(round(float(amount) * 0.25))))
+			_in_gold_to_xp_conversion = false
 
 
 func can_afford(cost: int) -> bool:
