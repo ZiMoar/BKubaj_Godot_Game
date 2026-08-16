@@ -53,6 +53,24 @@ func _ready() -> void:
 	if net.has_signal("peer_left"):
 		net.peer_left.connect(_on_peer_left)
 
+	# The shared HUD binds to the first "player"-group node at init, which before
+	# this controller runs is the arena's hidden baked single Player. Rebinding
+	# it to the locally-controlled per-peer Player keeps chest/level-up/anvil
+	# grants going to the character the user actually controls (otherwise they'd
+	# silently land on the baked player and auto weapons would never visibly fire).
+	call_deferred("_rebind_hud_to_local_player")
+
+
+## Point the shared HUD at the locally-controlled Player now that the per-peer
+## players exist and the baked player has been dropped from the "player" group.
+func _rebind_hud_to_local_player() -> void:
+	var arena: Node = get_tree().current_scene
+	if arena == null:
+		return
+	var hud: Node = arena.get_node_or_null("HUD")
+	if hud and hud.has_method("_connect_to_player"):
+		hud.call("_connect_to_player")
+
 
 ## The arena scene contains one baked-in single-player "Player" that must not
 ## collide with per-peer spawns. Hide it, stop it, drop it from the "player"

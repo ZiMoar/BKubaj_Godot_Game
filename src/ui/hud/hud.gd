@@ -185,8 +185,20 @@ func _connect_to_xp_manager() -> void:
 		_update_difficulty_meter()
 		_update_session_timer_label()
 
+## Returns the Player this machine actually controls — the one whose network
+## authority matches the local peer. Falls back to the first player in the
+## "player" group. This matters in co-op: the arena also contains a HIDDEN baked
+## single Player (a non-simulated placeholder for single-player). If the HUD
+## bound to it, chest/level-up/anvil grants would be sent to a character nobody
+## controls and automatic weapons would never visibly fire.
+func _find_local_player() -> Player:
+	for p: Node in get_tree().get_nodes_in_group("player"):
+		if p is Player and p.is_multiplayer_authority():
+			return p as Player
+	return get_tree().get_first_node_in_group("player") as Player
+
 func _connect_to_player() -> void:
-	current_player = get_tree().get_first_node_in_group("player") as Player
+	current_player = _find_local_player()
 	if current_player:
 		_setup_weapon_slots(current_player)
 		_update_difficulty_meter()
