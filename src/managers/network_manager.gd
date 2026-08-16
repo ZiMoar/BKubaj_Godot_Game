@@ -42,10 +42,15 @@ func _ready() -> void:
 
 
 ## True while a live listen-server/client connection exists.
+## NOTE: this must NOT be inferred from `multiplayer.multiplayer_peer`, because in
+## a plain single-player run Godot still installs a default OfflineMultiplayerPeer
+## (status CONNECTION_CONNECTED) — that would make every arena think co-op is live,
+## hide the real player and spawn nothing ("invisible player, can't move"). We
+## track an explicit flag set only when a real ENet host/join is created.
+var _session_active: bool = false
+
 func active() -> bool:
-	return (multiplayer.has_multiplayer_peer()
-		and multiplayer.multiplayer_peer != null
-		and multiplayer.multiplayer_peer.get_connection_status() != MultiplayerPeer.CONNECTION_DISCONNECTED)
+	return _session_active
 
 
 ## Host starts a listening server and becomes peer id 1. Returns OK on success.
@@ -60,6 +65,7 @@ func create_host(class_id: String) -> Error:
 		return err
 	multiplayer.multiplayer_peer = peer
 	peer_classes = {1: class_id}
+	_session_active = true
 	return OK
 
 
@@ -73,6 +79,7 @@ func join_game(ip: String, class_id: String) -> Error:
 		return err
 	multiplayer.multiplayer_peer = peer
 	peer_classes = {}
+	_session_active = true
 	return OK
 
 
@@ -81,6 +88,7 @@ func leave() -> void:
 	multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
 	is_host = false
 	peer_classes = {}
+	_session_active = false
 
 
 ## Host: kick off the run once players are connected. Starts GameState on the
@@ -142,6 +150,7 @@ func _on_connected_to_server() -> void:
 
 
 func _on_connection_failed() -> void:
+	_session_active = false
 	connection_failed_to_host.emit()
 
 
@@ -149,4 +158,5 @@ func _on_server_disconnected() -> void:
 	multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
 	is_host = false
 	peer_classes = {}
+	_session_active = false
 	server_disconnected.emit()
