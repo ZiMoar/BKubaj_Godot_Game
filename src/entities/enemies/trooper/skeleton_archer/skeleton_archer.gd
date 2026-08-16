@@ -11,6 +11,9 @@ var _attack_timer: float = 0.0
 
 
 func _ready() -> void:
+	doodle_kind = 2  # diamond (ranged)
+	doodle_color = Color(0.3, 0.8, 0.5)
+	doodle_size = 7.0
 	speed = 55.0  # Slower than regular skeletons (80)
 	max_health = 45
 	contact_damage = 6

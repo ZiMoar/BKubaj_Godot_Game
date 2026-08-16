@@ -117,8 +117,22 @@ var _impale_echo_per_hit: float = 0.0
 
 @onready var hp_bar: Control = get_node_or_null("HPBar")
 
+# --- Procedural doodle ----------------------------------------------------
+# Every enemy shares the same placeholder icon texture today, so they only differ
+# by a tint — genuinely hard to tell apart mid-swarm. Each subclass sets a small
+# doodle (distinct shape + color) which is drawn here with _draw() primitives so
+# each type reads clearly at a glance. doodle_kind: 0=circle 1=square 2=diamond
+# 3=triangle 4=bomb(fuse) 5=star 6=hexagon.
+var doodle_kind: int = 0
+var doodle_color: Color = Color(0.9, 0.9, 0.95)
+var doodle_size: float = 6.0
+
 func _ready() -> void:
 	add_to_group("enemies")
+	# Every enemy type uses the same placeholder icon; the per-type procedural
+	# doodle (drawn in _draw) is their real visual, so hide the shared sprite.
+	if has_node("Sprite2D"):
+		($Sprite2D as Sprite2D).visible = false
 	current_health = max_health
 	if gold_value <= 0:
 		gold_value = max(1, xp_value)
@@ -189,6 +203,44 @@ func _setup_status_icon_overlay() -> void:
 	overlay.name = "StatusIcons"
 	overlay.z_index = 12
 	add_child(overlay)
+
+## Draws this enemy's procedural doodle so each type is visually distinct.
+func _draw() -> void:
+	var c: Color = doodle_color
+	var s: float = doodle_size
+	match doodle_kind:
+		0:  # circle (grunt)
+			draw_circle(Vector2.ZERO, s, c)
+		1:  # square (tank)
+			var half: float = s
+			draw_rect(Rect2(-half, -half, s * 2.0, s * 2.0), c)
+			draw_rect(Rect2(-half * 0.55, -half * 0.55, s * 1.1, s * 1.1), c.lightened(0.25))
+		2:  # diamond (ranged)
+			var dh: float = s
+			draw_colored_polygon(PackedVector2Array([Vector2(0, -dh), Vector2(dh, 0), Vector2(0, dh), Vector2(-dh, 0)]), c)
+		3:  # triangle (dasher)
+			var th: float = s
+			draw_colored_polygon(PackedVector2Array([Vector2(0, -th * 1.2), Vector2(th, th * 0.8), Vector2(-th, th * 0.8)]), c)
+		4:  # bomb (fuse + bright spark)
+			draw_circle(Vector2(0, 2), s * 0.8, c)
+			draw_line(Vector2(0, 2 - s * 0.8), Vector2(0, 2 - s * 1.3), c.lightened(0.35), 1.5)
+			draw_circle(Vector2(0, 2 - s * 1.4), 1.5, Color(1.0, 0.9, 0.3))
+		5:  # star (boss)
+			var pts: PackedVector2Array = PackedVector2Array()
+			for i in range(10):
+				var ang: float = -PI / 2.0 + float(i) * PI / 5.0
+				var r: float = s if i % 2 == 0 else s * 0.45
+				pts.append(Vector2(cos(ang), sin(ang)) * r)
+			draw_colored_polygon(pts, c)
+			draw_polyline(pts, Color(0, 0, 0, 0.35), 1.0, true)
+		6:  # hexagon (summoner)
+			var pts2: PackedVector2Array = PackedVector2Array()
+			for i in range(6):
+				var ang2: float = PI / 6.0 + float(i) * PI / 3.0
+				pts2.append(Vector2(cos(ang2), sin(ang2)) * s)
+			draw_colored_polygon(pts2, c)
+			draw_circle(Vector2.ZERO, s * 0.2, Color(0, 0, 0, 0.35))
+
 
 func _physics_process(delta: float) -> void:
 	_process_status_dots(delta)

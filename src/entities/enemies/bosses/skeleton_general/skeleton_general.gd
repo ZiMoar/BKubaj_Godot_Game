@@ -17,6 +17,9 @@ extends BossEnemy
 
 
 func _ready() -> void:
+	doodle_kind = 5  # star (boss)
+	doodle_color = Color(0.9, 0.8, 0.4)
+	doodle_size = 14.0
 	boss_display_name = "Skeleton General"
 	# Stats tuned for a fully-leveled-up player: the boss spawns at the 5-minute
 	# mark, so its base pool is high and difficulty scaling pushes it further.

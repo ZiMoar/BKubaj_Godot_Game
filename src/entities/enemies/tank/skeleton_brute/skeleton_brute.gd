@@ -2,6 +2,9 @@ class_name SkeletonBrute
 extends EnemyBase
 
 func _ready() -> void:
+	doodle_kind = 1  # square (tank)
+	doodle_color = Color(0.45, 0.15, 0.75)
+	doodle_size = 10.0
 	max_health = 140
 	speed = 42.0
 	contact_damage = 12

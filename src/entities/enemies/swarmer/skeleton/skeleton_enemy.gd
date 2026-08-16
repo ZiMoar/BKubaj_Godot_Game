@@ -2,6 +2,9 @@ class_name SkeletonEnemy
 extends EnemyBase
 
 func _ready() -> void:
+	doodle_kind = 0  # circle (grunt)
+	doodle_color = Color(0.9, 0.9, 0.95)
+	doodle_size = 6.0
 	speed = 80.0
 	max_health = 50
 	contact_damage = 7

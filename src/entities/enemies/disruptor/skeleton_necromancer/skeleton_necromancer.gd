@@ -17,6 +17,9 @@ var _summon_timer: float = 0.0
 
 
 func _ready() -> void:
+	doodle_kind = 6  # hexagon (summoner)
+	doodle_color = Color(0.7, 0.3, 0.9)
+	doodle_size = 8.0
 	speed = 55.0
 	max_health = 90               # Medium HP (between skeleton 50 and brute 140)
 	contact_damage = 6

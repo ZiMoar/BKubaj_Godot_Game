@@ -16,6 +16,9 @@ var _armed: bool = false
 
 
 func _ready() -> void:
+	doodle_kind = 4  # bomb (fuse + spark)
+	doodle_color = Color(1.0, 0.35, 0.25)
+	doodle_size = 8.0
 	add_to_group("bombers")
 	speed = 215.0                # Just barely faster than the player's default 200
 	max_health = 120             # More HP than a standard skeleton (50)

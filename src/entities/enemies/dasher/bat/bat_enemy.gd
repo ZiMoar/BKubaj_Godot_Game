@@ -20,6 +20,9 @@ var _dash_velocity: Vector2 = Vector2.ZERO
 
 
 func _ready() -> void:
+	doodle_kind = 3  # triangle (dasher)
+	doodle_color = Color(0.6, 0.3, 0.85)
+	doodle_size = 6.0
 	add_to_group("flying_enemies")
 	speed = 90.0
 	max_health = 30               # Tiny and fragile
