@@ -16,7 +16,9 @@ var lifetime: float = 4.0
 var bolt_interval: float = 0.5
 var bolt_count: int = 3
 var bolt_damage: int = 14
-var bolt_range: float = 300.0
+# Reach of each secondary hit (initial zap from the orb, and every chain hop),
+# scaled by the weapon's area multiplier and set from the weapon on spawn.
+var bolt_range: float = 100.0
 var bolt_speed: float = 340.0
 
 var _age: float = 0.0
@@ -78,7 +80,7 @@ func _fire_volley() -> void:
 		var target: Node2D = _nearest_enemy(enemies)
 		if target == null:
 			continue
-		_zap(target, player)
+		_zap(global_position, target, player)
 		if chain_count > 0:
 			var hit: Dictionary = { target.get_instance_id(): true }
 			var from: Vector2 = target.global_position
@@ -86,7 +88,7 @@ func _fire_volley() -> void:
 				var next: Node2D = _nearest_enemy_from(enemies, from, hit)
 				if next == null:
 					break
-				_zap(next, player)
+				_zap(from, next, player)
 				hit[next.get_instance_id()] = true
 				from = next.global_position
 
@@ -94,10 +96,12 @@ func _fire_volley() -> void:
 ## Instantly strikes one enemy (hitscan) with a random-damage-type zap. Applies
 ## crit, ailment resonance, lifesteal, and explosion-on-kill just like the old
 ## bolt projectile did, but immediately and at the target's current position.
-func _zap(target: Node2D, player: Node) -> void:
+func _zap(origin: Vector2, target: Node2D, player: Node) -> void:
 	if target == null or not is_instance_valid(target):
 		return
 	var rnd_type: DamageType.Type = _random_damage_type()
+	# Visual tracer from the strike origin to the target, colored by element.
+	_spawn_bolt_line(origin, target.global_position, DamageType.color_for(rnd_type))
 	var dmg: int = bolt_damage
 	var crit: bool = false
 	if is_instance_valid(source_weapon):
@@ -152,6 +156,25 @@ func _nearest_enemy_from(enemies: Array, from: Vector2, used: Dictionary) -> Nod
 			best_d = d
 			best = en
 	return best
+
+
+## Draws a brief tracer line from `from` to `to` in the strike's element color,
+## letting the player actually see each secondary hit land. The line fades out
+## over ~0.18s then frees itself.
+func _spawn_bolt_line(from: Vector2, to: Vector2, color: Color) -> void:
+	var line := Line2D.new()
+	line.points = PackedVector2Array([from, to])
+	line.default_color = color
+	line.width = 2.5
+	line.antialiased = true
+	line.z_index = 20
+	var scene: Node = get_tree().current_scene
+	if scene == null:
+		return
+	scene.add_child(line)
+	var tw := line.create_tween()
+	tw.tween_property(line, "self_modulate:a", 0.0, 0.18)
+	tw.tween_callback(line.queue_free)
 
 
 func _random_damage_type() -> DamageType.Type:

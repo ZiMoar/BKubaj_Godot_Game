@@ -79,5 +79,5 @@ func fire() -> void:
 	orb.deceleration = ORB_DECEL
 	orb.lifetime = get_effective_duration(ORB_LIFETIME)
 	orb.bolt_interval = BOLT_INTERVAL
-	orb.bolt_range = 300.0 * get_area_multiplier()
+	orb.bolt_range = 100.0 * get_area_multiplier()
 	get_tree().current_scene.add_child(orb)

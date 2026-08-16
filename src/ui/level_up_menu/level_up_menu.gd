@@ -240,8 +240,11 @@ func _update_buttons() -> void:
 		# Format the description, replacing {value} with the actual scaled value
 		var desc_template: String = choice.get("description", "") as String
 		var display_value: String
+		# These option descriptions already append a literal "%" (e.g. "+{value}%
+		# ailment chance"), so display_value must be the bare integer or the % would
+		# show twice ("+5%% ailment chance.").
 		if choice["id"] in ["might_percent", "crit_chance", "ailment_chance", "move_speed_percent", "growth", "greed"]:
-			display_value = "%d%%" % int(round(effective_value * 100.0))
+			display_value = "%d" % int(round(effective_value * 100.0))
 		elif effective_value < 1.0 and effective_value > 0.0:
 			display_value = "%.2f" % effective_value
 		else:
