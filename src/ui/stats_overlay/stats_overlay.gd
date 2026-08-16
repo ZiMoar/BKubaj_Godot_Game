@@ -78,6 +78,9 @@ func _populate() -> void:
 	_add_stat("Lifesteal", "%.1f" % float(player.get("lifesteal_flat")))
 	_add_stat("Thorns", "%.1f" % thorns)
 	_add_stat("Shield", "%.1f" % float(player.get("shield_capacity")))
+	var revive_count: int = int(player.get("revive_count"))
+	if revive_count > 0:
+		_add_stat("Revives", "%d" % revive_count)
 
 	_add_section("Offense")
 	_add_stat("Damage (might)", "%+d%%" % int(round((might_mult - 1.0) * 100.0)))
@@ -94,6 +97,16 @@ func _populate() -> void:
 	_add_stat("Gold", "%d" % int(player.get("gold")))
 	_add_stat("Luck", "%d%%" % int(round(float(player.get("luck")) * 100.0)))
 	_add_stat("Magnet", "on" if bool(player.get("magnet_enabled")) else "off")
+	var growth: float = float(player.get("growth_percent_bonus"))
+	if growth != 0.0:
+		_add_stat("XP gain", "%+d%%" % int(round(growth * 100.0)))
+	var greed: float = float(player.get("greed_percent_bonus"))
+	if greed != 0.0:
+		_add_stat("Gold gain", "%+d%%" % int(round(greed * 100.0)))
+	_add_stat("Rerolls", "%d" % int(player.get("rerolls")))
+	var banish_count: int = int(player.get("banish_count"))
+	if banish_count > 0:
+		_add_stat("Banish", "%d" % banish_count)
 	_add_stat("Dash charges", "%d" % int(player.get("dash_charges")))
 	var dash_cd: float = float(player.get("dash_cooldown"))
 	if dash_cd > 0.0:

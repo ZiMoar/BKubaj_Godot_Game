@@ -617,11 +617,11 @@ func get_artefact_slot_name(slot_index: int) -> String:
 	return ARTEFACTS.get_display_name(id)
 
 
-## Raw artefact id at the given equip slot (for lookups / logging).
+## Raw artefact id at the given equip slot (combined normal + cursed order,
+## matching get_artefact_count and the slot-colour/name helpers). This is what
+## the stats overlay / HUD use to list every relic a player owns.
 func get_artefact_at_slot(slot_index: int) -> String:
-	if slot_index < 0 or slot_index >= artefact_ids.size():
-		return ""
-	return artefact_ids[slot_index]
+	return _artefact_id_at_slot(slot_index)
 
 
 ## Raw cursed artefact id at the given cursed slot.
