@@ -80,11 +80,11 @@ const BURN_MAX_TICKS: int = 30
 var shock_timer: float = 0.0
 const SHOCK_DURATION: float = 1.5
 
-# ARCANE -> Crit vulnerability: while active, non-crit hits have a chance to be
-# upgraded into crits. CRIT_VULN_TIMER also serves as the icon active flag.
+# ARCANE -> Crit vulnerability: while active the player's crit chance is rolled
+# TWICE (lucky effect — take the better result) instead of a flat upgrade chance.
+# CRIT_VULN_TIMER also serves as the icon active flag.
 var crit_vuln_timer: float = 0.0
 const CRIT_VULN_DURATION: float = 3.0
-const CRIT_VULN_UPGRADE_CHANCE: float = 0.5  # chance a non-crit hit becomes a crit
 
 # NECROTIC -> Decay: while active, the enemy deals less damage.
 var decay_timer: float = 0.0
@@ -365,12 +365,14 @@ func _roll_ailment() -> bool:
 	var pl: Node = get_tree().get_first_node_in_group("player")
 	if pl == null or not pl.has_method("roll_ailment"):
 		return false
-	var chance: float = float(pl.roll_ailment_result())
-	# Unstable Mind relic: against Critically Vulnerable enemies, ailment chance is
-	# boosted by the same amount as the crit-vulnerability upgrade chance (0.5).
-	if crit_vuln_timer > 0.0 and pl.has_method("has_artefact") and pl.has_artefact("unstable_mind"):
-		chance += CRIT_VULN_UPGRADE_CHANCE
-	return randf() < clampf(chance, 0.0, 1.0)
+	var chance: float = clampf(float(pl.roll_ailment_result()), 0.0, 1.0)
+	var rolled: bool = randf() < chance
+	# Unstable Mind relic: against Critically Vulnerable enemies, ailment chance
+	# benefits from a LUCKY re-roll (roll twice, take the best) — mirroring the
+	# reworked crit-vulnerability mechanic.
+	if not rolled and crit_vuln_timer > 0.0 and pl.has_method("has_artefact") and pl.has_artefact("unstable_mind"):
+		rolled = randf() < chance
+	return rolled
 
 
 # Applies the ailment matching the given damage type to this enemy (and, for
@@ -496,13 +498,16 @@ func take_damage(amount: int, is_critical: bool = false, damage_type: DamageType
 	if frozen_timer > 0.0:
 		dealt *= FROZEN_DAMAGE_MULT
 
-	# CRIT VULNERABILITY (arcane): a non-crit hit has a chance to be upgraded into
-	# a crit. Needs the player's crit multiplier for the damage bump.
-	if not is_critical and crit_vuln_timer > 0.0 and randf() < CRIT_VULN_UPGRADE_CHANCE:
-		is_critical = true
-		var pl: Node = get_tree().get_first_node_in_group("player")
-		if pl != null and pl.has_method("get_critical_multiplier"):
-			dealt *= float(pl.get_critical_multiplier())
+	# CRIT VULNERABILITY (arcane): LUCKY re-roll. A non-crit hit rolls the
+	# player's crit chance a second time and, if it succeeds, upgrades into a
+	# crit — effectively rolling crit chance twice and taking the best. Scales
+	# with the player's crit build rather than a flat upgrade chance.
+	if not is_critical and crit_vuln_timer > 0.0:
+		var crit_chance: float = float(plr.get("critical_hit_chance")) if plr != null and plr.get("critical_hit_chance") != null else 0.0
+		if randf() < crit_chance:
+			is_critical = true
+			if plr != null and plr.has_method("get_critical_multiplier"):
+				dealt *= float(plr.get_critical_multiplier())
 
 	# Relic hooks: Cold Blooded (+30% vs slowed) and Static Conduit (+50% crit dmg
 	# vs shocked). Both read the player's current artefact loadout live.

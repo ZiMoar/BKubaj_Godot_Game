@@ -24,8 +24,10 @@ func _ready() -> void:
 	area_entered.connect(_on_touch)
 	body_entered.connect(_on_touch)
 	
-	# Auto-destroy after lifetime expires
-	get_tree().create_timer(lifetime).timeout.connect(queue_free)
+	# Auto-destroy after lifetime expires. process_always=false so the countdown
+	# freezes while the game is paused (otherwise books keep expiring on-screen
+	# inside the pause menu).
+	get_tree().create_timer(lifetime, false).timeout.connect(queue_free)
 
 func setup(initial_angle: float, start_pos: Vector2) -> void:
 	current_angle = initial_angle

@@ -382,6 +382,12 @@ func _get_max_anvil_level(weapons: Array[Weapon]) -> int:
 	return (min_upgrades / 3) * 3 + 3
 
 
+## Special anvils (golden, elemental, inverted) ignore the 3-upgrade
+## anti-stacking gate, so any weapon may be upgraded freely past a multiple of 3.
+func _is_special_anvil() -> bool:
+	return _is_golden or _anvil_kind != AnvilKind.STANDARD
+
+
 # --- Phase 1: weapon selection -------------------------------------------
 
 func _show_weapon_selection() -> void:
@@ -396,12 +402,15 @@ func _show_weapon_selection() -> void:
 		close_menu()
 		return
 
+	# Special anvils (golden, elemental, inverted) ignore the anti-stacking gate:
+	# no weapon is locked and the "spread upgrades" message is never shown.
+	var restricts: bool = not _is_special_anvil()
 	var max_level: int = _get_max_anvil_level(weapons)
 	var any_locked: bool = false
 	for w: Weapon in weapons:
 		var btn := Button.new()
 		btn.text = w.weapon_name
-		if w.anvil_upgrade_count >= max_level:
+		if restricts and w.anvil_upgrade_count >= max_level:
 			btn.text = "%s  (locked)" % w.weapon_name
 			btn.disabled = true
 			any_locked = true
@@ -426,7 +435,7 @@ func _show_weapon_selection() -> void:
 			_:
 				subtitle_label.text = "Choose a weapon to upgrade. Grants a signature choice!" if _is_golden else "Choose a weapon to upgrade."
 	if any_locked and subtitle_label:
-		subtitle_label.text += "\nIt's locked: spread anvil upgrades across every weapon to push one past 3."
+		subtitle_label.text += "\nIt's locked: spread anvil upgrades across every weapon to push one past %d." % max_level
 	weapon_list.visible = true
 	if weapon_scroll:
 		weapon_scroll.visible = true
