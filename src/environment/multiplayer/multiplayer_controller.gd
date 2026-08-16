@@ -133,8 +133,6 @@ func _ensure_player(id: int, class_id: String) -> void:
 	var p: CharacterBody2D = PLAYER_SCENE.instantiate()
 	p.name = name
 	p.player_class_id = class_id
-	# The owning peer simulates this Player; everyone else shows a ghost.
-	p.set_multiplayer_authority(id)
 
 	_add_position_sync(p)
 	# Spawn at the arena center so players are actually among the enemies (see
@@ -149,6 +147,12 @@ func _ensure_player(id: int, class_id: String) -> void:
 	# (gray screen) or collides with the host's (overlap lock).
 	p.position = _spawn_point + Vector2(_players.get_child_count() * 40, 0)
 	_players.add_child(p)
+	# Bind network authority while the node is IN the tree. Setting it before
+	# add_child (as done previously) left the SceneMultiplayer unaware of who owns
+	# the node, so the MultiplayerSynchronizer never swapped roles: every machine
+	# treated the OTHER player as a frozen replica of its spawn. The proven Ziva
+	# pattern assigns authority in _enter_tree (node already in-tree) — same idea.
+	p.set_multiplayer_authority(id)
 
 	# Only the owning peer's camera should be active — and it must be made
 	# "current" explicitly, or a hidden/previous camera can lock the view
@@ -166,9 +170,15 @@ func _ensure_player(id: int, class_id: String) -> void:
 func _add_position_sync(p: Node) -> void:
 	var sync := MultiplayerSynchronizer.new()
 	sync.name = "Sync"
+	sync.replication_interval = 0.0  # push position every network frame (no throttling)
 	var cfg := SceneReplicationConfig.new()
+	# Replicate the owner's position continuously to the other machine(s).
+	# IMPORTANT: do NOT property_set_spawn(position) here. That flag is for nodes
+	# created via multiplayer.spawn(); these per-peer players are built locally on
+	# every machine, so the spawn flag made the SERVER keep re-writing the player's
+	# position back to its initial spawn every frame -> on the client the body moved
+	# locally but was yanked back to spawn ("wobble but no movement").
 	cfg.add_property(NodePath(".:position"))
-	cfg.property_set_spawn(NodePath(".:position"), true)
 	cfg.property_set_replication_mode(NodePath(".:position"), SceneReplicationConfig.REPLICATION_MODE_ALWAYS)
 	sync.replication_config = cfg
 	sync.root_path = NodePath("..")

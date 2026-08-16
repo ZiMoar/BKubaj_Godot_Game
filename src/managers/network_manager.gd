@@ -97,6 +97,7 @@ func leave() -> void:
 ## session (run_active, difficulty, stage, timer) — otherwise the client would
 ## load the arena but sit in a "no run" state and nothing would actually happen.
 func host_start_run() -> void:
+	print("[COOP] HOST starting run. roster=", peer_classes)
 	begin_run_relayed.rpc(CATACOMBS_ARENA_PATH)
 	load_arena.rpc()
 
@@ -104,14 +105,17 @@ func host_start_run() -> void:
 ## Every peer starts a real run on the shared arena path (host + clients).
 @rpc("any_peer", "call_local", "reliable")
 func begin_run_relayed(arena_path: String) -> void:
+	print("[COOP] begin_run_relayed received. active=", active(), " arena=", arena_path)
 	var gs: Node = get_node_or_null("/root/GameState")
 	if gs and gs.has_method("begin_run"):
 		gs.begin_run(arena_path)
+		print("[COOP] begin_run executed. run_active=", gs.get("run_active"))
 
 
 ## Every peer (host + clients) loads the shared arena scene.
 @rpc("any_peer", "call_local", "reliable")
 func load_arena() -> void:
+	print("[COOP] load_arena: changing scene to catacombs")
 	get_tree().change_scene_to_file(CATACOMBS_ARENA_PATH)
 
 
@@ -135,6 +139,7 @@ func register_class(cls: String) -> void:
 @rpc("any_peer", "call_local", "reliable")
 func sync_classes(roster: Dictionary) -> void:
 	peer_classes = roster.duplicate()
+	print("[COOP] roster synced: ", roster, " (my_peer=", my_peer_id, ")")
 	classes_synced.emit()
 
 
@@ -154,6 +159,7 @@ func _on_peer_disconnected(id: int) -> void:
 func _on_connected_to_server() -> void:
 	my_peer_id = multiplayer.get_unique_id()
 	peer_classes[my_peer_id] = my_class_id
+	print("[COOP] client connected. my_peer=", my_peer_id, " local_class=", my_class_id, " roster=", peer_classes)
 	connected_to_host.emit()
 	send_class_to_host()
 
