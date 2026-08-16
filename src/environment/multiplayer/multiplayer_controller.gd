@@ -138,13 +138,16 @@ func _ensure_player(id: int, class_id: String) -> void:
 
 	_add_position_sync(p)
 	# Spawn at the arena center so players are actually among the enemies (see
-	# _spawn_point). A tiny per-peer stagger keeps spawned players from stacking
-	# exactly on top of one another / on the (now hidden) baked player.
-	# NOTE: Godot 4.7 assigns clients LARGE peer ids (not 2,3,4). Using the raw id
-	# here was a bug: (519355369-1)*40 ≈ 20.7 BILLION px, flinging the client's
-	# player+camera into empty space -> gray screen. Modulo keeps the nudge small
-	# yet deterministic (same peer -> same offset on every machine) for any id.
-	p.position = _spawn_point + Vector2(((id - 1) % 16) * 40, 0)
+	# _spawn_point), with a stagger so no two bodies land on the same pixel.
+	# Two CharacterBody2D spawning exactly on top of one another collide and
+	# can't separate -> "wobble toward the input but no movement", so each gets
+	# a distinct slot (0, 40, 80, ...) taken from how many players already exist.
+	# Using get_child_count() keeps offsets unique AND identical on every machine
+	# (each builds players over the same roster in the same order). Do NOT derive
+	# the offset from the raw peer id: Godot 4.7 assigns clients LARGE ids (e.g.
+	# 519355369), so id*-based math either flings the player ~20.7B px off-world
+	# (gray screen) or collides with the host's (overlap lock).
+	p.position = _spawn_point + Vector2(_players.get_child_count() * 40, 0)
 	_players.add_child(p)
 
 	# Only the owning peer's camera should be active — and it must be made
