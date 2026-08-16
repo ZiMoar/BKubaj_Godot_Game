@@ -24,6 +24,7 @@ func _ready() -> void:
 	max_health = 120             # More HP than a standard skeleton (50)
 	contact_damage = 0           # No contact damage — it explodes instead
 	xp_value = 4
+	xp_orb_tier = 2
 	weight = 15.0
 	max_knockback_speed = 200.0
 	knockback_decay = 14.0

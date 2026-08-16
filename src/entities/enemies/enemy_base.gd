@@ -33,6 +33,13 @@ const StatusIconScript: Script = preload("res://src/ui/status_icons/status_icon_
 # each other instead of stacking on top of one another.
 const DROP_SCATTER_RADIUS: float = 14.0
 
+# Team XP scales with combat progress (room_number/2 skips non-combat rooms):
+# room 1 is baseline, and each later combat room adds XP_ROOM_SCALE more.
+const XP_ROOM_SCALE: float = 0.25
+# Late-game gold nerf: gold per kill is divided down as combat progresses so
+# total gold doesn't balloon as enemy counts grow. Room 1 is untouched.
+const GOLD_ROOM_DECAY: float = 0.12
+
 var current_health: int
 var can_deal_damage: bool = true
 var target_player: Node2D = null
@@ -728,7 +735,7 @@ func _drop_xp() -> void:
 		var orb = xp_orb_scene.instantiate() as XPOrb
 		if orb:
 			orb.global_position = global_position + _random_scatter()
-			orb.setup(xp_value, xp_orb_tier)
+			orb.setup(_scaled_xp_value(), xp_orb_tier)
 			get_tree().current_scene.call_deferred("add_child", orb)
 
 func _drop_gold() -> void:
@@ -736,8 +743,31 @@ func _drop_gold() -> void:
 		var coin = gold_pickup_scene.instantiate() as GoldPickup
 		if coin:
 			coin.global_position = global_position + _random_scatter()
-			coin.setup(gold_value)
+			coin.setup(_scaled_gold_value())
 			get_tree().current_scene.call_deferred("add_child", coin)
+
+## 0-based index of the current COMBAT room. Rooms alternate combat/non-combat
+## (odd stages are combat, even are shop/anvil/relic), so floor(stage/2) counts
+## only combat rooms: stage 1 -> 0, 3 -> 1, 5 -> 2, etc.
+func _combat_room_index() -> int:
+	var gs: Node = get_tree().get_root().get_node_or_null("GameState")
+	if gs == null or gs.get("stage") == null:
+		return 0
+	return int(floor(float(gs.get("stage")) / 2.0))
+
+
+## XP per kill grows with combat room count (more XP the further you go).
+func _scaled_xp_value() -> int:
+	var idx: int = _combat_room_index()
+	return max(1, int(round(float(xp_value) * (1.0 + XP_ROOM_SCALE * float(idx)))))
+
+
+## Gold per kill shrinks as combat progresses so late-game gold drops don't run
+## away. Room 1 (index 0) drops full gold_value.
+func _scaled_gold_value() -> int:
+	var idx: int = _combat_room_index()
+	var reduced: float = float(gold_value) / (1.0 + GOLD_ROOM_DECAY * float(idx))
+	return max(1, int(round(reduced)))
 
 # Random offset within a small ring so individual drops don't stack together.
 func _random_scatter() -> Vector2:

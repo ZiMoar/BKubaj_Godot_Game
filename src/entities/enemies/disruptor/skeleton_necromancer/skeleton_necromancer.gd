@@ -25,6 +25,7 @@ func _ready() -> void:
 	contact_damage = 6
 	damage_cooldown = 1.0
 	xp_value = 6
+	xp_orb_tier = 2
 	weight = 22.0
 	max_knockback_speed = 180.0
 	knockback_decay = 12.0

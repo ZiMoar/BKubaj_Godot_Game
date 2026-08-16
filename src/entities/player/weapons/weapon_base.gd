@@ -326,7 +326,10 @@ func apply_explosion_on_kill(origin: Vector2, kill_damage: int) -> void:
 
 
 func _explode_at(origin: Vector2, kill_damage: int) -> void:
-	var eff_radius: float = explosion_radius * get_area_multiplier()
+	# Blast radius nerf: the area anvil stat inflates the explosion radius at a
+	# reduced rate (60% of the normal area bonus) so AOE doesn't balloon as fast.
+	# Base radius (area_bonus=0) is unchanged.
+	var eff_radius: float = explosion_radius * (1.0 + maxf(0.0, area_bonus) * 0.6)
 	var dmg: int = maxi(1, int(round(float(kill_damage) * explosion_damage_ratio)))
 	_spawn_explosion_visual(origin, eff_radius)
 	var targets: Array[Node] = get_tree().get_nodes_in_group("enemies")
