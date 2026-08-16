@@ -36,8 +36,11 @@ var _spawn_point: Vector2 = Vector2(960, 540)
 func _ready() -> void:
 	var net: Node = get_node_or_null("/root/Net")
 	if net == null or not net.active():
+		print("[COOP] controller removed: net=", net, " active=", (net.active() if net else "n/a"))
 		queue_free()
 		return
+
+	print("[COOP] controller READY. roster=", net.get("peer_classes"), " my_peer=", net.get("my_peer_id"), " active=", net.active())
 
 	_hide_baked_player()
 
@@ -85,7 +88,9 @@ func _hide_baked_player() -> void:
 		return
 	var baked: Node = arena.get_node_or_null("Player")
 	if baked == null:
+		print("[COOP] no baked player, spawn_point stays ", _spawn_point)
 		return
+	print("[COOP] hiding baked player at ", (baked as Node2D).global_position if baked is Node2D else "n/a")
 	baked.visible = false
 	baked.set_process(false)
 	baked.set_physics_process(false)
@@ -135,7 +140,11 @@ func _ensure_player(id: int, class_id: String) -> void:
 	# Spawn at the arena center so players are actually among the enemies (see
 	# _spawn_point). A tiny per-peer stagger keeps spawned players from stacking
 	# exactly on top of one another / on the (now hidden) baked player.
-	p.position = _spawn_point + Vector2((id - 1) * 40, 0)
+	# NOTE: Godot 4.7 assigns clients LARGE peer ids (not 2,3,4). Using the raw id
+	# here was a bug: (519355369-1)*40 ≈ 20.7 BILLION px, flinging the client's
+	# player+camera into empty space -> gray screen. Modulo keeps the nudge small
+	# yet deterministic (same peer -> same offset on every machine) for any id.
+	p.position = _spawn_point + Vector2(((id - 1) % 16) * 40, 0)
 	_players.add_child(p)
 
 	# Only the owning peer's camera should be active — and it must be made
@@ -147,6 +156,7 @@ func _ensure_player(id: int, class_id: String) -> void:
 		cam.enabled = owner_id == id
 		if owner_id == id:
 			cam.make_current()
+		print("[COOP] built Player id=", id, " class=", str(class_id), " owner_id=", owner_id, " camEnabled=", cam.enabled, " camCurrent=", cam.is_current())
 
 
 ## Replicate this Player's position from its owning peer to every machine.
