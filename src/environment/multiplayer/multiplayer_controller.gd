@@ -26,6 +26,12 @@ const PLAYER_SCENE: PackedScene = preload("res://src/entities/player/player/play
 ## Created in _ready; holds one Player_<peerId> per connected peer.
 var _players: Node2D
 
+## Spawn point for co-op players. Captured from the baked-in single Player's
+## position (the arena center) so per-peer players appear where a single player
+## would — otherwise they orbited at world (0,0), far from enemies and outside
+## the range of every automatic weapon.
+var _spawn_point: Vector2 = Vector2(960, 540)
+
 
 func _ready() -> void:
 	var net: Node = get_node_or_null("/root/Net")
@@ -70,6 +76,13 @@ func _hide_baked_player() -> void:
 	var cam: Camera2D = baked.get_node_or_null("Camera2D") as Camera2D
 	if cam:
 		cam.enabled = false
+	# Remember where the single player would have stood, so per-peer players can
+	# spawn in the middle of the arena instead of at world origin.
+	if baked is Node2D:
+		_spawn_point = (baked as Node2D).global_position
+	# Relocate the baked player far off-screen and make it fully inert so it
+	# can't block per-peer players, eat their projectiles, or be hit at spawn.
+	baked.set_deferred("position", _spawn_point + Vector2(5000, 5000))
 
 
 ## Build a Player_<id> node for every peer currently in the roster. Idempotent:
@@ -101,6 +114,10 @@ func _ensure_player(id: int, class_id: String) -> void:
 	p.set_multiplayer_authority(id)
 
 	_add_position_sync(p)
+	# Spawn at the arena center so players are actually among the enemies (see
+	# _spawn_point). A tiny per-peer stagger keeps spawned players from stacking
+	# exactly on top of one another / on the (now hidden) baked player.
+	p.position = _spawn_point + Vector2((id - 1) * 40, 0)
 	_players.add_child(p)
 
 	# Only the owning peer's camera should be active — and it must be made
