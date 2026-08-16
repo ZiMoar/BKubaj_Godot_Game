@@ -84,6 +84,9 @@ func _populate() -> void:
 
 	_add_section("Offense")
 	_add_stat("Damage (might)", "%+d%%" % int(round((might_mult - 1.0) * 100.0)))
+	var power_flat: float = float(player.get("might_flat_bonus"))
+	if power_flat != 0.0:
+		_add_stat("Power", "+%.0f" % power_flat)
 	_add_stat("Attack speed", "%d%%" % int(round(as_mult * 100.0)))
 	_add_stat("Crit chance", "%d%%" % int(round(crit_chance)))
 	_add_stat("Crit damage", "%.1fx" % crit_mult)
@@ -124,6 +127,68 @@ func _populate() -> void:
 
 	if relic_count > 0:
 		_add_relic_listing(player)
+
+	_add_weapon_listing(player)
+
+
+## Lists every equipped weapon with its per-weapon anvil/signature stat bonuses.
+## These live on each weapon (not the player), so they're aggregated here per
+## weapon so the player can see what upgrades each one has taken.
+func _add_weapon_listing(player: Node) -> void:
+	var weapons: Node = player.get_node_or_null("Weapons")
+	if weapons == null:
+		return
+	var weapon_nodes: Array = weapons.get_children()
+	if weapon_nodes.is_empty():
+		return
+	_add_section("Weapons")
+	for weapon: Node in weapon_nodes:
+		_add_weapon_block(weapon)
+
+
+func _add_weapon_block(weapon: Node) -> void:
+	if stats_box == null:
+		return
+	var nm: String = str(weapon.get("weapon_name")) if weapon.get("weapon_name") != null else str(weapon.name)
+	var name_l := Label.new()
+	name_l.text = nm
+	name_l.add_theme_color_override("font_color", Color(0.55, 0.85, 1.0))
+	name_l.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
+	name_l.add_theme_constant_override("outline_size", 1)
+	name_l.add_theme_font_size_override("font_size", 13)
+	stats_box.add_child(name_l)
+
+	var specs: Array = [
+		["Projectiles", "projectile_count_bonus", false],
+		["Pierce", "pierce_bonus", false],
+		["Chain", "chain_count_bonus", false],
+		["Area", "area_bonus", true],
+		["Repeat", "repeat_chance", true],
+		["Damage", "damage_percent_bonus", true],
+		["Proj. speed", "projectile_speed_bonus", true],
+		["Duration", "duration_bonus", true],
+		["Explosion", "explosion_on_kill_chance", true],
+		["Knockback", "knockback_bonus", true],
+		["Ailment dmg", "ailment_effect_bonus", true],
+		["Close dmg", "close_range_damage_bonus", true],
+		["Far dmg", "far_range_damage_bonus", true],
+	]
+	for s: Array in specs:
+		var label: String = str(s[0])
+		var key: String = str(s[1])
+		var pct: bool = bool(s[2])
+		var raw = weapon.get(key)
+		var val: float = float(raw) if raw != null else 0.0
+		if val == 0.0:
+			continue
+		if pct:
+			_add_stat(label, "%+d%%" % int(round(val * 100.0)))
+		else:
+			_add_stat(label, "%+d" % int(round(val)))
+
+	var upg: int = int(weapon.get("anvil_upgrade_count")) if weapon.get("anvil_upgrade_count") != null else 0
+	if upg > 0:
+		_add_stat("Anvil upgrades", "%d" % upg)
 
 
 ## Lists the player's currently-equipped relics with their names + descriptions.
