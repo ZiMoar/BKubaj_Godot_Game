@@ -48,7 +48,7 @@ var STAT_POOL: Array[Dictionary] = [
 	{
 		"id": "repeat",
 		"title": "Repeat",
-		"description": "+{value}% repeat chance. Each 100% guarantees an extra volley; leftover is % chance of another.",
+		"description": "+{value}% chance of an extra volley.",
 		"value": 25,
 		"weight": 1.0,
 		"apply": func(w: Weapon) -> void: w.repeat_chance += 0.25,
@@ -72,7 +72,7 @@ var STAT_POOL: Array[Dictionary] = [
 	{
 		"id": "explosion_on_kill",
 		"title": "Explosion on Kill",
-		"description": "{value}% chance kills explode in an AOE (100% = always, extra % = chance of a 2nd explosion).",
+		"description": "{value}% chance kills explode in an AOE.",
 		"value": 25,
 		"weight": 1.0,
 		"apply": func(w: Weapon) -> void: w.explosion_on_kill_chance += 0.25,

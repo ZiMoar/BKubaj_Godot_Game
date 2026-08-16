@@ -83,7 +83,7 @@ var revive_remaining: int = 0
 var hp_regen_bank: float = 0.0
 var difficulty_runtime_bonus: float = 0.0
 var _lifesteal_cooldown_remaining: float = 0.0
-const LIFESTEAL_COOLDOWN: float = 0.1
+const LIFESTEAL_COOLDOWN: float = 0.3
 
 # --- Class Mobility Ability (Space) ---
 # Per-class movement tool config, keyed by ClassBase.class_ability_id.

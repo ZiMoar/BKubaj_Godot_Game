@@ -63,7 +63,8 @@ func _build_keybinds_button() -> void:
 
 
 func _build_coop_button() -> void:
-	# Insert a "PLAY CO-OP" button just before QUIT, styled like the others.
+	# Insert a "PLAY CO-OP" button right BELOW the single-player PLAY button,
+	# styled like the others.
 	var vertical: VBoxContainer = get_node_or_null("CenterContainer/Panel/Vertical") as VBoxContainer
 	if vertical == null:
 		return
@@ -84,9 +85,10 @@ func _build_coop_button() -> void:
 		btn.add_theme_color_override(col, ref.get_theme_color(col))
 	btn.add_theme_font_size_override("font_size", ref.get_theme_font_size("font_size"))
 	vertical.add_child(btn)
-	var quit := vertical.get_node_or_null("QuitButton")
-	if quit != null:
-		vertical.move_child(btn, quit.get_index())
+	# Place directly under the single-player PLAY (StartButton) button.
+	var play := vertical.get_node_or_null("StartButton")
+	if play != null:
+		vertical.move_child(btn, play.get_index() + 1)
 
 
 func _on_coop_pressed() -> void:
