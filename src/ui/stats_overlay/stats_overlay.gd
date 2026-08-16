@@ -72,7 +72,9 @@ func _populate() -> void:
 	_add_stat("HP regen /s", "%.1f" % float(player.get("hp_regen_per_second")))
 	_add_stat("Armor", "%.1f" % armor)
 	_add_stat("Damage reduction", "%d%%" % int(round((1.0 - dr_mult) * 100.0)))
-	_add_stat("Evasion", "%d%%" % int(round(float(player.get("evasion_chance")) * 100.0)))
+	_add_stat("Evasion", "%.0f" % float(player.get("evasion_chance")))
+	var dodge_chance: float = float(player.call("get_evasion_dodge_chance")) if player.has_method("get_evasion_dodge_chance") else 0.0
+	_add_stat("Dodge chance", "%d%%" % int(round(dodge_chance * 100.0)))
 	_add_stat("Lifesteal", "%.1f" % float(player.get("lifesteal_flat")))
 	_add_stat("Thorns", "%.1f" % thorns)
 	_add_stat("Shield", "%.1f" % float(player.get("shield_capacity")))

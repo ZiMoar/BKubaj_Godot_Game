@@ -244,6 +244,13 @@ func current_armor() -> float:
 func get_damage_reduction_multiplier() -> float:
 	return 100.0 / (100.0 + current_armor())
 
+# Evasion is a FLAT stat with the same diminishing-returns shape as armor:
+# chance to be hit = 100/(100+evasion), so this returns the chance to DODGE
+# (= 1 - chance to be hit). evasion=100 -> 50% dodge, 300 -> 75%.
+func get_evasion_dodge_chance() -> float:
+	var ev: float = maxf(0.0, evasion_chance)
+	return clampf(ev / (100.0 + ev), 0.0, 0.95)
+
 # Thorns damage actually reflected to attackers. Artefacts can scale it off
 # other defensive stats (e.g. armor).
 func get_thorns_damage() -> float:
@@ -692,7 +699,7 @@ func apply_upgrade(upgrade_id: String, rarity: int = 0) -> void:
 		"armor":
 			armor += value
 		"evasion":
-			evasion_chance = clamp(evasion_chance + value, 0.0, 0.75)
+			evasion_chance += value
 		"lifesteal":
 			lifesteal_flat += value
 		"thorns":
@@ -1048,12 +1055,14 @@ func take_damage(amount: int, source: Node = null) -> void:
 			return
 		_source_last_hit[source] = now
 
-	# Effective evasion: Ghost Step relic adds +20% while a dash charge is ready.
-	var eff_evasion: float = clamp(evasion_chance, 0.0, 1.0)
+	# Evasion is a FLAT stat like armor: chance to be hit = 100/(100+evasion), so
+	# dodge chance = 1 - that = evasion/(100+evasion). The Ghost Step relic adds a
+	# flat +20% dodge chance while a dash charge is ready.
+	var dodge_chance: float = get_evasion_dodge_chance()
 	if has_artefact("ghost_step") and is_class_ability_ready():
-		eff_evasion = clampf(eff_evasion + 0.20, 0.0, 1.0)
+		dodge_chance = clampf(dodge_chance + 0.20, 0.0, 0.95)
 
-	if randf() < eff_evasion:
+	if randf() < dodge_chance:
 		trigger_evasion()
 		return
 
@@ -1237,7 +1246,8 @@ func capture_run_state() -> Dictionary:
 				"pierce_bonus": w.pierce_bonus,
 				"chain_count_bonus": w.chain_count_bonus,
 				"area_bonus": w.area_bonus,
-				"repeat_bonus": w.repeat_bonus,
+				"repeat_chance": w.repeat_chance,
+				"anvil_upgrade_count": w.anvil_upgrade_count,
 				"projectile_speed_bonus": w.projectile_speed_bonus,
 				"close_range_damage_bonus": w.close_range_damage_bonus,
 				"far_range_damage_bonus": w.far_range_damage_bonus,
@@ -1273,7 +1283,8 @@ func restore_run_state(snap: Dictionary) -> void:
 			weapon.pierce_bonus = wdata.get("pierce_bonus", 0)
 			weapon.chain_count_bonus = wdata.get("chain_count_bonus", 0)
 			weapon.area_bonus = wdata.get("area_bonus", 0.0)
-			weapon.repeat_bonus = wdata.get("repeat_bonus", 0)
+			weapon.repeat_chance = float(wdata.get("repeat_chance", wdata.get("repeat_bonus", 0)))
+			weapon.anvil_upgrade_count = int(wdata.get("anvil_upgrade_count", 0))
 			weapon.projectile_speed_bonus = wdata.get("projectile_speed_bonus", 0.0)
 			weapon.close_range_damage_bonus = wdata.get("close_range_damage_bonus", 0.0)
 			weapon.far_range_damage_bonus = wdata.get("far_range_damage_bonus", 0.0)

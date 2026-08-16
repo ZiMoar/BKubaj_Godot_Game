@@ -4,7 +4,7 @@ extends Weapon
 ## nearby enemies in a chain. Hitscan, so it can't be dodged by obstacles.
 
 @export var max_targets: int = 4
-@export var base_damage: int = 45
+@export var base_damage: int = 38
 @export var chain_range: float = 270.0
 @export var lightning_scene: PackedScene
 
@@ -62,13 +62,15 @@ func fire() -> void:
 	var origin: Vector2 = global_position
 	var eff_chain_range: float = chain_range * get_area_multiplier()
 	var eff_max_targets: int = get_effective_chain_count(max_targets)
+	# The initial zap is itself range-limited (chain_range * area), so the whole
+	# strike keeps a visible radius instead of hitting enemies anywhere on screen.
 	var first: Node2D = null
 	var first_dist: float = INF
 	for e: Node in enemies:
 		if not is_instance_valid(e):
 			continue
 		var d: float = origin.distance_squared_to((e as Node2D).global_position)
-		if d < first_dist:
+		if d <= eff_chain_range * eff_chain_range and d < first_dist:
 			first_dist = d
 			first = e as Node2D
 	if first == null:

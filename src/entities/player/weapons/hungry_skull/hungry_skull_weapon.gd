@@ -8,7 +8,7 @@ extends Weapon
 const HungrySkullScene: PackedScene = preload("res://src/entities/projectiles/hungry_skull/hungry_skull.tscn")
 
 const BASE_SKULL_COUNT: int = 1
-const BASE_DAMAGE: int = 9
+const BASE_DAMAGE: int = 13
 const SKULL_SPEED: float = 120.0
 const SKULL_LIFETIME: float = 6.0
 const COOLDOWN: float = 3.5

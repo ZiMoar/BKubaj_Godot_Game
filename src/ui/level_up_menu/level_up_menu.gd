@@ -52,8 +52,8 @@ const UPGRADE_POOL: Array[Dictionary] = [
 	# --- Survival ---
 	{"id": "max_health",           "title": "Max Health",    "description": "+{value} max HP.",                      "min_rarity": Rarity.COMMON,    "base_value": 10.0,  "value_scaling": 5.0},
 	{"id": "armor",                "title": "Armor",         "description": "+{value} armor.",                           "min_rarity": Rarity.UNCOMMON,  "base_value": 20.0,  "value_scaling": 12.0},
-	{"id": "evasion",              "title": "Evasion",       "description": "+{value}% dodge chance.",               "min_rarity": Rarity.RARE,      "base_value": 0.02,  "value_scaling": 0.01},
-	{"id": "hp_regen",             "title": "HP Regen",      "description": "+{value} HP/sec.",                      "min_rarity": Rarity.COMMON,    "base_value": 0.25,  "value_scaling": 0.15},
+	{"id": "evasion",              "title": "Evasion",       "description": "+{value} evasion.",                     "min_rarity": Rarity.RARE,      "base_value": 20.0,  "value_scaling": 12.0},
+	{"id": "hp_regen",             "title": "HP Regen",      "description": "+{value} HP/sec.",                      "min_rarity": Rarity.COMMON,    "base_value": 1.0,   "value_scaling": 0.5},
 	{"id": "lifesteal",            "title": "Life Steal",    "description": "+{value} heal on hit.",                 "min_rarity": Rarity.UNCOMMON,  "base_value": 1.0,   "value_scaling": 0.5},
 	{"id": "thorns",               "title": "Thorns",        "description": "+{value} reflected damage.",            "min_rarity": Rarity.COMMON,    "base_value": 5.0,   "value_scaling": 3.0},
 	{"id": "revive",               "title": "Revive",        "description": "+{value} revive charge(s).",            "min_rarity": Rarity.EPIC,      "base_value": 1.0,   "value_scaling": 1.0},
@@ -240,7 +240,7 @@ func _update_buttons() -> void:
 		# Format the description, replacing {value} with the actual scaled value
 		var desc_template: String = choice.get("description", "") as String
 		var display_value: String
-		if choice["id"] in ["might_percent", "crit_chance", "ailment_chance", "evasion", "move_speed_percent", "growth", "greed"]:
+		if choice["id"] in ["might_percent", "crit_chance", "ailment_chance", "move_speed_percent", "growth", "greed"]:
 			display_value = "%d%%" % int(round(effective_value * 100.0))
 		elif effective_value < 1.0 and effective_value > 0.0:
 			display_value = "%.2f" % effective_value

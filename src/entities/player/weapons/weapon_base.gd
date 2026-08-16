@@ -39,7 +39,14 @@ var projectile_count_bonus: int = 0
 var pierce_bonus: int = 0
 var chain_count_bonus: int = 0
 var area_bonus: float = 0.0
-var repeat_bonus: int = 0            # extra volleys fired in succession per trigger
+## Repeat chance (anvil upgrades add +25% each). Each full 100% guarantees one
+## extra volley; the leftover percent is a chance to fire one more. E.g. 125%
+## = 100% chance of 1 extra volley + 25% chance of a 2nd extra.
+var repeat_chance: float = 0.0
+## Number of anvil upgrades this weapon has taken this run. Drives the anvil's
+## anti-stacking gate: a weapon may only be upgraded past a multiple of 3 once
+## EVERY weapon the player owns has at least that many upgrades.
+var anvil_upgrade_count: int = 0
 var projectile_speed_bonus: float = 0.0  # fractional (+0.5 = +50% speed)
 var duration_bonus: float = 0.0          # fractional; negative = shorter durations (-0.2 = 20% shorter)
 var close_range_damage_bonus: float = 0.0  # dmg mult in the closest third of reach
@@ -175,7 +182,13 @@ func get_effective_duration(base_duration: float) -> float:
 
 # Returns the number of times this weapon should fire per trigger (repeat).
 func get_fire_repeat_count() -> int:
-	return maxi(1, repeat_bonus + 1)
+	# Repeat is a % chance to chain an extra volley. Each full 100% guarantees one
+	# extra; the remainder is a percentile chance of one more.
+	var chance: float = maxf(0.0, repeat_chance)
+	var guaranteed: int = int(floor(chance))
+	var frac: float = chance - float(guaranteed)
+	var extra: int = 1 if frac > 0.0 and randf() < frac else 0
+	return 1 + guaranteed + extra
 
 # --- Anvil capability reporting -------------------------------------------
 # Each weapon overrides the stats it can actually use, so the anvil only offers
@@ -300,11 +313,16 @@ func _get_screen_reach() -> float:
 
 # After scoring a kill (enemy died), possibly trigger an explosion AOE.
 func apply_explosion_on_kill(origin: Vector2, kill_damage: int) -> void:
-	if explosion_on_kill_chance <= 0.0:
+	var chance: float = maxf(0.0, explosion_on_kill_chance)
+	if chance <= 0.0:
 		return
-	if randf() > explosion_on_kill_chance:
-		return
-	_explode_at(origin, kill_damage)
+	# Chance over 100% lets a kill explode multiple times: each full 100% is one
+	# guaranteed explosion, the remainder is a percentile chance of one more.
+	var guaranteed: int = int(floor(chance))
+	var frac: float = chance - float(guaranteed)
+	var count: int = guaranteed + (1 if frac > 0.0 and randf() < frac else 0)
+	for i in range(count):
+		_explode_at(origin, kill_damage)
 
 
 func _explode_at(origin: Vector2, kill_damage: int) -> void:

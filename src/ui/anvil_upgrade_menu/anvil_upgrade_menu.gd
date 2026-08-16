@@ -48,10 +48,10 @@ var STAT_POOL: Array[Dictionary] = [
 	{
 		"id": "repeat",
 		"title": "Repeat",
-		"description": "Attack {value} extra time(s) in succession.",
-		"value": 1,
+		"description": "+{value}% repeat chance. Each 100% guarantees an extra volley; leftover is % chance of another.",
+		"value": 25,
 		"weight": 1.0,
-		"apply": func(w: Weapon) -> void: w.repeat_bonus += 1,
+		"apply": func(w: Weapon) -> void: w.repeat_chance += 0.25,
 	},
 	{
 		"id": "projectile_speed",
@@ -72,10 +72,10 @@ var STAT_POOL: Array[Dictionary] = [
 	{
 		"id": "explosion_on_kill",
 		"title": "Explosion on Kill",
-		"description": "{value}% chance kills explode in an AOE.",
+		"description": "{value}% chance kills explode in an AOE (100% = always, extra % = chance of a 2nd explosion).",
 		"value": 25,
 		"weight": 1.0,
-		"apply": func(w: Weapon) -> void: w.explosion_on_kill_chance = minf(1.0, w.explosion_on_kill_chance + 0.25),
+		"apply": func(w: Weapon) -> void: w.explosion_on_kill_chance += 0.25,
 	},
 	{
 		"id": "duration",
@@ -368,6 +368,20 @@ func _get_player_weapons() -> Array[Weapon]:
 	return result
 
 
+## Anti-stacking gate: a weapon may only be raised past a multiple of 3 once
+## every weapon the player owns has reached that multiple. Returns the highest
+## upgrade level (0-indexed count) any single weapon may currently be raised TO,
+## i.e. floor(min_upgrades/3)*3 + 3. Example: all at 0-2 -> max 3; all at 3-5 ->
+## max 6; all at 6+ -> max 9 (and so on).
+func _get_max_anvil_level(weapons: Array[Weapon]) -> int:
+	if weapons.is_empty():
+		return 0
+	var min_upgrades: int = 1 << 30
+	for w: Weapon in weapons:
+		min_upgrades = mini(min_upgrades, w.anvil_upgrade_count)
+	return (min_upgrades / 3) * 3 + 3
+
+
 # --- Phase 1: weapon selection -------------------------------------------
 
 func _show_weapon_selection() -> void:
@@ -382,9 +396,15 @@ func _show_weapon_selection() -> void:
 		close_menu()
 		return
 
+	var max_level: int = _get_max_anvil_level(weapons)
+	var any_locked: bool = false
 	for w: Weapon in weapons:
 		var btn := Button.new()
 		btn.text = w.weapon_name
+		if w.anvil_upgrade_count >= max_level:
+			btn.text = "%s  (locked)" % w.weapon_name
+			btn.disabled = true
+			any_locked = true
 		btn.custom_minimum_size = Vector2(0, 40)
 		btn.pressed.connect(_on_weapon_pressed.bind(w))
 		weapon_list.add_child(btn)
@@ -405,6 +425,8 @@ func _show_weapon_selection() -> void:
 				subtitle_label.text = "Choose a weapon. Guarantees an inverted trade, plus standard upgrades."
 			_:
 				subtitle_label.text = "Choose a weapon to upgrade. Grants a signature choice!" if _is_golden else "Choose a weapon to upgrade."
+	if any_locked and subtitle_label:
+		subtitle_label.text += "\nIt's locked: spread anvil upgrades across every weapon to push one past 3."
 	weapon_list.visible = true
 	if weapon_scroll:
 		weapon_scroll.visible = true
@@ -719,6 +741,7 @@ func _on_stat_pressed(index: int) -> void:
 		return
 	var apply: Callable = stat["apply"] as Callable
 	apply.call(_selected_weapon)
+	_selected_weapon.anvil_upgrade_count += 1
 	upgrade_applied.emit(_selected_weapon, stat["id"] as String)
 
 

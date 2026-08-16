@@ -34,6 +34,9 @@ func supports_projectile_speed() -> bool:
 func supports_duration() -> bool:
 	return true
 
+func supports_chain() -> bool:
+	return true
+
 
 ## Chromatic Bolt's signature upgrades (granted by the rare golden anvil).
 func get_signature_pool() -> Array[Dictionary]:
