@@ -34,14 +34,14 @@ func _unhandled_input(event: InputEvent) -> void:
 func open() -> void:
 	_populate()
 	visible = true
-	get_tree().paused = true
+	PauseCoord.begin_block()
 	if close_button:
 		close_button.grab_focus()
 
 
 func close() -> void:
 	visible = false
-	get_tree().paused = false
+	PauseCoord.end_block()
 	_clear()
 
 

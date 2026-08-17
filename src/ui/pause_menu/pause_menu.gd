@@ -49,14 +49,14 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func pause() -> void:
 	visible = true
-	get_tree().paused = true
+	PauseCoord.begin_block()
 	if resume_button:
 		resume_button.grab_focus()
 
 
 func resume() -> void:
 	visible = false
-	get_tree().paused = false
+	PauseCoord.end_block()
 
 
 func _on_resume_pressed() -> void:
@@ -64,8 +64,8 @@ func _on_resume_pressed() -> void:
 
 
 func _on_main_menu_pressed() -> void:
-	# Unpause and clear run state so a fresh run starts from the menu.
-	get_tree().paused = false
+	# Clear the coordinated pause and run state so a fresh run starts from the menu.
+	PauseCoord.reset()
 	var run_state: Node = get_node_or_null("/root/GameState")
 	if run_state and run_state.has_method("end_run"):
 		run_state.end_run()
@@ -73,5 +73,5 @@ func _on_main_menu_pressed() -> void:
 
 
 func _on_quit_pressed() -> void:
-	get_tree().paused = false
+	PauseCoord.reset()
 	get_tree().quit()

@@ -314,7 +314,7 @@ func _show_level_up_menu(new_level: int) -> void:
 			return
 
 	level_up_menu_open = true
-	get_tree().paused = true
+	PauseCoord.begin_block()
 	level_up_menu.open_for_player(current_player, new_level)
 
 func _on_upgrade_selected(upgrade_id: String, rarity: int) -> void:
@@ -345,7 +345,7 @@ func _close_level_up_menu() -> void:
 	level_up_menu_open = false
 	if level_up_menu:
 		level_up_menu.close_menu()
-	get_tree().paused = false
+	PauseCoord.end_block()
 
 
 # --- Weapon Choice (Treasure Chest) ---
@@ -354,7 +354,7 @@ func show_weapon_choice() -> void:
 	if weapon_choice_menu == null or current_player == null:
 		return
 
-	get_tree().paused = true
+	PauseCoord.begin_block()
 	weapon_choice_menu.open_menu()
 
 
@@ -362,7 +362,7 @@ func _on_weapon_choice_selected(weapon_scene: PackedScene) -> void:
 	if current_player and current_player.has_method("add_weapon"):
 		current_player.add_weapon(weapon_scene)
 	weapon_choice_menu.close_menu()
-	get_tree().paused = false
+	PauseCoord.end_block()
 
 
 # --- Anvil Upgrade (upgrade a specific weapon's stats) ---
@@ -370,13 +370,13 @@ func _on_weapon_choice_selected(weapon_scene: PackedScene) -> void:
 func show_anvil_upgrade(golden: bool = false, kind: int = 0) -> void:
 	if anvil_upgrade_menu == null or current_player == null:
 		return
-	get_tree().paused = true
+	PauseCoord.begin_block()
 	anvil_upgrade_menu.open_menu(golden, kind)
 
 
 func _on_anvil_upgrade_applied(_weapon: Weapon, _stat_id: String) -> void:
 	anvil_upgrade_menu.close_menu()
-	get_tree().paused = false
+	PauseCoord.end_block()
 	# Re-read every equipped weapon so the slot UI reflects stat changes made
 	# by the anvil (most importantly a damage-type conversion, which edits
 	# weapon.damage_type directly and emits no signal of its own).
@@ -391,14 +391,14 @@ func show_dash_upgrade() -> void:
 		return
 	if not current_player.has_method("add_dash_charge"):
 		return
-	get_tree().paused = true
+	PauseCoord.begin_block()
 	dash_upgrade_menu.open_menu()
 
 
 func _on_dash_upgrade_selected(upgrade_id: String) -> void:
 	if current_player == null:
 		dash_upgrade_menu.close_menu()
-		get_tree().paused = false
+		PauseCoord.end_block()
 		return
 	match upgrade_id:
 		"dash_charge":
@@ -408,7 +408,7 @@ func _on_dash_upgrade_selected(upgrade_id: String) -> void:
 		"dash_range":
 			current_player.increase_dash_range(0.30)
 	dash_upgrade_menu.close_menu()
-	get_tree().paused = false
+	PauseCoord.end_block()
 
 
 # --- Artefact Choice (Boss Relic) ---
@@ -428,7 +428,7 @@ func show_artefact_choice(cursed_only: bool = false) -> void:
 		if current_player.get_artefact_count() >= current_player.get_artefact_slot_capacity():
 			return
 
-	get_tree().paused = true
+	PauseCoord.begin_block()
 	artefact_choice_menu.open_for_player(current_player, cursed_only)
 
 
@@ -436,7 +436,7 @@ func _on_artefact_choice_selected(artefact_id: String) -> void:
 	if current_player and current_player.has_method("add_artefact"):
 		current_player.add_artefact(artefact_id)
 	artefact_choice_menu.close_menu()
-	get_tree().paused = false
+	PauseCoord.end_block()
 
 func _on_difficulty_timer_timeout() -> void:
 	pass
