@@ -41,12 +41,9 @@ func fire() -> void:
 	if is_critical:
 		var crit_mult: float = bow.get_critical_multiplier() if bow else get_critical_multiplier()
 		total = int(round(float(total) * crit_mult))
-	# "+ projectile" anvil upgrades on the Longbow make the Rain blanket the
-	# area harder: each extra effective projectile adds another arrow's worth of
-	# damage to the volley (base 1 projectile = no change).
-	var volley_count: int = (bow.get_effective_projectile_count(1) if bow else get_effective_projectile_count(1))
-	if volley_count > 1:
-		total = maxi(1, int(round(float(total) * float(volley_count))))
+	# Note: "+ projectile" anvil upgrades on the Longbow go to the Longbow's own
+	# arrow volley (see bow_weapon.gd) — they no longer inflate the Rain's damage.
+	# The Rain still inherits the bow's damage/area/crit/status/explosion stats.
 	var eff_radius: float = radius * area_mult
 
 	for node in get_tree().get_nodes_in_group("enemies"):

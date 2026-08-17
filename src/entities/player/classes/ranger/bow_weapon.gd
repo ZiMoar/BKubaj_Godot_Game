@@ -33,10 +33,9 @@ func supports_pierce() -> bool:
 func supports_chain() -> bool:
 	return true
 
-## Projectile count is supported, but instead of adding arrows to the Longbow
-## itself, extra projectiles feed the Rain of Arrows (see ranger_rain_weapon.gd).
-## This lets "+ projectile" anvil upgrades meaningfully buff the Ranger's
-## secondary. Documented in the compendium, not the anvil tooltip.
+## Projectile count is supported and ADDS arrows to the Longbow's combo volley
+## (on top of the base 1/2/3 combo). Each "+ projectile" anvil upgrade fires one
+## more arrow per shot. Rain of Arrows no longer double-dips into this stat.
 func supports_projectile_count() -> bool:
 	return true
 
@@ -78,7 +77,9 @@ func fire() -> void:
 	var step: Vector2i = COMBO[combo_step]
 	combo_step = (combo_step + 1) % COMBO.size()
 
-	var arrow_count: int = step.x
+	# Combo step sets the base arrow count; "+ projectile" anvil upgrades add
+	# arrows on top of it (get_effective_projectile_count handles the floor).
+	var arrow_count: int = get_effective_projectile_count(step.x)
 	var total_spread: float = deg_to_rad(float(step.y))
 
 	var base_dir: Vector2 = (get_global_mouse_position() - global_position).normalized()

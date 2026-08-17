@@ -16,7 +16,7 @@ extends CharacterBody2D
 @export var speed_scale_per_difficulty: float = 0.2  # movement speed grows at this rate per difficulty (nerfed, and can be 0 to disable)
 @export var separation_radius: float = 42.0  # how close to another enemy before we push apart
 @export var separation_strength: float = 240.0  # how hard enemies push each other apart
-@export var engage_radius: float = 22.0  # stop closing beyond this distance to the player; orbit instead of jamming into them
+@export var engage_radius: float = 16.0  # stop closing beyond this distance to the player; orbit instead of jamming into them
 @export var orbit_speed_ratio: float = 0.55  # fraction of normal speed used while orbiting the player
 ## Whether this enemy PHYSICALLY collides with the player. Most mobs are set to
 ## false so the player walks through enemies (only the Hitbox deals contact
@@ -32,6 +32,10 @@ const StatusIconScript: Script = preload("res://src/ui/status_icons/status_icon_
 # Scatter drops in a small ring around the enemy so gold and XP land next to
 # each other instead of stacking on top of one another.
 const DROP_SCATTER_RADIUS: float = 14.0
+
+# The player's collision body is a 16x16 rectangle, so its half-extent is 8.
+# Used to compute how close an enemy must be for its melee contact to register.
+const PLAYER_BODY_HALF: float = 8.0
 
 # Team XP scales with combat progress (room_number/2 skips non-combat rooms):
 # room 1 is baseline, and each later combat room adds XP_ROOM_SCALE more.
@@ -391,6 +395,15 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 	knockback_velocity = knockback_velocity.move_toward(Vector2.ZERO, knockback_decay * delta)
 	_process_body_contacts()
+
+	# Continuous melee contact: the swarm stops/orbits at engage_radius, so a
+	# stationary player inside that ring must keep taking contact damage. The
+	# Hitbox area only fires on ENTRY, not for a body that keeps overlapping, so
+	# poll by distance here. It shares can_deal_damage with the area handlers,
+	# which prevents double-hits on the same frame.
+	if can_deal_damage and dist <= engage_radius + PLAYER_BODY_HALF:
+		_deal_player_damage(target_player, _get_outgoing_contact_damage(), self)
+		_start_damage_cooldown()
 
 
 func apply_slow(duration: float, factor: float) -> void:
