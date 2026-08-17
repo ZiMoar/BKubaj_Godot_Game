@@ -104,8 +104,9 @@ var shock_timer: float = 0.0
 const SHOCK_DURATION: float = 1.5
 
 # ARCANE -> Crit vulnerability: while active the player's crit chance is rolled
-# TWICE (lucky effect — take the better result) instead of a flat upgrade chance.
-# CRIT_VULN_TIMER also serves as the icon active flag.
+# MULTIPLE times (lucky effect — take the better result) instead of a flat
+# upgrade chance. Ailment Effect lengthens the window and adds a re-roll per
+# full +100% bonus. CRIT_VULN_TIMER also serves as the icon active flag.
 var crit_vuln_timer: float = 0.0
 const CRIT_VULN_DURATION: float = 3.0
 
@@ -451,8 +452,9 @@ func apply_impale(hit_damage: float) -> void:
 
 
 # ARCANE -> Crit vulnerability: raise the chance incoming hits become crits.
-func apply_crit_vulnerability() -> void:
-	crit_vuln_timer = maxf(crit_vuln_timer, CRIT_VULN_DURATION)
+# Ailment Effect lengthens the vulnerable window (longer uptime to exploit it).
+func apply_crit_vulnerability(effect_multiplier: float = 1.0) -> void:
+	crit_vuln_timer = maxf(crit_vuln_timer, CRIT_VULN_DURATION * maxf(0.25, effect_multiplier))
 
 
 # NECROTIC -> Decay: enemy deals less damage.
@@ -525,7 +527,7 @@ func _apply_ailment(damage_type: DamageType.Type, hit_damage: int, effect_multip
 			# Stronger slow: scale the slow factor (0.45 base) toward a hard cap.
 			apply_slow(2.0, clampf(0.45 * effect_multiplier, 0.05, 0.95))
 		DamageType.Type.ARCANE:
-			apply_crit_vulnerability()
+			apply_crit_vulnerability(effect_multiplier)
 		DamageType.Type.NECROTIC:
 			apply_decay()
 		DamageType.Type.HOLY:
@@ -643,13 +645,17 @@ func take_damage(amount: int, is_critical: bool = false, damage_type: DamageType
 	# CRIT VULNERABILITY (arcane): LUCKY re-roll. A non-crit hit rolls the
 	# player's crit chance a second time and, if it succeeds, upgrades into a
 	# crit — effectively rolling crit chance twice and taking the best. Scales
-	# with the player's crit build rather than a flat upgrade chance.
+	# with the player's crit build rather than a flat upgrade chance. Ailment
+	# Effect grants EXTRA re-rolls: +1 per full +100% bonus (em >= 2.0, 3.0, ...).
 	if not is_critical and crit_vuln_timer > 0.0:
 		var crit_chance: float = float(plr.get("critical_hit_chance")) if plr != null and plr.get("critical_hit_chance") != null else 0.0
-		if randf() < crit_chance:
-			is_critical = true
-			if plr != null and plr.has_method("get_critical_multiplier"):
-				dealt *= float(plr.get_critical_multiplier())
+		var rerolls: int = maxi(1, int(floor(ailment_multiplier)))
+		for i in rerolls:
+			if randf() < crit_chance:
+				is_critical = true
+				if plr != null and plr.has_method("get_critical_multiplier"):
+					dealt *= float(plr.get_critical_multiplier())
+				break
 
 	# Relic hooks: Cold Blooded (+30% vs slowed) and Static Conduit (+50% crit dmg
 	# vs shocked). Both read the player's current artefact loadout live.
