@@ -30,12 +30,21 @@ func _physics_process(delta: float) -> void:
 
 
 func _on_body_entered(body: Node2D) -> void:
+	# In co-op the projectile is spawned on every machine, but only the HOST's
+	# copy (the multiplayer authority) deals damage — its hits are forwarded to
+	# whichever player's owner it connects. Client copies are visual-only so a
+	# client's own local player (who is that copy's authority) isn't double-hit.
+	# In single-player is_multiplayer_authority() is true, so this stays unchanged.
+	if not is_multiplayer_authority():
+		return
 	if body.is_in_group("player") and body.has_method("take_damage"):
 		EnemyBase.forward_player_damage(body, damage, self)
 		queue_free()
 
 
 func _on_area_entered(area: Area2D) -> void:
+	if not is_multiplayer_authority():
+		return
 	var parent: Node = area.get_parent()
 	if parent and parent.is_in_group("player") and parent.has_method("take_damage"):
 		EnemyBase.forward_player_damage(parent, damage, self)

@@ -46,3 +46,14 @@ func hide_telegraph() -> void:
 	mode = Mode.NONE
 	hide()
 	queue_redraw()
+
+
+## In co-op the telegraph is a child of the host-simulated boss. The host's
+## MultiplayerSynchronizer replicates this node's state (mode / radii / colors /
+## direction / visibility), but replication alone doesn't re-render it — so on a
+## client replica we redraw every frame to reflect the latest replicated values.
+## (Hidden nodes skip drawing, so this is a no-op while the telegraph is off.)
+func _process(_delta: float) -> void:
+	if is_multiplayer_authority():
+		return
+	queue_redraw()

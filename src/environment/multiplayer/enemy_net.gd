@@ -33,7 +33,10 @@ const DROP_SCATTER_RADIUS := 28.0
 # when the client later applies a hit, so we always route through this id space.
 var _enemies: Node2D = null
 var _spawner: MultiplayerSpawner = null
+var _projectiles: Node2D = null
+var _proj_spawner: MultiplayerSpawner = null
 var _next_id: int = 1
+var _next_proj_id: int = 1
 
 
 func _ready() -> void:
@@ -49,6 +52,21 @@ func _ready() -> void:
 	# The host owns the spawner: only it may call spawn(), everyone else
 	# receives the spawned enemies. Peer 1 is always the ENet host.
 	_spawner.set_multiplayer_authority(1)
+
+	# Second MultiplayerSpawner for enemy PROJECTILES (arrows etc.). Enemy
+	# projectiles are deterministic (constant velocity), so spawning them on
+	# every machine lets clients SEE and dodge them while the host's copy remains
+	# the only one that deals damage.
+	_projectiles = Node2D.new()
+	_projectiles.name = "Projectiles"
+	add_child(_projectiles)
+
+	_proj_spawner = MultiplayerSpawner.new()
+	_proj_spawner.name = "ProjectileSpawner"
+	add_child(_proj_spawner)
+	_proj_spawner.spawn_path = _proj_spawner.get_path_to(_projectiles)
+	_proj_spawner.spawn_function = Callable(self, "_spawn_projectile")
+	_proj_spawner.set_multiplayer_authority(1)
 
 	add_to_group(GROUP)
 
@@ -83,6 +101,34 @@ func _spawn_enemy(data: Dictionary) -> Node2D:
 	return en
 
 
+## Host-only entry point used by enemies when they fire a projectile. Spawns the
+## projectile on EVERY machine via the projectile MultiplayerSpawner so clients
+## can see it and dodge. Motion is deterministic (constant velocity), so each
+## machine's copy travels identically. Only the HOST's copy is authoritative and
+## deals damage; client copies are visual-only (see the authority guard in the
+## projectile scripts). On a client this is a no-op.
+func request_projectile_spawn(scene_path: String, pos: Vector2, dir: Vector2, speed: float, damage: int) -> void:
+	if not multiplayer.is_server():
+		return
+	var pid: int = _next_proj_id
+	_next_proj_id += 1
+	_proj_spawner.spawn({"scene": scene_path, "pos": pos, "dir": dir, "speed": speed, "damage": damage, "id": pid})
+
+
+## Called by the projectile MultiplayerSpawner on EVERY peer each time the host
+## fires a projectile. setup() stores the exact start pos / dir / speed / damage,
+## so every machine simulates an identical trajectory.
+func _spawn_projectile(data: Dictionary) -> Node:
+	var scene: PackedScene = load(str(data["scene"]))
+	if scene == null:
+		return null
+	var proj: Node = scene.instantiate()
+	proj.name = "Proj_%d" % int(data["id"])
+	if proj.has_method("setup"):
+		proj.call("setup", data["pos"], data["dir"], float(data["speed"]), int(data["damage"]))
+	return proj
+
+
 ## Every enemy gets a MultiplayerSynchronizer replicating its position and its
 ## health from the host (authority) to clients (replicas). root_path ".." is
 ## relative to the synchronizer node, i.e. the enemy itself.
@@ -96,6 +142,20 @@ func _add_enemy_sync(en: Node) -> void:
 		NodePath(".:max_health"),
 		NodePath(".:current_health"),
 	]
+	# Bosses carry a procedural Telegraph child (AoE / line attack warnings).
+	# Replicate its state so clients see the SAME attack telegraphs as the host
+	# (the host's boss AI is what shows/hides it). Non-boss enemies have no
+	# Telegraph node, so this branch is skipped for them.
+	if en.get_node_or_null("Telegraph") != null:
+		props.append_array([
+			NodePath(".:Telegraph:visible"),
+			NodePath(".:Telegraph:mode"),
+			NodePath(".:Telegraph:zone_radius"),
+			NodePath(".:Telegraph:zone_color"),
+			NodePath(".:Telegraph:line_length"),
+			NodePath(".:Telegraph:line_color"),
+			NodePath(".:Telegraph:aim_direction"),
+		])
 	for prop: NodePath in props:
 		cfg.add_property(prop)
 		cfg.property_set_replication_mode(prop, SceneReplicationConfig.REPLICATION_MODE_ALWAYS)

@@ -58,8 +58,18 @@ func _fire_arrow() -> void:
 	if projectile_scene == null or target_player == null or not is_instance_valid(target_player):
 		return
 
+	var dir: Vector2 = (target_player.global_position - global_position).normalized()
+
+	# Co-op: route the arrow through EnemyNet so EVERY machine spawns it and the
+	# client can see it (host's copy deals the damage; client copies are visual).
+	var net: Node = get_node_or_null("/root/Net")
+	if net != null and net.active():
+		var enemy_net: Node = get_tree().get_first_node_in_group("enemy_net")
+		if enemy_net and enemy_net.has_method("request_projectile_spawn"):
+			enemy_net.request_projectile_spawn(projectile_scene.resource_path, global_position, dir, projectile_speed, projectile_damage)
+			return
+
 	var arrow: Area2D = projectile_scene.instantiate() as Area2D
 	get_tree().current_scene.add_child(arrow)
-	var dir: Vector2 = (target_player.global_position - global_position).normalized()
 	if arrow.has_method("setup"):
 		arrow.setup(global_position, dir, projectile_speed, projectile_damage)

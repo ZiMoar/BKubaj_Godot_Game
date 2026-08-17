@@ -84,12 +84,19 @@ func _execute_volley() -> void:
 	if target_player == null or volley_projectile_scene == null:
 		return
 	var base_dir: Vector2 = (target_player.global_position - global_position).normalized()
+	var net: Node = get_node_or_null("/root/Net")
+	var co_op: bool = net != null and net.active()
+	var enemy_net: Node = get_tree().get_first_node_in_group("enemy_net") if co_op else null
 	for i in range(volley_count):
 		var t: float = 0.0
 		if volley_count > 1:
 			t = float(i) / float(volley_count - 1)
 		var angle: float = deg_to_rad(-volley_spread_deg / 2.0) + deg_to_rad(volley_spread_deg) * t
 		var dir: Vector2 = base_dir.rotated(angle)
+		# Co-op: spawn each arrow on every machine so the client can see the volley.
+		if enemy_net and enemy_net.has_method("request_projectile_spawn"):
+			enemy_net.request_projectile_spawn(volley_projectile_scene.resource_path, global_position, dir, volley_speed, volley_damage)
+			continue
 		var proj: Node = volley_projectile_scene.instantiate()
 		get_tree().current_scene.add_child(proj)
 		if proj.has_method("setup"):
@@ -99,9 +106,17 @@ func _execute_volley() -> void:
 func _execute_summon() -> void:
 	if summon_enemy_scene == null:
 		return
+	var net: Node = get_node_or_null("/root/Net")
+	var co_op: bool = net != null and net.active()
+	var enemy_net: Node = get_tree().get_first_node_in_group("enemy_net") if co_op else null
 	for i in range(summon_count):
 		var ang: float = randf() * TAU
 		var pos: Vector2 = global_position + Vector2(cos(ang), sin(ang)) * 100.0
+		# Co-op: summoned minions are regular enemies, so spawn them through the
+		# shared enemy spawner (host-authoritative, position/health synced).
+		if enemy_net and enemy_net.has_method("request_spawn"):
+			enemy_net.request_spawn(summon_enemy_scene.resource_path, pos)
+			continue
 		var enemy: Node = summon_enemy_scene.instantiate()
 		get_tree().current_scene.add_child(enemy)
 		if enemy is Node2D:

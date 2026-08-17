@@ -67,11 +67,20 @@ func _physics_process(delta: float) -> void:
 func _summon() -> void:
 	if skel_scene == null:
 		return
+	var net: Node = get_node_or_null("/root/Net")
+	var co_op: bool = net != null and net.active()
+	var enemy_net: Node = get_tree().get_first_node_in_group("enemy_net") if co_op else null
 	for i in range(summon_count):
 		if skel_scene == null:
 			return
+		var offset: Vector2 = Vector2(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0)).normalized() * summon_radius
+		# Co-op: raised minions are regular enemies, so spawn them through the
+		# shared enemy spawner (host-authoritative, position/health synced) so the
+		# client sees them.
+		if enemy_net and enemy_net.has_method("request_spawn"):
+			enemy_net.request_spawn(skel_scene.resource_path, global_position + offset)
+			continue
 		var skel: Node = skel_scene.instantiate()
 		if skel is Node2D:
-			var offset: Vector2 = Vector2(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0)).normalized() * summon_radius
 			(skel as Node2D).global_position = global_position + offset
 		get_tree().current_scene.add_child(skel)
