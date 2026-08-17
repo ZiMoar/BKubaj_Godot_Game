@@ -693,11 +693,34 @@ func _spawn_damage_number(amount: int, is_critical: bool = false) -> void:
 func die() -> void:
 	_is_dead = true
 	_spread_ailments_on_death()
-	_drop_soul()
 	_register_kill()
+	# In co-op, a network-synced enemy dies on the HOST. Its drops are broadcast
+	# to every machine (so each player collects their own copy) instead of being
+	# spawned only here. Falls back to plain local drops otherwise.
+	if _route_shared_drops():
+		queue_free()
+		return
+	_drop_soul()
 	_drop_xp()
 	_drop_gold()
 	queue_free()
+
+
+## Co-op: this is a host-authoritative networked enemy and I am the host, so tell
+## every machine (including myself via call_local) to spawn its own copy of the
+## drops. Returns true if drops were routed this way (caller must NOT also drop
+## locally, or the host would double-spawn).
+func _route_shared_drops() -> bool:
+	var net: Node = get_node_or_null("/root/Net")
+	if _enemy_net_id < 0 or net == null or not net.active() or not multiplayer.is_server():
+		return false
+	var enemy_net: Node = get_tree().get_first_node_in_group("enemy_net")
+	if enemy_net == null:
+		return false
+	# xp/gold values are computed here (host) so every machine agrees; the soul
+	# pickup is decided per-machine inside spawn_shared_drops.
+	enemy_net.rpc("spawn_shared_drops", global_position, _scaled_xp_value(), xp_orb_tier, _scaled_gold_value())
+	return true
 
 
 ## Soul Harvest relic: drop a soul pickup that grants the player Shield.

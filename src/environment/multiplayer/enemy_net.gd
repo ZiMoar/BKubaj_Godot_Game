@@ -20,6 +20,14 @@ extends Node
 
 const GROUP := "enemy_net"
 
+# Shared-drop pickups. When a networked enemy dies, the HOST broadcasts the drop
+# values and each machine spawns its OWN copies so its local player(s) can
+# collect them (per-machine progression, matching how hp/run-state work).
+const XP_ORB_SCENE := preload("res://src/pickups/xp_orb/xp_orb.tscn")
+const GOLD_PICKUP_SCENE := preload("res://src/pickups/gold_pickup/gold_pickup.tscn")
+const SOUL_PICKUP_SCENE := preload("res://src/pickups/soul_pickup/soul_pickup.tscn")
+const DROP_SCATTER_RADIUS := 28.0
+
 # Enemies spawned by the host before a joining client exists must be reachable
 # when the client later applies a hit, so we always route through this id space.
 var _enemies: Node2D = null
@@ -108,6 +116,61 @@ func apply_enemy_hit(enemy_net_id: int, amount: int, is_critical: bool, damage_t
 		return
 	if en.has_method("take_damage"):
 		en.call("take_damage", maxi(1, amount), is_critical, damage_type, suppress_ailment, ailment_multiplier)
+
+
+## HOST -> every machine: a networked enemy died at `pos` and its drops must be
+## shared. Each machine (host included, via call_local) spawns its OWN copies of
+## the XP orb and gold coin so its local player(s) can collect them. The soul
+## pickup is decided per-machine because it depends on that player's Soul
+## Harvest relic. Drop VALUES (xp/gold) come from the host so all machines agree.
+@rpc("authority", "reliable", "call_local")
+func spawn_shared_drops(pos: Vector2, xp_value: int, xp_tier: int, gold_value: int) -> void:
+	var scene: Node = get_tree().current_scene
+	if scene == null:
+		return
+	_spawn_xp_orb(pos, xp_value, xp_tier)
+	_spawn_gold_coin(pos, gold_value)
+	_spawn_soul(pos)
+
+
+func _spawn_xp_orb(pos: Vector2, value: int, tier: int) -> void:
+	var orb: Node = XP_ORB_SCENE.instantiate()
+	if orb == null:
+		return
+	orb.global_position = pos + _scatter()
+	if orb.has_method("setup"):
+		orb.setup(maxi(1, value), maxi(1, tier))
+	get_tree().current_scene.call_deferred("add_child", orb)
+
+
+func _spawn_gold_coin(pos: Vector2, value: int) -> void:
+	var coin: Node = GOLD_PICKUP_SCENE.instantiate()
+	if coin == null:
+		return
+	coin.global_position = pos + _scatter()
+	if coin.has_method("setup"):
+		coin.setup(maxi(1, value))
+	get_tree().current_scene.call_deferred("add_child", coin)
+
+
+## Soul drops are per-machine: only spawn one if THIS machine's player holds the
+## Soul Harvest relic (mirrors enemy_base._drop_soul).
+func _spawn_soul(pos: Vector2) -> void:
+	var plr: Node = get_tree().get_first_node_in_group("player")
+	if plr == null or not plr.has_method("has_artefact") or not plr.has_artefact("soul_harvest"):
+		return
+	if get_tree().current_scene == null:
+		return
+	var soul: Node = SOUL_PICKUP_SCENE.instantiate()
+	if soul == null:
+		return
+	soul.global_position = pos + _scatter()
+	get_tree().current_scene.call_deferred("add_child", soul)
+
+
+func _scatter() -> Vector2:
+	var angle: float = randf() * TAU
+	return Vector2(cos(angle), sin(angle)) * randf_range(6.0, DROP_SCATTER_RADIUS)
 
 
 func _find_enemy(enemy_net_id: int) -> Node2D:
