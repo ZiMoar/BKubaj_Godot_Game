@@ -333,6 +333,23 @@ func _make_visual_copy(node: Node) -> void:
 	node.set_meta("visual_copy", true)
 
 
+## Find a player node by its node name. Used by remote visual copies of effects
+## that must follow/orbit a SPECIFIC player (a teammate's orbiting book or poison
+## spray), which on this machine is that player's replica. Searches the "player"
+## group by name because the replicas are nested under a "Players" container, so
+## a bare current_scene path lookup would miss them.
+static func find_player_by_name(node_name: String) -> Node:
+	if node_name.is_empty():
+		return null
+	var tree: SceneTree = Engine.get_main_loop()
+	if tree == null:
+		return null
+	for p: Node in tree.get_nodes_in_group("player"):
+		if p.name == node_name:
+			return p
+	return null
+
+
 ## Client tells the host which class it picked, so the host knows how to spawn
 ## this peer's Player and can share the full roster with everyone.
 func send_class_to_host() -> void:

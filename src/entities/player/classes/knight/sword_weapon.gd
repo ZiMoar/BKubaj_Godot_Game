@@ -1,5 +1,7 @@
 extends Weapon
 
+const SwordSlashVisualScene: PackedScene = preload("res://src/effects/sword_slash_visual/sword_slash_visual.tscn")
+
 ## Knight primary weapon: a broadsword with a 3-hit combo.
 ## Hits 1 & 2 are WIDE 100-degree arc slashes that both swing forward;
 ## hit 3 is a STAB (the original thin triangle) dealing 1.5x damage.
@@ -54,6 +56,18 @@ func fire() -> void:
 	slash_area.global_rotation = angle_to_mouse
 	slash_area.show()
 	col_poly.disabled = false
+
+	# Co-op: broadcast a standalone visual of this swing so the other player sees
+	# it (their copy of this player's weapon isn't animating). Purely cosmetic.
+	var net: Node = get_node_or_null("/root/Net")
+	if net and net.has_method("sync_player_effect"):
+		net.sync_player_effect(slash_area, SwordSlashVisualScene, {
+			"reach": reach * get_area_multiplier(),
+			"is_stab": is_stab,
+			"angle_deg": slash_angle_deg,
+			"segments": slash_arc_segments,
+			"color": Color(1.0, 0.95, 0.55, 1) if is_stab else Color.WHITE,
+		})
 
 	await get_tree().create_timer(0.1).timeout
 

@@ -103,6 +103,10 @@ func _attached_process(delta: float) -> void:
 
 
 func _attack() -> void:
+	# Co-op visual copy: it homes and latches onto an enemy to render the attach,
+	# but must never deal necrotic damage (its hits are manual, not physics).
+	if get_meta("visual_copy", false):
+		return
 	var target := _attached
 	if target == null or not is_instance_valid(target):
 		return
@@ -119,6 +123,9 @@ func _attack() -> void:
 ## that seeks a new target (up to FISSURE_MAX times total). Only if the owning
 ## weapon has the signature.
 func _try_fissure() -> void:
+	# Co-op visual copy: never split (a split would be a real damaging skull).
+	if get_meta("visual_copy", false):
+		return
 	if not _can_fissure:
 		return
 	if source_weapon == null or not source_weapon.has_method("has_signature") or not source_weapon.has_signature("fissure"):

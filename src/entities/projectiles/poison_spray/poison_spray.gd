@@ -17,6 +17,9 @@ var release_interval: float = 0.18
 var range_px: float = 190.0
 var half_angle: float = 0.22
 var hit_value: int = 20
+## Name of the player this visual copy follows (a teammate's replica on this
+## machine). Empty for the real, weapon-driven copy.
+var _visual_player_name: String = ""
 
 var _age: float = 0.0
 var _release_timer: float = 0.0
@@ -34,8 +37,14 @@ func setup(weapon: Node, val: int, dur: float, interval: float, rng_px: float, a
 
 ## Follow the living player. If the weapon reports a player, snap to it every
 ## frame so newly released puffs burst from the player, not from the fixed spot
-## where the emitter was first created.
+## where the emitter was first created. On a remote visual copy (no weapon ref),
+## follow the firing player's replica by name instead of the first local player.
 func _follow_player() -> void:
+	if get_meta("visual_copy", false):
+		var vis: Node = NetworkManager.find_player_by_name(_visual_player_name)
+		if vis is Node2D:
+			global_position = (vis as Node2D).global_position
+			return
 	var player: Node = null
 	if source_weapon and source_weapon.has_method("get_player"):
 		player = source_weapon.get_player()
@@ -43,6 +52,18 @@ func _follow_player() -> void:
 		player = get_tree().get_first_node_in_group("player")
 	if player is Node2D:
 		global_position = (player as Node2D).global_position
+
+
+## Co-op: configure a remote visual-only copy from broadcast data (no weapon ref
+## on this machine). It follows the firing player's replica and keeps releasing
+## visual puffs, but nothing applies poison.
+func setup_visual(data: Dictionary) -> void:
+	duration = float(data.get("dur", 2.0))
+	release_interval = float(data.get("interval", 0.18))
+	range_px = float(data.get("rng", 190.0))
+	half_angle = float(data.get("half_angle", 0.22))
+	hit_value = int(data.get("val", 20))
+	_visual_player_name = str(data.get("player_name", ""))
 
 
 func _physics_process(delta: float) -> void:
@@ -70,6 +91,9 @@ func _spawn_puff(dir: Vector2) -> void:
 	var puff: Node2D = PuffScript.new()
 	puff.name = "PoisonPuff"
 	puff.global_position = global_position
+	# A visual copy's own puffs must also be visual-only (render, no poison).
+	if get_meta("visual_copy", false):
+		puff.set_meta("visual_copy", true)
 	if puff.has_method("setup"):
 		puff.setup(source_weapon, dir, hit_value, half_angle, range_px)
 	get_tree().current_scene.add_child(puff)

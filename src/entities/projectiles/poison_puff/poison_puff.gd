@@ -45,6 +45,10 @@ func _physics_process(delta: float) -> void:
 
 
 func _apply() -> void:
+	# Co-op visual copy: render the spray puff but never apply poison (the real
+	# puff on the firing machine already does).
+	if get_meta("visual_copy", false):
+		return
 	var enemies: Array[Node] = get_tree().get_nodes_in_group("enemies")
 	for e: Node in enemies:
 		if not is_instance_valid(e):

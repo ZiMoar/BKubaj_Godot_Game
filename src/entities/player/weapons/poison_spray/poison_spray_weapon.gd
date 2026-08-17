@@ -67,6 +67,17 @@ func fire() -> void:
 			HALF_ANGLE
 		)
 	get_tree().current_scene.add_child(spray)
+	var net: Node = get_node_or_null("/root/Net")
+	if net and net.has_method("sync_player_effect"):
+		var _pl: Node = get_player()
+		net.sync_player_effect(spray, PoisonSprayScene, {
+			"dur": get_effective_duration(SPRAY_DURATION),
+			"interval": TICK_INTERVAL,
+			"rng": SPRAY_RANGE * get_area_multiplier(),
+			"half_angle": HALF_ANGLE,
+			"val": hit_value,
+			"player_name": _pl.name if _pl else "",
+		})
 
 
 func _nearest_enemy_dir() -> Vector2:

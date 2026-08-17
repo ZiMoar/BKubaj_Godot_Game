@@ -15,6 +15,9 @@ var center_position: Vector2 = Vector2.ZERO
 var is_critical: bool = false
 var source_player: Player = null
 var source_weapon: Node = null
+## Name of the player this visual copy orbits (a teammate's replica on this
+## machine). Empty for the real, weapon-driven copy.
+var _visual_player_name: String = ""
 
 # Dictionary to track per-enemy hit cooldowns
 var recently_hit: Dictionary = {}
@@ -33,6 +36,30 @@ func setup(initial_angle: float, start_pos: Vector2) -> void:
 	current_angle = initial_angle
 	center_position = start_pos
 	global_position = start_pos
+
+
+## Co-op: this is a remote visual-only copy of a teammate's book. The real book's
+## orbit is driven by the firing player's weapon every frame; here we reproduce
+## that same orbit ourselves around that player's replica, so it renders orbiting
+## the teammate but never deals damage (its overlap/collision checks are inert on
+## a visual copy).
+func _physics_process(delta: float) -> void:
+	if not get_meta("visual_copy", false):
+		return
+	var p: Node = NetworkManager.find_player_by_name(_visual_player_name)
+	if p is Node2D:
+		update_orbit(delta, (p as Node2D).global_position)
+
+
+## Configure a remote visual-only copy from broadcast data.
+func setup_visual(data: Dictionary) -> void:
+	current_angle = float(data.get("angle", 0.0))
+	current_radius = float(data.get("radius", 0.0))
+	target_radius = float(data.get("target_radius", 55.0))
+	orbit_speed = float(data.get("orbit_speed", 4.0))
+	spiral_speed = float(data.get("spiral_speed", 110.0))
+	_visual_player_name = str(data.get("player_name", ""))
+	global_position = data.get("pos", global_position)
 
 func update_orbit(delta: float, current_center: Vector2) -> void:
 	center_position = current_center
