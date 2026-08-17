@@ -29,3 +29,7 @@ export_presets.cfg
 /Dungeoneers.exe
 /Dungeoneers.pck
 /Dungeoneers.console.exe
+
+# Release staging (built by release.sh)
+/dist/
+/dist-patch/
