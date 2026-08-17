@@ -195,6 +195,13 @@ func _add_position_sync(p: Node) -> MultiplayerSynchronizer:
 	# locally but was yanked back to spawn ("wobble but no movement").
 	cfg.add_property(NodePath(".:position"))
 	cfg.property_set_replication_mode(NodePath(".:position"), SceneReplicationConfig.REPLICATION_MODE_ALWAYS)
+	# Replicate the owner's live health so every machine knows each player's real
+	# HP and shield. The ghost's HP/Shield bars are refreshed from these in
+	# Player._process (direct synchronizer writes don't re-trigger the bar UI).
+	for prop: String in ["current_health", "max_health", "max_health_bonus", "current_shield", "shield_cap_ratio_bonus"]:
+		var path: NodePath = NodePath(".:" + prop)
+		cfg.add_property(path)
+		cfg.property_set_replication_mode(path, SceneReplicationConfig.REPLICATION_MODE_ALWAYS)
 	sync.replication_config = cfg
 	sync.root_path = NodePath("..")
 	p.add_child(sync)

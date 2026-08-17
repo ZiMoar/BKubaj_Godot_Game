@@ -84,7 +84,7 @@ func _detonate() -> void:
 	if target_player and is_instance_valid(target_player):
 		var dist: float = global_position.distance_to(target_player.global_position)
 		if dist <= explosion_radius and target_player.has_method("take_damage"):
-			target_player.take_damage(explosion_damage, self)
+			_deal_player_damage(target_player, explosion_damage, self)
 	queue_free()
 
 

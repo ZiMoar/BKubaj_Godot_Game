@@ -77,7 +77,7 @@ func _execute_slam() -> void:
 	var dist: float = global_position.distance_to(target_player.global_position)
 	# Telegraph gave the player time to move out of the radius.
 	if dist <= slam_radius + 20.0 and target_player.has_method("take_damage"):
-		target_player.take_damage(slam_damage, self)
+		_deal_player_damage(target_player, slam_damage, self)
 
 
 func _execute_volley() -> void:

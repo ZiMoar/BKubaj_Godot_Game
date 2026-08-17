@@ -244,18 +244,47 @@ func _forward_client_hit(amount: int, is_critical: bool, damage_type: DamageType
 	tween.tween_property(self, "modulate", Color.WHITE, 0.05)
 
 
-## In co-op, an enemy must only deal its contact damage to a player it contacts
-## locally on this machine — i.e. a player this machine actually simulates. This
-## stops the host's authoritative enemy from draining the HP of another player's
-## position-replicated ghost (which would be a local-only, non-authoritative
-## change to that player's real health).
-func _can_damage_player_locally(p: Node) -> bool:
+## Deals damage to a target on this machine, OR — in co-op — forwards the hit to
+## the peer that OWNS a player when this enemy (on the host) contacts a client
+## player's ghost. The owner is the health authority for its own player, so a
+## host enemy must NOT mutate the ghost's local (replicated) health — that would
+## be a non-authoritative change that gets overwritten by the next sync. Instead
+## it tells the owner to commit the damage (Player.apply_network_damage), and the
+## owner's resulting HP replicates back out to everyone. Single-player and host's
+## own player are applied locally, exactly as before.
+func _deal_player_damage(target: Node, amount: int, source: Node) -> void:
+	var ghost: bool = _is_coop_ghost(target)
+	forward_player_damage(target, amount, source)
+	# Thorns reflect damage back to the attacker — but only for a locally-simmed
+	# hit. A ghost's thorns value isn't the real player's, so skip it there.
+	if not ghost:
+		_apply_thorns_to_attacker(target)
+
+
+## True when `target` is a co-op CLIENT player's ghost on this (host) machine —
+## i.e. a player this machine does NOT simulate. Its health is owned by its peer.
+func _is_coop_ghost(target: Node) -> bool:
 	var net: Node = get_node_or_null("/root/Net")
-	if net == null or not net.active():
-		return true
-	if p.is_in_group("player") and not p.is_multiplayer_authority():
-		return false
-	return true
+	return net != null and net.active() and target.is_in_group("player") and not target.is_multiplayer_authority()
+
+
+## Shared by enemies and their projectiles: apply damage locally, or in co-op
+## forward the hit to the peer that owns the player so it commits the damage to
+## its authoritative health (the resulting HP replicates back out to everyone).
+static func forward_player_damage(target: Node, amount: int, source: Node) -> void:
+	if amount <= 0 or target == null:
+		return
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree == null:
+		return
+	var net: Node = tree.root.get_node_or_null("Net")
+	if net != null and net.active() and target.is_in_group("player") and not target.is_multiplayer_authority():
+		# Co-op: a client player's ghost on our (host) machine. Forward to owner.
+		if target.has_method("apply_network_damage"):
+			target.rpc_id(target.get_multiplayer_authority(), "apply_network_damage", amount)
+		return
+	if target.has_method("take_damage"):
+		target.take_damage(amount, source)
 
 
 ## Simple enemy-enemy separation so a swarm fans out around the player instead
@@ -890,21 +919,18 @@ func _random_scatter() -> Vector2:
 func _on_hitbox_touch(node: Node) -> void:
 	var target = node.get_parent() if node is Area2D else node
 	if target and (target.is_in_group("player") or target.has_method("take_damage")) and not target.is_in_group("enemies"):
-		if can_deal_damage and _can_damage_player_locally(target):
-			target.take_damage(_get_outgoing_contact_damage(), self)
-			_apply_thorns_to_attacker(target)
+		if can_deal_damage:
+			_deal_player_damage(target, _get_outgoing_contact_damage(), self)
 			_start_damage_cooldown()
 
 func _process_body_contacts() -> void:
 	for i in range(get_slide_collision_count()):
 		var collision = get_slide_collision(i)
 		var collider = collision.get_collider()
-		if collider and collider.is_in_group("player") and can_deal_damage and _can_damage_player_locally(collider):
-			if collider.has_method("take_damage"):
-				collider.take_damage(_get_outgoing_contact_damage(), self)
-				_apply_thorns_to_attacker(collider)
-				_start_damage_cooldown()
-				return
+		if collider and collider.is_in_group("player") and can_deal_damage:
+			_deal_player_damage(collider, _get_outgoing_contact_damage(), self)
+			_start_damage_cooldown()
+			return
 
 # NECROTIC decay reduces the enemy's outgoing contact damage.
 func _get_outgoing_contact_damage() -> int:

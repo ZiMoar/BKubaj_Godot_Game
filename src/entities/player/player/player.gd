@@ -784,6 +784,45 @@ func _physics_process(delta: float) -> void:
 	if _momentum_timer > 0.0:
 		_momentum_timer = maxf(0.0, _momentum_timer - delta)
 
+
+## Co-op: keeps a remote player's ghost bars in sync. The MultiplayerSynchronizer
+## writes current_health/max_health/shield straight onto this (non-authority)
+## copy, but those direct writes don't re-trigger the HP/Shield bar updates that
+## the owning peer's damage/heal paths do. Poll once a frame so a teammate sees
+## your real HP/shield. The owner and single-player (no network peer) are
+## unaffected — their bars update through the normal take_damage/heal paths.
+func _process(_delta: float) -> void:
+	if multiplayer.has_multiplayer_peer() and not is_multiplayer_authority():
+		_sync_replicated_hp_ui()
+
+
+## Rebuilds the HP/Shield bars from the replicated health fields on a ghost.
+func _sync_replicated_hp_ui() -> void:
+	if hp_bar:
+		hp_bar.max_value = current_max_health()
+		hp_bar.value = clampf(current_health, 0, current_max_health())
+		_update_hp_value_label()
+	if has_node("ShieldBar"):
+		var sb: ProgressBar = get_node("ShieldBar") as ProgressBar
+		sb.max_value = maxf(1.0, get_shield_cap())
+		sb.value = clampf(current_shield, 0.0, sb.max_value)
+		sb.visible = current_shield > 0.0
+
+
+## Co-op: called by the HOST on the peer that OWNS this player when one of the
+## host's enemies hit this player's ghost on the host machine. Only the owner
+## commits damage to its own player (it is the health authority); the resulting
+## HP then replicates back out to everyone. No source is passed, so the owner
+## applies the flat hit with its own armor/shield/evasion.
+@rpc("any_peer", "reliable")
+func apply_network_damage(amount: int) -> void:
+	if not is_multiplayer_authority():
+		return
+	if amount <= 0 or current_health <= 0:
+		return
+	take_damage(amount, null)
+
+
 # --- Movement & Aiming ---
 func handle_movement() -> void:
 	current_move_input = Input.get_vector("move_left", "move_right", "move_up", "move_down")
