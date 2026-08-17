@@ -18,7 +18,7 @@ var bolt_count: int = 3
 var bolt_damage: int = 14
 # Reach of each secondary hit (initial zap from the orb, and every chain hop),
 # scaled by the weapon's area multiplier and set from the weapon on spawn.
-var bolt_range: float = 100.0
+var bolt_range: float = 150.0
 var bolt_speed: float = 340.0
 
 var _age: float = 0.0
@@ -50,11 +50,24 @@ func _physics_process(delta: float) -> void:
 		else:
 			global_position += dir * speed * delta
 
-	# Fire bolts periodically.
+	# Fire bolts periodically. The rate scales with the player's attack speed
+	# (the same multiplier that shortens the throw cooldown), so stacking attack
+	# speed genuinely speeds up the orb's secondary hits.
 	_bolt_timer -= delta
 	if _bolt_timer <= 0.0:
-		_bolt_timer = bolt_interval
+		_bolt_timer = _get_effective_bolt_interval()
 		_fire_volley()
+
+
+## The base bolt_interval shortened by the player's attack-speed multiplier
+## (lower = faster). Ensures a sane minimum so it can never tick faster than 20Hz.
+func _get_effective_bolt_interval() -> float:
+	var interval: float = bolt_interval
+	if is_instance_valid(source_weapon) and source_weapon.has_method("get_player"):
+		var player: Node = source_weapon.get_player()
+		if player != null and player.has_method("get_attack_speed_multiplier"):
+			interval *= float(player.get_attack_speed_multiplier())
+	return maxf(0.05, interval)
 
 
 func _fire_volley() -> void:

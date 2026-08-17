@@ -17,6 +17,7 @@ enum Type {
 	NECROTIC,   # decay (enemy deals 20% less damage)
 	HOLY,       # brand (enemy takes increased damage from all sources)
 	POISON,     # stackable DoT (long duration, slow ticks, < burn magnitude)
+	CHROMATIC,  # signals RANDOM-element behaviour (Chromatic Orb) — no fixed ailment
 }
 
 
@@ -31,6 +32,7 @@ static func display_name(type: Type) -> String:
 		Type.NECROTIC: return "NECROTIC"
 		Type.HOLY: return "HOLY"
 		Type.POISON: return "POISON"
+		Type.CHROMATIC: return "CHROMATIC"
 	return "PHYSICAL"
 
 
@@ -44,4 +46,5 @@ static func color_for(type: Type) -> Color:
 		Type.NECROTIC: return Color(0.5, 0.9, 0.6)
 		Type.HOLY: return Color(1.0, 0.95, 0.75)
 		Type.POISON: return Color(0.5, 0.85, 0.35)
+		Type.CHROMATIC: return Color(1.0, 0.45, 0.75)
 	return Color(0.85, 0.85, 0.85)

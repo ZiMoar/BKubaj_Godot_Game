@@ -20,7 +20,7 @@ func _ready() -> void:
 	weapon_name = "Chromatic Bolt"
 	trigger_type = TriggerType.AUTOMATIC
 	cooldown = COOLDOWN
-	damage_type = DamageType.Type.ARCANE  # the orb is arcane; bolts randomize
+	damage_type = DamageType.Type.CHROMATIC  # signals random element; the bolts randomize per hit
 	super._ready()
 	call_deferred("try_fire")
 
@@ -53,7 +53,40 @@ func get_signature_pool() -> Array[Dictionary]:
 
 func fire() -> void:
 	# Aim the throw at the nearest enemy, else a random direction.
-	var dir_start: Vector2 = Vector2.RIGHT
+	var dir_start: Vector2 = _aim_direction()
+
+	# +Projectile scales the NUMBER OF ORBS thrown (the base projectile), not the
+	# number of bonus bolts per orb — bolt count stays fixed at its base.
+	var orb_count: int = get_effective_projectile_count(1)
+	# Fan the throw directions so multiple orbs spread out instead of stacking.
+	var spread_deg: float = 14.0
+	for i in range(orb_count):
+		var t: float = 0.0
+		if orb_count > 1:
+			t = float(i) / float(orb_count - 1)
+		var ang: float = deg_to_rad(-spread_deg / 2.0) + deg_to_rad(spread_deg) * t
+		var orb_dir: Vector2 = dir_start.rotated(ang)
+
+		var orb: Node = ChromaticOrbScene.instantiate()
+		orb.name = "ChromaticOrb_%d" % i
+		# Offset each orb sideways so multiple orbs appear side-by-side, not on top of each other.
+		var side: float = float(i) - float(orb_count - 1) * 0.5
+		orb.global_position = global_position + orb_dir.orthogonal() * (side * 26.0)
+		if orb.has_method("setup"):
+			orb.setup(self, get_player(), orb_dir, BASE_BOLT_DAMAGE, BASE_BOLT_COUNT)
+		orb.speed = ORB_INITIAL_SPEED * (1.0 + projectile_speed_bonus)
+		orb.deceleration = ORB_DECEL
+		orb.lifetime = get_effective_duration(ORB_LIFETIME)
+		orb.bolt_interval = BOLT_INTERVAL
+		orb.bolt_range = 150.0 * get_area_multiplier()
+		get_tree().current_scene.add_child(orb)
+		var net: Node = get_node_or_null("/root/Net")
+		if net and net.has_method("sync_player_projectile"):
+			net.sync_player_projectile(orb, ChromaticOrbScene)
+
+
+## Nearest enemy direction for the throw (else a random direction).
+func _aim_direction() -> Vector2:
 	var enemies: Array[Node] = get_tree().get_nodes_in_group("enemies")
 	var nearest: Node2D = null
 	var best_d: float = INF
@@ -66,21 +99,5 @@ func fire() -> void:
 			best_d = d
 			nearest = en
 	if nearest != null:
-		dir_start = (nearest.global_position - global_position).normalized()
-	else:
-		dir_start = Vector2(randf_range(-1, 1), randf_range(-1, 1)).normalized()
-
-	var orb: Node = ChromaticOrbScene.instantiate()
-	orb.name = "ChromaticOrb"
-	orb.global_position = global_position
-	if orb.has_method("setup"):
-		orb.setup(self, get_player(), dir_start, BASE_BOLT_DAMAGE, get_effective_projectile_count(BASE_BOLT_COUNT))
-	orb.speed = ORB_INITIAL_SPEED * (1.0 + projectile_speed_bonus)
-	orb.deceleration = ORB_DECEL
-	orb.lifetime = get_effective_duration(ORB_LIFETIME)
-	orb.bolt_interval = BOLT_INTERVAL
-	orb.bolt_range = 100.0 * get_area_multiplier()
-	get_tree().current_scene.add_child(orb)
-	var net: Node = get_node_or_null("/root/Net")
-	if net and net.has_method("sync_player_projectile"):
-		net.sync_player_projectile(orb, ChromaticOrbScene)
+		return (nearest.global_position - global_position).normalized()
+	return Vector2(randf_range(-1, 1), randf_range(-1, 1)).normalized()
