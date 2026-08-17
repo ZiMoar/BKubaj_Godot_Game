@@ -32,6 +32,14 @@ var peer_classes: Dictionary = {}
 var is_host: bool = false
 var my_peer_id: int = 1
 
+## True while a stage transition is being broadcast; prevents double-advancing
+## when both players reach the door at nearly the same time. Reset when the
+## scene changes to the next arena.
+var _advance_in_progress: bool = false
+var _last_scene: Node = null
+var _run_sync_accum: float = 0.0
+const RUN_STATE_SYNC_INTERVAL: float = 2.0
+
 
 func _ready() -> void:
 	multiplayer.peer_connected.connect(_on_peer_connected)
@@ -39,6 +47,25 @@ func _ready() -> void:
 	multiplayer.connected_to_server.connect(_on_connected_to_server)
 	multiplayer.connection_failed.connect(_on_connection_failed)
 	multiplayer.server_disconnected.connect(_on_server_disconnected)
+
+
+func _process(delta: float) -> void:
+	# Reset the stage-advance guard whenever the arena scene changes.
+	var tree: SceneTree = get_tree()
+	if tree == null:
+		return
+	var scene: Node = tree.current_scene
+	if scene != _last_scene:
+		_last_scene = scene
+		_advance_in_progress = false
+	# Only the host is authoritative for run state; broadcast periodically so
+	# clients re-sync stage / difficulty / run timer.
+	if not active() or not is_host:
+		return
+	_run_sync_accum += delta
+	if _run_sync_accum >= RUN_STATE_SYNC_INTERVAL:
+		_run_sync_accum = 0.0
+		_broadcast_run_state()
 
 
 ## True while a live listen-server/client connection exists.
@@ -117,6 +144,87 @@ func begin_run_relayed(arena_path: String) -> void:
 func load_arena() -> void:
 	print("[COOP] load_arena: changing scene to catacombs")
 	get_tree().change_scene_to_file(CATACOMBS_ARENA_PATH)
+
+
+# --- Run-state sync (host-authoritative) -------------------------------------
+# Stage advancement and the run-level numeric state (stage, difficulty floor,
+# run timer) are decided by the host and broadcast, so every machine picks the
+# SAME next arena (no per-machine RNG desync) and shows the same run state.
+
+## The player THIS machine owns (the one whose network authority matches the
+## local peer). Used to capture the correct local snapshot when advancing — a
+## co-op arena also contains other players' ghosts, so blindly taking the first
+## "player"-group node could snapshot the wrong character.
+func _local_player() -> Node:
+	for p: Node in get_tree().get_nodes_in_group("player"):
+		if p is CharacterBody2D and p.is_multiplayer_authority():
+			return p
+	return get_tree().get_first_node_in_group("player") as Node
+
+
+func _local_xp_manager() -> Node:
+	return get_tree().get_first_node_in_group("team_xp_manager") as Node
+
+
+## Client: a player walked through the exit door — ask the host to advance.
+@rpc("any_peer", "reliable")
+func request_advance() -> void:
+	if not is_host or _advance_in_progress:
+		return
+	_do_advance()
+
+
+## Host: advance the authoritative run state, pick the next arena (the single
+## RNG source for the whole group), and broadcast it so every machine loads the
+## same room together. Guarded so both players reaching the door at once only
+## advances a single stage.
+func _do_advance() -> void:
+	if _advance_in_progress:
+		return
+	_advance_in_progress = true
+	var gs: Node = get_node_or_null("/root/GameState")
+	if gs == null:
+		_advance_in_progress = false
+		return
+	var player: Node = _local_player()
+	var xp_mgr: Node = _local_xp_manager()
+	if gs.has_method("advance_stage"):
+		gs.advance_stage(player, xp_mgr)
+		advance_stage_relayed.rpc(int(gs.get("stage")), float(gs.get("min_difficulty")), str(gs.get("current_arena_path")))
+
+
+## Every machine applies the host's chosen next stage and loads the same arena.
+@rpc("any_peer", "call_local", "reliable")
+func advance_stage_relayed(next_stage: int, next_min_difficulty: float, next_path: String) -> void:
+	var gs: Node = get_node_or_null("/root/GameState")
+	if gs:
+		var player: Node = _local_player()
+		var xp_mgr: Node = _local_xp_manager()
+		if gs.has_method("apply_stage_advance"):
+			gs.apply_stage_advance(player, xp_mgr, next_stage, next_min_difficulty, next_path)
+	if not next_path.is_empty():
+		get_tree().change_scene_to_file(next_path)
+
+
+## Host periodically broadcasts the authoritative run state so a client that
+## joins late or drifts snaps back to the same stage / difficulty / run timer.
+func _broadcast_run_state() -> void:
+	var gs: Node = get_node_or_null("/root/GameState")
+	if gs == null:
+		return
+	sync_run_state.rpc(int(gs.get("stage")), float(gs.get("min_difficulty")), int(gs.get("run_started_at")))
+
+
+@rpc("any_peer", "call_local", "reliable")
+func sync_run_state(stage: int, min_difficulty: float, run_started_at: int) -> void:
+	if is_host:
+		return  # the host is the source of truth; don't apply to self
+	var gs: Node = get_node_or_null("/root/GameState")
+	if gs == null:
+		return
+	gs.set("stage", stage)
+	gs.set("min_difficulty", min_difficulty)
+	gs.set("run_started_at", run_started_at)
 
 
 ## Client tells the host which class it picked, so the host knows how to spawn

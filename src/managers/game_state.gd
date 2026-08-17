@@ -356,6 +356,18 @@ func advance_stage(player: Node, xp_manager: Node) -> void:
 	current_arena_path = get_next_arena_path()
 
 
+## Co-op only: advance to the HOST-provided next stage. Captures this machine's
+## player + team-XP snapshot (for restoration on the new arena), then adopts the
+## host's authoritative stage/min_difficulty/arena path. Crucially it does NOT
+## call get_next_arena_path() — that uses local RNG, which would pick a different
+## random non-combat room on each machine and desync the run.
+func apply_stage_advance(player: Node, xp_manager: Node, next_stage: int, next_min_difficulty: float, next_path: String) -> void:
+	capture_loop_state(player, xp_manager)
+	stage = next_stage
+	min_difficulty = next_min_difficulty
+	current_arena_path = next_path
+
+
 ## Applies the stored snapshot to a freshly-instantiated player + XP manager on
 ## the new stage's arena. Returns true if a continuation was applied.
 func apply_continue(player: Node, xp_manager: Node) -> bool:

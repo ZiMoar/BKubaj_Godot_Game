@@ -80,6 +80,17 @@ func _on_body_entered(body: Node2D) -> void:
 func _advance_stage() -> void:
 	if not is_instance_valid(self):
 		return
+	# Co-op: stage advancement is host-authoritative so every machine picks the
+	# SAME next arena (a client's local RNG could choose a different random room)
+	# and loads it together. This door fired because a LOCAL player entered it;
+	# the host advances + broadcasts, a client just asks the host to.
+	var net: Node = get_node_or_null("/root/Net")
+	if net and net.active():
+		if net.get("is_host") == true:
+			net.call("_do_advance")
+		else:
+			net.request_advance.rpc_id(1)
+		return
 	var run_state: Node = get_node_or_null("/root/GameState")
 	if run_state == null:
 		return
