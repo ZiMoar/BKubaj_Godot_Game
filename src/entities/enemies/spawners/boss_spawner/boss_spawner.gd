@@ -22,21 +22,36 @@ func _trigger() -> void:
 
 	_derive_arena_bounds()
 
+	# Co-op: spawn ONE shared, host-authoritative boss. Route through EnemyNet so
+	# the HOST spawns it on every machine with position/health synced and client
+	# damage forwarded to the host (identical to regular enemies). On a client
+	# request_spawn is a no-op (only the host may spawn), so a client never spawns
+	# a second, un-synced local boss that would desync room progression.
+	var net: Node = get_node_or_null("/root/Net")
+	if net != null and net.active():
+		var enemy_net: Node = get_tree().get_first_node_in_group("enemy_net")
+		if enemy_net and enemy_net.has_method("request_spawn"):
+			enemy_net.request_spawn(boss_scene.resource_path, _pick_spawn_position())
+		_set_spawner_suppression(true)
+		return
+
 	_active_boss = boss_scene.instantiate() as Node2D
 	if _active_boss == null:
 		return
 
 	get_tree().current_scene.add_child(_active_boss)
-	var player: Node2D = get_tree().get_first_node_in_group("player") as Node2D
-	if player:
-		_active_boss.global_position = player.global_position + spawn_offset
-	else:
-		_active_boss.global_position = Vector2(960, 300)
-	# Keep the boss inside the arena walls, even if the player is hugging a edge.
-	_active_boss.global_position = clamp_position_to_arena(_active_boss.global_position)
+	_active_boss.global_position = _pick_spawn_position()
 
 	_active_boss.tree_exited.connect(_on_boss_exited.bind(_active_boss))
 	_set_spawner_suppression(true)
+
+
+## Where the boss appears: near the current player (or arena top-center if none),
+## clamped to the arena walls. Shared by the co-op and single-player paths.
+func _pick_spawn_position() -> Vector2:
+	var player: Node2D = get_tree().get_first_node_in_group("player") as Node2D
+	var pos: Vector2 = (player.global_position + spawn_offset) if player else Vector2(960, 300)
+	return clamp_position_to_arena(pos)
 
 
 func _on_boss_exited(boss: Node2D) -> void:

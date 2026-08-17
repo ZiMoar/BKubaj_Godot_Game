@@ -26,6 +26,7 @@ const GROUP := "enemy_net"
 const XP_ORB_SCENE := preload("res://src/pickups/xp_orb/xp_orb.tscn")
 const GOLD_PICKUP_SCENE := preload("res://src/pickups/gold_pickup/gold_pickup.tscn")
 const SOUL_PICKUP_SCENE := preload("res://src/pickups/soul_pickup/soul_pickup.tscn")
+const ARTEFACT_PICKUP_SCENE := preload("res://src/pickups/artefact_pickup/artefact_pickup.tscn")
 const DROP_SCATTER_RADIUS := 28.0
 
 # Enemies spawned by the host before a joining client exists must be reachable
@@ -151,6 +152,22 @@ func _spawn_gold_coin(pos: Vector2, value: int) -> void:
 	if coin.has_method("setup"):
 		coin.setup(maxi(1, value))
 	get_tree().current_scene.call_deferred("add_child", coin)
+
+
+## HOST -> every machine: the boss died and its relic reward must be shared.
+## Each machine spawns its OWN copy so its local player can pick it up — the
+## artefact choice is randomized per-player on pickup, so no content needs to
+## travel (mirrors how xp/gold drops are per-machine copies of shared values).
+@rpc("authority", "reliable", "call_local")
+func spawn_boss_relic(pos: Vector2) -> void:
+	var scene: Node = get_tree().current_scene
+	if scene == null:
+		return
+	var pickup: Node = ARTEFACT_PICKUP_SCENE.instantiate()
+	if pickup == null:
+		return
+	pickup.global_position = pos
+	scene.add_child(pickup)
 
 
 ## Soul drops are per-machine: only spawn one if THIS machine's player holds the

@@ -36,12 +36,40 @@ func _ready() -> void:
 
 func _physics_process(delta: float) -> void:
 	_process_status_dots(delta)
-	if target_player == null:
-		target_player = get_tree().get_first_node_in_group("player") as Node2D
+	# Re-pick the target if the current one is gone or downed, so in co-op the
+	# shared boss engages whoever is actually alive and nearest (not the first
+	# player it saw at spawn, which could be a downed ghost). Single-player is
+	# unaffected: there is only ever one player, so this resolves to the same one.
+	if target_player == null or not is_instance_valid(target_player) or _is_player_down(target_player):
+		target_player = _pick_nearest_living_player()
 		if target_player == null:
 			return
 	_process_boss_state(delta)
 	_process_body_contacts()
+
+
+func _pick_nearest_living_player() -> Node2D:
+	var best: Node2D = null
+	var best_dist: float = INF
+	for p: Node in get_tree().get_nodes_in_group("player"):
+		if _is_player_down(p):
+			continue
+		var d: float = (p as Node2D).global_position.distance_squared_to(global_position)
+		if d < best_dist:
+			best_dist = d
+			best = p as Node2D
+	return best
+
+
+func _is_player_down(p: Node) -> bool:
+	if p == null or not is_instance_valid(p) or not p.is_inside_tree():
+		return true
+	if p.get("is_ghost") == true:
+		return true
+	var hp: Variant = p.get("current_health")
+	if hp is int and hp <= 0:
+		return true
+	return false
 
 
 func _process_boss_state(delta: float) -> void:
@@ -161,6 +189,14 @@ func _drop_artefact() -> void:
 func _spawn_relic_pickup(at_pos: Vector2) -> void:
 	if ARTEFACT_PICKUP_SCENE == null:
 		return
+	# Co-op: the boss is host-simulated, so its relic must be spawned on EVERY
+	# machine (each player picks up their own copy). Route through EnemyNet.
+	var net: Node = get_node_or_null("/root/Net")
+	if _enemy_net_id >= 0 and net != null and net.active():
+		var enemy_net: Node = get_tree().get_first_node_in_group("enemy_net")
+		if enemy_net and enemy_net.has_method("spawn_boss_relic"):
+			enemy_net.rpc("spawn_boss_relic", at_pos)
+			return
 	var pickup: ArtefactPickup = ARTEFACT_PICKUP_SCENE.instantiate() as ArtefactPickup
 	if pickup == null:
 		return
