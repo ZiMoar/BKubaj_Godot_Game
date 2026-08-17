@@ -8,12 +8,16 @@ extends BossEnemy
 @export var summon_enemy_scene: PackedScene = preload("res://src/entities/enemies/swarmer/skeleton/skeleton_enemy.tscn")
 
 @export var slam_radius: float = 240.0
-@export var slam_damage: int = 50
+@export var slam_damage: int = 30
 @export var volley_count: int = 7
 @export var volley_speed: float = 300.0
 @export var volley_spread_deg: float = 45.0
 @export var volley_damage: int = 28
 @export var summon_count: int = 4
+
+## Direction the volley was aimed at when its telegraph started. The volley fires
+## along THIS line (not the player's live position), so the player can dodge it.
+var _volley_dir: Vector2 = Vector2.RIGHT
 
 
 func _ready() -> void:
@@ -41,10 +45,9 @@ func _ready() -> void:
 
 	super._ready()
 
-	register_attack(1.2, 0.3, 1.0, { "type": "slam" })
+	register_attack(1.5, 0.3, 1.0, { "type": "slam" })
 	register_attack(1.0, 0.6, 1.2, { "type": "volley" })
 	register_attack(1.2, 0.5, 1.5, { "type": "summon" })
-
 
 func _begin_telegraph(attack: Dictionary) -> void:
 	super._begin_telegraph(attack)
@@ -53,9 +56,11 @@ func _begin_telegraph(attack: Dictionary) -> void:
 			if telegraph and telegraph.has_method("show_circle"):
 				telegraph.show_circle(slam_radius, Color(1, 0.25, 0.25, 0.35))
 		"volley":
-			if target_player and telegraph and telegraph.has_method("show_line"):
-				var dir: Vector2 = (target_player.global_position - global_position).normalized()
-				telegraph.show_line(650.0, dir, Color(1, 0.6, 0.2, 0.5))
+			if target_player and telegraph and telegraph.has_method("show_fan"):
+				# Lock the aim NOW so the volley fires along this exact line —
+				# the player can read the fan and sidestep it during the windup.
+				_volley_dir = (target_player.global_position - global_position).normalized()
+				telegraph.show_fan(650.0, _volley_dir, volley_spread_deg, volley_count, Color(1, 0.6, 0.2, 0.5))
 		"summon":
 			if telegraph and telegraph.has_method("show_circle"):
 				telegraph.show_circle(150.0, Color(0.6, 0.4, 1.0, 0.35))
@@ -74,6 +79,10 @@ func _begin_execution(attack: Dictionary) -> void:
 func _execute_slam() -> void:
 	if target_player == null:
 		return
+	# The slam lands exactly as the warning circle disappears, so the player can
+	# time it: hide the telegraph the moment the damage resolves.
+	if telegraph and telegraph.has_method("hide_telegraph"):
+		telegraph.hide_telegraph()
 	var dist: float = global_position.distance_to(target_player.global_position)
 	# Telegraph gave the player time to move out of the radius.
 	if dist <= slam_radius + 20.0 and target_player.has_method("take_damage"):
@@ -83,7 +92,9 @@ func _execute_slam() -> void:
 func _execute_volley() -> void:
 	if target_player == null or volley_projectile_scene == null:
 		return
-	var base_dir: Vector2 = (target_player.global_position - global_position).normalized()
+	# Fire along the direction locked at telegraph time (NOT the player's live
+	# position), so the volley matches the fan the player saw and can be dodged.
+	var base_dir: Vector2 = _volley_dir
 	var net: Node = get_node_or_null("/root/Net")
 	var co_op: bool = net != null and net.active()
 	var enemy_net: Node = get_tree().get_first_node_in_group("enemy_net") if co_op else null
