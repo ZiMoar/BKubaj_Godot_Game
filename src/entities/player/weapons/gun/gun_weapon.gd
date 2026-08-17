@@ -34,3 +34,6 @@ func fire() -> void:
 	bullet.source_player = get_player()
 	
 	get_tree().current_scene.add_child(bullet)
+	var net: Node = get_node_or_null("/root/Net")
+	if net and net.has_method("sync_player_projectile"):
+		net.sync_player_projectile(bullet, bullet_scene)

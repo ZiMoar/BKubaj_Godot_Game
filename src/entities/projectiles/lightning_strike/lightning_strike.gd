@@ -16,6 +16,13 @@ func setup(poly: PackedVector2Array, col: Color = Color(1.0, 0.9, 0.3, 1.0)) -> 
 	queue_redraw()
 
 
+## Co-op: configure a remote visual-only copy from broadcast data. The strike is
+## already pure feedback (damage is dealt by the weapon), so this just reproduces
+## the same lightning geometry/color.
+func setup_visual(data: Dictionary) -> void:
+	setup(data.get("poly", PackedVector2Array()) as PackedVector2Array, data.get("color", Color(1.0, 0.9, 0.3, 1.0)) as Color)
+
+
 func _process(delta: float) -> void:
 	_life -= delta
 	_fade = clampf(_life / 0.35, 0.0, 1.0)

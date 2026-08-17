@@ -52,10 +52,25 @@ func _physics_process(delta: float) -> void:
 	queue_redraw()
 
 
+## Co-op: configure a remote visual-only copy from broadcast data (no weapon/
+## player refs on the remote machine). Renders the ticking bomb; on fuse expiry
+## it just disappears (no damage, no cluster, no explosion FX).
+func setup_visual(data: Dictionary) -> void:
+	fuse = maxf(0.3, float(data.get("fuse", 2.0)))
+	max_fuse = maxf(0.3, float(data.get("max_fuse", fuse)))
+	radius = float(data.get("radius", 90.0))
+
+
 func _explode() -> void:
 	if _exploded:
 		return
 	_exploded = true
+	# Co-op: visual-only copy of a teammate's bomb. Its damage/cluster/FX are all
+	# manual (no physics collision), so it would double-hit here on top of the
+	# firing player's forwarded damage — it just disappears on fuse expiry.
+	if get_meta("visual_copy", false):
+		queue_free()
+		return
 	# Damage scales with how long the fuse was: a longer fuse = a bigger blast.
 	# (base 1.0 at the shortest fuse, up to ~2.0x at the full fuse length).
 	var charge_mult: float = lerpf(1.0, 2.0, clampf(fuse / max_fuse, 0.0, 1.0))

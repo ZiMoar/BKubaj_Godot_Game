@@ -73,3 +73,6 @@ func fire() -> void:
 			ring.global_position = origin
 			ring.setup(eff_radius)
 			get_tree().current_scene.add_child(ring)
+			var net: Node = get_node_or_null("/root/Net")
+			if net and net.has_method("sync_player_effect"):
+				net.sync_player_effect(ring, frost_scene, {"radius": eff_radius})

@@ -12,6 +12,11 @@ func setup(circle_radius: float) -> void:
 	radius = circle_radius
 
 
+## Co-op: configure a remote visual-only copy from broadcast data.
+func setup_visual(data: Dictionary) -> void:
+	setup(float(data.get("radius", 150.0)))
+
+
 func _process(delta: float) -> void:
 	_life -= delta
 	if _life <= 0.0:

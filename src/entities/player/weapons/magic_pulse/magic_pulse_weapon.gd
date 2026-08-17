@@ -61,6 +61,9 @@ func fire() -> void:
 		if pulse.has_method("setup"):
 			pulse.setup(self, get_player(), cone_dir, dmg, crit, PULSE_RANGE * get_area_multiplier(), PULSE_KNOCKBACK)
 		get_tree().current_scene.add_child(pulse)
+		var net: Node = get_node_or_null("/root/Net")
+		if net and net.has_method("sync_player_effect"):
+			net.sync_player_effect(pulse, MagicPulseScene, {"dir": cone_dir, "rng": PULSE_RANGE * get_area_multiplier()})
 
 
 func _nearest_enemy_dir() -> Vector2:

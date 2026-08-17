@@ -70,3 +70,6 @@ func fire() -> void:
 		if bomb.has_method("setup"):
 			bomb.setup(bomb.global_position, dmg, crit, fuse_len, natural_fuse, BOMB_RADIUS * get_area_multiplier(), get_player(), self)
 		get_tree().current_scene.add_child(bomb)
+		var net: Node = get_node_or_null("/root/Net")
+		if net and net.has_method("sync_player_effect"):
+			net.sync_player_effect(bomb, ExplosiveChargeScene, {"fuse": bomb.get("fuse"), "max_fuse": bomb.get("max_fuse"), "radius": bomb.get("radius")})

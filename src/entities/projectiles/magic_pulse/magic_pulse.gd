@@ -45,6 +45,12 @@ func _physics_process(delta: float) -> void:
 
 
 func _apply_pulse() -> void:
+	# Co-op: this is a visual-only copy of a teammate's pulse. Its damage is a
+	# manual cone check (no physics collision), so it would double-hit here on top
+	# of the firing player's forwarded damage — a visual copy never applies it.
+	# It still renders the expanding cone and fades out normally.
+	if get_meta("visual_copy", false):
+		return
 	# Vacuum Grasp: pull enemies toward the player instead of knocking away.
 	var pull: bool = source_weapon != null and source_weapon.has_method("has_signature") and source_weapon.has_signature("vacuum_grasp")
 	var enemies: Array[Node] = get_tree().get_nodes_in_group("enemies")
@@ -70,6 +76,17 @@ func _apply_pulse() -> void:
 		if source_weapon and en.is_in_group("enemies"):
 			if en.has_method("has_died") and en.has_died():
 				source_weapon.apply_explosion_on_kill(en.global_position, damage)
+
+
+## Co-op: configure a remote visual-only copy from broadcast data (no weapon/
+## player refs available on the remote machine). Renders the cone but never hits.
+func setup_visual(data: Dictionary) -> void:
+	direction = (data.get("dir", Vector2.RIGHT) as Vector2).normalized()
+	if direction == Vector2.ZERO:
+		direction = Vector2.RIGHT
+	range_px = float(data.get("rng", 200.0))
+	half_angle = float(data.get("half_angle", 0.7))
+	rotation = direction.angle()
 
 
 func _in_cone(target: Vector2) -> bool:

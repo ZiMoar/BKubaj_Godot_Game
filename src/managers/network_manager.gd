@@ -279,6 +279,44 @@ func spawn_player_projectile_visual(data: Dictionary) -> void:
 		current.add_child(proj)
 
 
+## A weapon spawned a local effect node (AoE / beam / ground telegraph) that
+## renders without needing a weapon/player ref. Broadcast a visual-only copy to
+## the other machine(s) so they can see it. `extra` carries the effect's render
+## params (radius, fuse, polygon, direction...). The remote copy is made inert
+## and configured through its setup_visual() method.
+func sync_player_effect(effect: Node, scene: PackedScene, extra: Dictionary = {}) -> void:
+	if not active() or effect == null or scene == null:
+		return
+	rpc("spawn_player_effect_visual", {
+		"scene": scene.resource_path,
+		"pos": effect.global_position,
+		"rotation": effect.rotation,
+		"scale": effect.scale,
+		"extra": extra,
+	})
+
+
+## Any machine -> the others: a player on another machine spawned an effect.
+## Instantiate an inert visual-only copy here (setup_visual configures it; the
+## effect's own damage paths bail on the visual_copy meta).
+@rpc("any_peer", "reliable")
+func spawn_player_effect_visual(data: Dictionary) -> void:
+	var scene: PackedScene = load(str(data["scene"]))
+	if scene == null:
+		return
+	var effect: Node = scene.instantiate()
+	_make_visual_copy(effect)
+	effect.global_position = data["pos"]
+	effect.rotation = data["rotation"]
+	effect.scale = data["scale"]
+	var extra: Dictionary = data.get("extra", {})
+	if effect.has_method("setup_visual"):
+		effect.call("setup_visual", extra)
+	var current: Node = get_tree().current_scene
+	if current:
+		current.add_child(effect)
+
+
 ## Disable everything that lets a projectile deal damage or interact, turning it
 ## into a pure visual that only renders its travel.
 func _make_visual_copy(node: Node) -> void:
