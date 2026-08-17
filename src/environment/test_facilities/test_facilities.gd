@@ -34,6 +34,11 @@ const SCENES := {
 }
 @export var respawn_cooldown: float = 2.0
 
+## Hotkey to manually spawn a skeleton just below the player (for testing
+## on-kill effects like explosions / Corrosive Burst without waiting on spawners).
+const SPAWN_KEY: Key = KEY_K
+const SKELETON_SCENE: PackedScene = preload("res://src/entities/enemies/swarmer/skeleton/skeleton_enemy.tscn")
+
 var _nodes: Dictionary = {}   # slot_id -> live pickup node
 var _waiting: Dictionary = {} # slot_id -> bool (collected, waiting to respawn)
 var _timers: Dictionary = {}  # slot_id -> float countdown
@@ -48,6 +53,41 @@ func _ready() -> void:
 		_waiting[slot_id] = false
 		_timers[slot_id] = respawn_cooldown
 		call_deferred("_spawn_slot", slot_id)
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo:
+		if event.physical_keycode == SPAWN_KEY:
+			_manual_spawn_skeleton()
+			get_viewport().set_input_as_handled()
+
+
+## Spawns a basic skeleton just below the player through the existing spawner
+## pipeline (so it joins the enemies group and is correctly spawned in co-op).
+func _manual_spawn_skeleton() -> void:
+	var player: Node2D = get_tree().get_first_node_in_group("player") as Node2D
+	if player == null:
+		return
+	var spawn_pos: Vector2 = player.global_position + Vector2(0, 40)
+	var spawner: Node = _find_skeleton_spawner()
+	if spawner != null:
+		spawner.call("spawn_at_position", spawn_pos)
+		return
+	# No spawner present (e.g. the test map has none) — instantiate directly.
+	var enemy: Node = SKELETON_SCENE.instantiate()
+	if enemy is Node2D:
+		(enemy as Node2D).global_position = spawn_pos
+	get_tree().current_scene.add_child(enemy)
+
+
+func _find_skeleton_spawner() -> Node:
+	for s: Node in get_tree().get_nodes_in_group("regular_spawner"):
+		if s.name == "SkeletonSpawner":
+			return s
+		var scene = s.get("enemy_scene")
+		if scene != null and scene is PackedScene and scene.resource_path.ends_with("skeleton_enemy.tscn"):
+			return s
+	return null
 
 
 func _physics_process(delta: float) -> void:

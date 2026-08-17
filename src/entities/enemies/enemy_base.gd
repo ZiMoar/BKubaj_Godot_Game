@@ -28,6 +28,9 @@ var gold_pickup_scene: PackedScene = preload("res://src/pickups/gold_pickup/gold
 var soul_pickup_scene: PackedScene = preload("res://src/pickups/soul_pickup/soul_pickup.tscn")
 
 const StatusIconScript: Script = preload("res://src/ui/status_icons/status_icon_overlay.gd")
+## Short-lived expanding-ring visual reused for the Corrosive Burst relic so the
+## poison-expiry explosion is actually visible.
+const PoisonBurstFxScript: Script = preload("res://src/effects/explosion_effect/explosion_effect.gd")
 
 # Scatter drops in a small ring around the enemy so gold and XP land next to
 # each other instead of stacking on top of one another.
@@ -833,6 +836,7 @@ func _release_poison_burst() -> bool:
 	var burst_dmg: int = maxi(1, int(round(poison_tick_dps * POISON_TICK_INTERVAL * 2.0)))
 	var origin: Vector2 = global_position
 	var burst_radius: float = 85.0
+	_spawn_poison_burst_visual(origin, burst_radius)
 	for e: Node in get_tree().get_nodes_in_group("enemies"):
 		if not is_instance_valid(e) or e == self:
 			continue
@@ -840,6 +844,20 @@ func _release_poison_burst() -> bool:
 		if origin.distance_to(en.global_position) <= burst_radius and en.has_method("take_damage"):
 			en.take_damage(burst_dmg, false, DamageType.Type.POISON, true)
 	return true
+
+
+## Shows a brief green expanding ring so the Corrosive Burst relic's poison
+## explosion is visible (matches the explosion-on-kill visual, tinted for poison).
+func _spawn_poison_burst_visual(origin: Vector2, radius: float) -> void:
+	var tree := get_tree()
+	if tree == null or tree.current_scene == null:
+		return
+	var fx: Node2D = PoisonBurstFxScript.new()
+	fx.name = "PoisonBurstFX"
+	fx.global_position = origin
+	fx.set("max_radius", radius)
+	fx.set("color", Color(0.4, 0.9, 0.45))
+	tree.current_scene.add_child(fx)
 
 func apply_knockback(source_position: Vector2, force: float) -> void:
 	var push_force = force - weight

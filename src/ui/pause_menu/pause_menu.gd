@@ -36,7 +36,7 @@ func _on_stats_pressed() -> void:
 	visible = false
 	var stats_overlay: Node = get_node_or_null("../StatsOverlay")
 	if stats_overlay and stats_overlay.has_method("open"):
-		stats_overlay.open()
+		stats_overlay.open(true)
 
 
 func _unhandled_input(event: InputEvent) -> void:

@@ -13,6 +13,11 @@ const ARTEFACTS: Script = preload("res://src/systems/artefact.gd")
 @onready var stats_box: VBoxContainer = get_node_or_null("CenterContainer/Panel/Vertical/Scroll/StatsBox") as VBoxContainer
 @onready var close_button: Button = get_node_or_null("CenterContainer/Panel/Vertical/CloseButton") as Button
 
+## True when this overlay was opened from the pause menu (which hid itself).
+## On close we must restore the pause menu, otherwise the game stays paused with
+## nothing visible (a soft-lock).
+var _opened_from_pause: bool = false
+
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -31,7 +36,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 
 
-func open() -> void:
+func open(from_pause: bool = false) -> void:
+	_opened_from_pause = from_pause
 	_populate()
 	visible = true
 	PauseCoord.begin_block()
@@ -43,6 +49,22 @@ func close() -> void:
 	visible = false
 	PauseCoord.end_block()
 	_clear()
+	# If we were opened from the pause menu (which hid itself), bring it back so
+	# the player isn't left staring at a paused but empty screen.
+	if _opened_from_pause:
+		_opened_from_pause = false
+		_restore_pause_menu()
+
+
+## Re-show the pause menu after closing stats that were opened from it.
+func _restore_pause_menu() -> void:
+	var pause_menu: Control = get_node_or_null("../PauseMenu") as Control
+	if pause_menu == null:
+		return
+	pause_menu.visible = true
+	var resume_button: Button = pause_menu.get_node_or_null("CenterContainer/Panel/Vertical/ResumeButton") as Button
+	if resume_button:
+		resume_button.grab_focus()
 
 
 ## Rebuild the stat rows from the live player state.
