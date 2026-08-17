@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/entities/player/weapons/aura/aura_field_visual.gd" id="1_aura_field"]
+
+[node name="AuraFieldVisual" type="Node2D"]
+script = ExtResource("1_aura_field")

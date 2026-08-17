@@ -1,5 +1,7 @@
 extends Weapon
 
+const OverloadAuraVisualScene: PackedScene = preload("res://src/entities/player/classes/mage/overload_aura_visual.tscn")
+
 ## Mage secondary ability: Mana Overload. While active, every weapon's
 ## cooldowns are halved (player.cooldown_multiplier = 0.5). This ability's own
 ## recharge cooldown is unaffected: it only starts AFTER the buff ends.
@@ -58,6 +60,18 @@ func _activate() -> void:
 	var p = get_player()
 	if p and p.has_method("set_cooldown_multiplier"):
 		p.set_cooldown_multiplier(0.5)
+
+	# Co-op: broadcast a visual copy of the overload aura so a teammate sees the
+	# buff around this player. The remote copy self-follows this player's replica
+	# for buff_duration, then frees. Purely cosmetic.
+	var net: Node = get_node_or_null("/root/Net")
+	if net and net.has_method("sync_player_effect") and net.active() and p:
+		var visual: Node2D = OverloadAuraVisualScene.instantiate()
+		visual.global_position = global_position
+		net.sync_player_effect(visual, OverloadAuraVisualScene, {
+			"player_name": p.name,
+			"life": buff_duration,
+		})
 
 	# Let the HUD show the full recharge as the "cooldown" bar.
 	cooldown_started.emit(recharge)

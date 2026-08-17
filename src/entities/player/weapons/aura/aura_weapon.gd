@@ -1,5 +1,7 @@
 extends Weapon
 
+const AuraFieldVisualScene: PackedScene = preload("res://src/entities/player/weapons/aura/aura_field_visual.tscn")
+
 @export var aura_radius: float = 72.0
 @export var base_damage: int = 6
 
@@ -9,6 +11,7 @@ extends Weapon
 
 var _pulse_timer: float = 0.0
 var _pulse_interval: float = 0.4
+var _aura_synced: bool = false
 
 
 func _ready() -> void:
@@ -21,6 +24,11 @@ func _ready() -> void:
 	aura_area.body_entered.connect(_on_body_entered)
 	aura_area.area_entered.connect(_on_area_entered)
 	_apply_area_radius()
+	# Co-op: show this player's persistent aura field on other machines. Deferred
+	# so the player is fully in the tree (and reachable by name) before we read it.
+	if not _aura_synced:
+		_aura_synced = true
+		call_deferred("_sync_aura_visual")
 
 
 func _physics_process(delta: float) -> void:
@@ -46,6 +54,24 @@ func _apply_area_radius() -> void:
 
 func supports_range_damage() -> bool:
 	return true
+
+
+## Co-op: broadcast a persistent visual copy of this aura so a teammate sees the
+## field around this player. The remote copy self-follows this player's replica
+## and pulses on its own; it can never deal damage.
+func _sync_aura_visual() -> void:
+	var net: Node = get_node_or_null("/root/Net")
+	if net == null or not net.has_method("sync_player_effect") or not net.active():
+		return
+	var _pl: Node = get_player()
+	if _pl == null:
+		return
+	var visual: Node2D = AuraFieldVisualScene.instantiate()
+	visual.global_position = global_position
+	net.sync_player_effect(visual, AuraFieldVisualScene, {
+		"player_name": _pl.name,
+		"radius": aura_radius * get_area_multiplier(),
+	})
 
 
 ## Fire Aura's signature upgrades (granted by the rare golden anvil).

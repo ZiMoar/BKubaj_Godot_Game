@@ -17,6 +17,15 @@ func _ready() -> void:
 	queue_redraw()
 
 
+## Co-op: configure a remote visual-only copy from broadcast data (used when a
+## teammate's radiant barrier wave / explosion-on-kill should render here too).
+func setup_visual(data: Dictionary) -> void:
+	max_radius = float(data.get("max_radius", max_radius))
+	color = data.get("color", color)
+	_duration = float(data.get("_duration", _duration))
+	queue_redraw()
+
+
 func _process(delta: float) -> void:
 	_elapsed += delta
 	if _elapsed >= _duration:

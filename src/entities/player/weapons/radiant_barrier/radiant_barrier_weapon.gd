@@ -5,6 +5,8 @@ extends Weapon
 ## HOLY damage. Re-arms on its cooldown. The barrier registers itself in the
 ## "radiant_barrier" group so the player's take_damage can hand it the hit.
 
+const ExplosionEffectScene: PackedScene = preload("res://src/effects/explosion_effect/explosion_effect.tscn")
+
 const BLOCK_FULL: bool = true   # barrier fully absorbs the next hit
 
 const COOLDOWN: float = 7.0
@@ -119,6 +121,14 @@ func _release_holy_wave(blocked_damage: int) -> void:
 		fx.set("color", Color(1.0, 0.9, 0.5, 1.0))
 		fx.set("_duration", 0.5)
 		get_tree().current_scene.add_child(fx)
+		# Co-op: broadcast the wave so the other player sees the barrier pop.
+		var net: Node = get_node_or_null("/root/Net")
+		if net and net.has_method("sync_player_effect"):
+			net.sync_player_effect(fx, ExplosionEffectScene, {
+				"max_radius": eff_radius * 1.2,
+				"color": Color(1.0, 0.9, 0.5, 1.0),
+				"_duration": 0.5,
+			})
 		# Second, inner bright flash that fills and fades even faster.
 		var fx2: Node2D = ExplosionEffectScript.new()
 		fx2.name = "RadiantFlashFX"
@@ -127,6 +137,12 @@ func _release_holy_wave(blocked_damage: int) -> void:
 		fx2.set("color", Color(1.0, 1.0, 0.85, 1.0))
 		fx2.set("_duration", 0.25)
 		get_tree().current_scene.add_child(fx2)
+		if net and net.has_method("sync_player_effect"):
+			net.sync_player_effect(fx2, ExplosionEffectScene, {
+				"max_radius": eff_radius * 0.7,
+				"color": Color(1.0, 1.0, 0.85, 1.0),
+				"_duration": 0.25,
+			})
 
 
 func _draw() -> void:
