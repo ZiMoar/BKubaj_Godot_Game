@@ -340,7 +340,26 @@ func _explode_at(origin: Vector2, kill_damage: int) -> void:
 			continue
 		var en: Node2D = e as Node2D
 		if origin.distance_to(en.global_position) <= eff_radius:
-			en.take_damage(dmg, false, damage_type, false, get_ailment_effect_multiplier())
+			en.take_damage(dmg, false, _resolve_damage_type(), false, get_ailment_effect_multiplier())
+
+
+## CHROMATIC is the Chromatic Orb's display-only "random element" marker. It must
+## never reach an enemy as a real damage type, so resolve it to a random real
+## element here — matching the orb's random-element bolts. Any other type passes
+## through unchanged.
+func _resolve_damage_type() -> DamageType.Type:
+	if damage_type != DamageType.Type.CHROMATIC:
+		return damage_type
+	var choices: Array[DamageType.Type] = [
+		DamageType.Type.FIRE,
+		DamageType.Type.LIGHTNING,
+		DamageType.Type.COLD,
+		DamageType.Type.ARCANE,
+		DamageType.Type.NECROTIC,
+		DamageType.Type.HOLY,
+		DamageType.Type.POISON,
+	]
+	return choices[randi() % choices.size()]
 
 
 ## Spawns a short-lived expanding-ring visual so explosions are clearly visible.

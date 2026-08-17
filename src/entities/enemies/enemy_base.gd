@@ -536,6 +536,10 @@ func _apply_ailment(damage_type: DamageType.Type, hit_damage: int, effect_multip
 			apply_poison(float(hit_damage) * effect_multiplier)
 		DamageType.Type.PHYSICAL:
 			apply_impale(float(hit_damage) * effect_multiplier)
+		# CHROMATIC and any future display-only types never reach here (weapons
+		# resolve them to a real element first); a clean no-op is the safe fallback.
+		_:
+			pass
 
 
 # LIGHTNING -> Shock: zap a DIFFERENT nearby enemy for 50% of the hit damage.
