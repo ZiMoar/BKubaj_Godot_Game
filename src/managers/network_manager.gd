@@ -227,6 +227,74 @@ func sync_run_state(stage: int, min_difficulty: float, run_started_at: int) -> v
 	gs.set("run_started_at", run_started_at)
 
 
+# --- Player projectile visibility ---------------------------------------------
+# Each machine simulates its OWN player locally, so a player's weapon projectiles
+# only ever exist on the machine that fired them — the other player can't see
+# them (their DAMAGE already reaches enemies via the host-authoritative enemy
+# pipeline; only the visual is missing). When a weapon fires a travel projectile
+# it calls sync_player_projectile(), which broadcasts a collision-disabled VISUAL
+# copy to the other machine(s). The firing machine keeps its one real projectile
+# (which deals damage using its own player's stats); the remote copies only
+# render the travel and can never damage or interact.
+
+## Weapon fired a local projectile: broadcast a visual copy to the other
+## machine(s) so they can see it. Only travel projectiles (those with a `speed`
+## and a `dir`/`direction`) are syncable; other effects are skipped.
+func sync_player_projectile(proj: Node, scene: PackedScene) -> void:
+	if not active() or proj == null or scene == null:
+		return
+	if not ("speed" in proj):
+		return
+	var dir: Variant = proj.get("dir") if ("dir" in proj) else (proj.get("direction") if ("direction" in proj) else Vector2.RIGHT)
+	rpc("spawn_player_projectile_visual", {
+		"scene": scene.resource_path,
+		"pos": proj.global_position,
+		"rotation": proj.rotation,
+		"scale": proj.scale,
+		"dir": dir,
+		"speed": proj.speed,
+	})
+
+
+## Any machine -> the others: a player on another machine fired a projectile.
+## Instantiate a collision-disabled visual copy here. The firing machine is
+## excluded automatically (rpc() without call_local skips the sender), so it
+## keeps its single real projectile.
+@rpc("any_peer", "reliable")
+func spawn_player_projectile_visual(data: Dictionary) -> void:
+	var scene: PackedScene = load(str(data["scene"]))
+	if scene == null:
+		return
+	var proj: Node = scene.instantiate()
+	_make_visual_copy(proj)
+	proj.global_position = data["pos"]
+	proj.rotation = data["rotation"]
+	proj.scale = data["scale"]
+	proj.set("speed", data["speed"])
+	for key: String in ["dir", "direction", "current_dir"]:
+		if proj.has(key):
+			proj.set(key, data["dir"])
+	var current: Node = get_tree().current_scene
+	if current:
+		current.add_child(proj)
+
+
+## Disable everything that lets a projectile deal damage or interact, turning it
+## into a pure visual that only renders its travel.
+func _make_visual_copy(node: Node) -> void:
+	node.set("collision_layer", 0)
+	node.set("collision_mask", 0)
+	node.set("monitoring", false)
+	node.set("monitorable", false)
+	if node is Area2D:
+		for child in node.get_children():
+			if child is CollisionShape2D:
+				child.set("disabled", true)
+	# Marker so projectiles that deal damage outside of physics collision (e.g.
+	# hitscan bolts, ground zones) can refuse to act on a remote visual copy.
+	node.set_meta("visual_copy", true)
+
+
 ## Client tells the host which class it picked, so the host knows how to spawn
 ## this peer's Player and can share the full roster with everyone.
 func send_class_to_host() -> void:

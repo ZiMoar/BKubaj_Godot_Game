@@ -73,6 +73,9 @@ func _fire_bolt(index: int, aim: Vector2) -> void:
 	if bolt.has_method("setup"):
 		bolt.setup(global_position, bolt_dir, eff_speed, attack_damage, is_crit, get_player(), self)
 		bolt.scale *= get_area_multiplier()
+	var net: Node = get_node_or_null("/root/Net")
+	if net and net.has_method("sync_player_projectile"):
+		net.sync_player_projectile(bolt, bolt_scene)
 
 
 func fire() -> void:
@@ -122,3 +125,6 @@ func _fire_anomaly(aim: Vector2) -> void:
 		bolt.setup(global_position, aim, eff_speed, anomaly_damage, is_crit, get_player(), self, 30)
 		bolt.scale *= get_area_multiplier()
 		bolt.scale *= 2.5
+	var net: Node = get_node_or_null("/root/Net")
+	if net and net.has_method("sync_player_projectile"):
+		net.sync_player_projectile(bolt, bolt_scene)

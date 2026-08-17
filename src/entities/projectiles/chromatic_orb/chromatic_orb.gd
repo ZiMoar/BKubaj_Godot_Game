@@ -58,6 +58,12 @@ func _physics_process(delta: float) -> void:
 
 
 func _fire_volley() -> void:
+	# Co-op: this is a visual-only copy of a teammate's orb (spawned so the other
+	# player can see it). Its bolts are HITSCAN — they'd deal real damage here on
+	# top of the firing player's already-forwarded hits — so a visual copy never
+	# fires. It just renders the orb drifting/decelerating.
+	if get_meta("visual_copy", false):
+		return
 	if not is_instance_valid(source_weapon):
 		return
 	var player := source_player as Node

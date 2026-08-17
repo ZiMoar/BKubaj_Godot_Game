@@ -81,3 +81,6 @@ func fire() -> void:
 	orb.bolt_interval = BOLT_INTERVAL
 	orb.bolt_range = 100.0 * get_area_multiplier()
 	get_tree().current_scene.add_child(orb)
+	var net: Node = get_node_or_null("/root/Net")
+	if net and net.has_method("sync_player_projectile"):
+		net.sync_player_projectile(orb, ChromaticOrbScene)

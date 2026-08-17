@@ -79,3 +79,6 @@ func fire() -> void:
 		get_tree().current_scene.add_child(dagger)
 		dagger.setup(global_position, dir, eff_speed, dmg, crit, get_player(), total_pierce, total_chain, eff_chain_range, self, do_return)
 		dagger.scale *= get_area_multiplier()
+		var net: Node = get_node_or_null("/root/Net")
+		if net and net.has_method("sync_player_projectile"):
+			net.sync_player_projectile(dagger, dagger_scene)
