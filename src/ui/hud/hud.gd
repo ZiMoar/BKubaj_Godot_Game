@@ -51,7 +51,39 @@ func _ready() -> void:
 	_ensure_stats_overlay()
 	_ensure_ability_cooldown_ui()
 	_ensure_dash_upgrade_menu()
+	_ensure_waiting_indicator()
 	call_deferred("_initialize_hud")
+
+
+## Builds a small bottom-centre "Waiting for other player(s)..." label shown while
+## THIS player has finished their menus but the game is still paused because the
+## other player hasn't finished theirs. Without it the game just looks frozen.
+## Built in code (not the scene) so it works in every arena, like the pause menu.
+func _ensure_waiting_indicator() -> void:
+	var wait := Label.new()
+	wait.name = "WaitingIndicator"
+	wait.text = "Waiting for other player(s)..."
+	wait.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	wait.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	wait.add_theme_font_size_override("font_size", 15)
+	wait.add_theme_color_override("font_color", Color(1, 1, 1, 0.95))
+	wait.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
+	wait.add_theme_constant_override("outline_size", 5)
+	wait.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+	wait.offset_left = -240
+	wait.offset_right = 240
+	wait.offset_top = -70
+	wait.offset_bottom = -40
+	wait.visible = false
+	wait.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(wait)
+	# The coordinator exists on every machine; sync the label with its waiting
+	# state (including the current state, in case we started already waiting).
+	var coord: Node = get_node_or_null("/root/PauseCoord")
+	if coord and coord.has_signal("waiting_changed"):
+		coord.connect("waiting_changed", func(w: bool) -> void: wait.visible = w)
+		if coord.has_method("is_waiting"):
+			wait.visible = bool(coord.call("is_waiting"))
 
 
 ## Builds a small bottom-centre panel showing the Space ability and its cooldown.

@@ -19,10 +19,15 @@ extends Node
 ## state back to everyone.
 
 signal pause_changed(paused: bool)
+## Emitted when THIS machine's "waiting" state changes: true while the game is
+## paused by someone ELSE (all local UIs closed, but another player still has a
+## menu open), false once everyone is done.
+signal waiting_changed(waiting: bool)
 
 ## Number of blocking UIs currently open on THIS machine.
 var _local_blocks: int = 0
 var _paused: bool = false
+var _waiting_cached: bool = false
 
 ## Host-side: peer id -> open-block count.
 var _peer_blocks: Dictionary = {}
@@ -53,6 +58,7 @@ func begin_block() -> void:
 	# Immediate local pause for responsiveness (authoritative state may lag).
 	if _local_blocks == 1:
 		_set_paused(true)
+	_notify_waiting()
 
 
 ## Close a blocking UI on THIS machine. Never unpauses by itself: it reports the
@@ -62,10 +68,24 @@ func end_block() -> void:
 		return
 	_local_blocks -= 1
 	_report_local_to_host()
+	_notify_waiting()
 
 
 func is_paused() -> bool:
 	return _paused
+
+
+## True while this machine has all its own menus closed but the game is still
+## paused because another player has a menu open (i.e. we are waiting on them).
+func is_waiting() -> bool:
+	return _paused and _local_blocks == 0
+
+
+func _notify_waiting() -> void:
+	var w: bool = is_waiting()
+	if w != _waiting_cached:
+		_waiting_cached = w
+		waiting_changed.emit(w)
 
 
 ## Discard all block state (used on scene transitions). Clients re-report their
@@ -121,6 +141,7 @@ func _set_paused(p: bool) -> void:
 	_paused = p
 	get_tree().paused = p
 	pause_changed.emit(p)
+	_notify_waiting()
 
 
 ## Client -> host: this machine's open-block count changed.

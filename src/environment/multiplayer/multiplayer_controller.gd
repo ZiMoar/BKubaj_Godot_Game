@@ -140,7 +140,7 @@ func _ensure_player(id: int, class_id: String) -> void:
 	p.name = name
 	p.player_class_id = class_id
 
-	_add_position_sync(p)
+	var sync: MultiplayerSynchronizer = _add_position_sync(p)
 	# Spawn at the arena center so players are actually among the enemies (see
 	# _spawn_point), with a stagger so no two bodies land on the same pixel.
 	# Two CharacterBody2D spawning exactly on top of one another collide and
@@ -159,6 +159,14 @@ func _ensure_player(id: int, class_id: String) -> void:
 	# treated the OTHER player as a frozen replica of its spawn. The proven Ziva
 	# pattern assigns authority in _enter_tree (node already in-tree) — same idea.
 	p.set_multiplayer_authority(id)
+	# The per-player MultiplayerSynchronizer inherits its authority the moment it
+	# enters the tree, which happened when the PLAYER was still default-authority
+	# (1) — so it bound to the host for EVERY player, not just the host's own.
+	# That silently broke client->host movement sync (only the host's player ever
+	# replicated). Pin the synchronizer to the same owner so the owning peer's
+	# position replicates and everyone else just renders the ghost.
+	if sync:
+		sync.set_multiplayer_authority(id)
 
 	# Only the owning peer's camera should be active — and it must be made
 	# "current" explicitly, or a hidden/previous camera can lock the view
@@ -173,7 +181,8 @@ func _ensure_player(id: int, class_id: String) -> void:
 
 
 ## Replicate this Player's position from its owning peer to every machine.
-func _add_position_sync(p: Node) -> void:
+## Returns the synchronizer so the caller can pin its authority to the owner.
+func _add_position_sync(p: Node) -> MultiplayerSynchronizer:
 	var sync := MultiplayerSynchronizer.new()
 	sync.name = "Sync"
 	sync.replication_interval = 0.0  # push position every network frame (no throttling)
@@ -189,6 +198,7 @@ func _add_position_sync(p: Node) -> void:
 	sync.replication_config = cfg
 	sync.root_path = NodePath("..")
 	p.add_child(sync)
+	return sync
 
 
 func _on_peer_left(id: int) -> void:
