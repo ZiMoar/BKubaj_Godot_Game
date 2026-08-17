@@ -70,6 +70,13 @@ const ARTEFACTS: Script = preload("res://src/systems/artefact.gd")
 @export var shield_placeholder: float = 0.0
 
 var current_health: int
+## Co-op only: true when this player went down but a teammate is still alive.
+## A ghost can drift around but can't attack and can't be damaged; it is revived
+## at full HP when the room is cleared (or the run ends in defeat if everyone
+## goes down). False (and unused) in single-player.
+var is_ghost: bool = false
+## Prevents the defeat flow from firing more than once on this machine.
+var _defeat_triggered: bool = false
 # Shield is a second HP bar that depletes before health. Fewer, dedicated
 # sources grant it (e.g. necrotic soul pickups, regen overheal relic). It
 # persists until depleted. Cap defaults to 50% of max health and can be raised
@@ -775,6 +782,12 @@ func _physics_process(delta: float) -> void:
 	# is a no-op, so single-player is unchanged.
 	if multiplayer.has_multiplayer_peer() and not is_multiplayer_authority():
 		return
+	# A co-op ghost can drift around but can't attack, cast, regen, or be hurt.
+	# It also checks whether a teammate that was alive has now gone down too.
+	if is_ghost:
+		handle_movement()
+		_check_all_dead_defeat()
+		return
 	handle_movement()
 	handle_aiming()
 	handle_weapon_inputs()
@@ -1093,6 +1106,8 @@ var _source_last_hit: Dictionary = {}
 func take_damage(amount: int, source: Node = null) -> void:
 	if is_invincible:
 		return
+	if is_ghost:
+		return  # a co-op ghost is invulnerable until revived
 
 	# Global i-frames are intentionally short (0.05s). Most incoming damage is
 	# instead throttled per-source: a single source can't hit more than once per
@@ -1203,6 +1218,20 @@ func die() -> void:
 		trigger_invincibility()
 		return
 
+	# Co-op: if a teammate is still standing, don't end the run — this player
+	# becomes an invulnerable ghost and is revived when the room is cleared.
+	if multiplayer.has_multiplayer_peer() and _has_alive_teammate():
+		_enter_ghost_state()
+		return
+	_end_run_defeat()
+
+
+## Ends the run on this machine (summary / reload). Extracted so both the normal
+## "last player down" path and the co-op all-downed check can trigger it once.
+func _end_run_defeat() -> void:
+	if _defeat_triggered:
+		return
+	_defeat_triggered = true
 	print("Player Died! Showing run summary...")
 	# Capture the final difficulty + gold for the end-of-run summary BEFORE the
 	# scene is torn down (the player is still valid here).
@@ -1219,6 +1248,61 @@ func die() -> void:
 			return
 	# Fallback: no GameState summary wiring — just reload to restart.
 	call_deferred("_reload_current_scene_safe")
+
+
+## True if any OTHER player (not self) is still alive — used to decide whether a
+## downed co-op player should become a ghost rather than end the run.
+func _has_alive_teammate() -> bool:
+	for p: Node in get_tree().get_nodes_in_group("player"):
+		if p == self:
+			continue
+		if not (p as Player).is_ghost and (p as Player).current_health > 0:
+			return true
+	return false
+
+
+## True when EVERY player (including self) is down — i.e. the room can't be
+## cleared by anyone, so the run should end in defeat.
+func _all_players_dead() -> bool:
+	for p: Node in get_tree().get_nodes_in_group("player"):
+		if (p as Player).current_health > 0:
+			return false
+	return true
+
+
+## Co-op downed state: invulnerable, can move but not act, until room clear.
+func _enter_ghost_state() -> void:
+	if is_ghost:
+		return
+	is_ghost = true
+	current_health = 0
+	# Ghostly tint so the state is obvious to both players.
+	modulate = Color(1.0, 1.0, 1.0, 0.45)
+	if hp_bar:
+		hp_bar.value = 0
+	health_changed.emit(0, current_max_health())
+	_update_hp_value_label()
+
+
+## Co-op: restores a downed player to full HP (called when the room is cleared).
+func revive() -> void:
+	if not is_ghost:
+		return
+	is_ghost = false
+	current_health = current_max_health()
+	modulate = Color.WHITE
+	if hp_bar:
+		hp_bar.max_value = current_max_health()
+		hp_bar.value = current_health
+	health_changed.emit(current_health, current_max_health())
+	_update_hp_value_label()
+
+
+## A ghost polls once a frame: if everyone is now down (a teammate who was alive
+## went down too), nobody can clear the room, so end the run in defeat.
+func _check_all_dead_defeat() -> void:
+	if _all_players_dead():
+		_end_run_defeat()
 
 func _go_to_summary(path: String) -> void:
 	var tree := get_tree()

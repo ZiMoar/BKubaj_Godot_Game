@@ -59,6 +59,12 @@ func _process(_delta: float) -> void:
 
 
 func _begin_completion() -> void:
+	# Co-op: revive any player who went down during the fight now that the room
+	# is cleared (boss dead, safe). Runs on every machine, so a ghost's local
+	# player rejoins in time to collect drops and walk through the door.
+	for p: Node in get_tree().get_nodes_in_group("player"):
+		if is_instance_valid(p) and p.get("is_ghost") == true and p.has_method("revive"):
+			p.revive()
 	# Stop all spawners so no new enemies appear during clean-up / door phase.
 	_pause_all_spawners()
 	# Kill all remaining enemies without dropping loot.
