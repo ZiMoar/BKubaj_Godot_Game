@@ -51,6 +51,8 @@ func _find_floor_node() -> GridBackground:
 func _physics_process(delta: float) -> void:
 	if not is_active:
 		return  # Room cleared; don't spawn another box after the boss dies.
+	if _is_network_client():
+		return  # Co-op: the HOST decides when/where a weapon box spawns.
 	if _spawned_once:
 		return  # Weapon boxes spawn once per room.
 
@@ -61,8 +63,27 @@ func _physics_process(delta: float) -> void:
 		if _player_at_weapon_cap():
 			chest_spawned.emit()
 			return
-		_spawn_chest()
+		_do_spawn_chest()
 		chest_spawned.emit()
+
+
+## Co-op: the host picks the position (host-only RNG) and broadcasts it so every
+## machine spawns the SAME weapon box at the SAME spot. Single-player just
+## spawns locally with no network round-trip.
+func _do_spawn_chest() -> void:
+	var pos: Vector2 = _random_arena_position()
+	if _is_coop():
+		spawn_chest.rpc(pos)  # authority RPC; call_local includes the host
+	else:
+		_spawn_chest_at(pos)
+
+
+## Host -> every machine: place a weapon box at the shared position. Each machine
+## spawns its OWN interactive copy (like shared pickups) so its local player can
+## open it; opening frees only that machine's copy.
+@rpc("authority", "reliable", "call_local")
+func spawn_chest(pos: Vector2) -> void:
+	_spawn_chest_at(pos)
 
 
 func _player_at_weapon_cap() -> bool:
@@ -94,18 +115,29 @@ func _on_chest_exited(chest: Node) -> void:
 	_active_chests.erase(chest)
 
 
-func _spawn_chest() -> void:
-	if _player == null or not is_instance_valid(_player):
-		_player = get_tree().get_first_node_in_group("player") as Node2D
-		if _player == null:
-			return
-
+func _spawn_chest_at(pos: Vector2) -> void:
+	if get_tree().current_scene == null:
+		return
 	var chest: Node2D = chest_scene.instantiate() as Node2D
-	var spawn_pos: Vector2 = _random_arena_position()
-	chest.global_position = spawn_pos
+	chest.global_position = pos
 	get_tree().current_scene.add_child(chest)
 	_active_chests.append(chest)
 	chest.tree_exited.connect(_on_chest_exited.bind(chest))
+
+
+## True when a live co-op session is active (host or client).
+func _is_coop() -> bool:
+	var net: Node = get_node_or_null("/root/Net")
+	return net != null and net.active()
+
+
+## True on a co-op CLIENT (not the host). Such a machine never spawns a weapon
+## box on its own — it only reacts to the host's spawn_chest RPC.
+func _is_network_client() -> bool:
+	var net: Node = get_node_or_null("/root/Net")
+	if net == null or not net.active():
+		return false
+	return not multiplayer.is_server()
 
 
 func _random_arena_position() -> Vector2:

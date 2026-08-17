@@ -39,30 +39,52 @@ const SPIKES_SCENE: PackedScene = preload("res://src/environment/obstacles/spike
 @export var door_clearance: float = 160.0
 
 
+## Authoritative obstacle layout (host only): list of {"scene", "pos"} dicts.
+var _layout: Array = []
+## Client peer ids that asked for the layout before the host had generated it.
+var _pending_requests: Array = []
+
+
 func _ready() -> void:
 	if not enabled:
 		return
 	# Defer until this frame's tree is fully settled so the arena root, its walls
 	# and Floor are all in place and registered.
-	call_deferred("_populate")
+	call_deferred("_setup")
 
 
-## Removes any obstacles that were baked into the arena scene at authoring time
-## (we now replace fixed presets with random placement), then places a fresh
-## random set. Obstacles are identified by group so we clear every type
-## (solid / destructible / hazard) without hard-coding their names.
-func _populate() -> void:
+func _setup() -> void:
+	if _is_network_client():
+		# Co-op: the HOST owns the layout (its RNG). Ask it for the authoritative
+		# obstacle placement instead of scattering our own random set — otherwise
+		# the two machines would build DIFFERENT obstacle layouts and collide with
+		# different things. Do NOT self-populate.
+		request_obstacle_layout.rpc_id(1)
+		return
+	# Host or single-player: generate the layout and apply it locally.
+	_generate_and_apply()
+
+
+func _generate_and_apply() -> void:
 	var arena: Node2D = get_parent() as Node2D
 	if arena == null:
 		return
-
-	_clear_preset_obstacles(arena)
-
 	var floor_node: GridBackground = _find_floor(arena)
 	if floor_node == null:
 		# No floor to measure against — don't scatter randomly.
 		return
+	var layout := _generate_layout(arena, floor_node)
+	_layout = layout
+	_apply_layout(arena, layout)
+	# Clients that asked before we finished generating can now be answered.
+	for id: int in _pending_requests:
+		sync_obstacles.rpc_id(id, layout)
+	_pending_requests.clear()
 
+
+## Generates the obstacle placement (host-only RNG). Returns a list of dicts
+## {"scene": resource_path, "pos": Vector2}.
+func _generate_layout(arena: Node2D, floor_node: GridBackground) -> Array:
 	var bounds := Rect2(
 		floor_node.arena_center - floor_node.arena_size * 0.5,
 		floor_node.arena_size
@@ -72,13 +94,71 @@ func _populate() -> void:
 	var door_pos := Vector2(floor_node.arena_center.x, bounds.position.y)
 
 	var count := randi_range(min_obstacles, max_obstacles)
+	var layout: Array = []
 	var placed: Array[Vector2] = []
 	for i in count:
 		var pos := _find_valid_position(bounds, player_spawn, door_pos, placed)
 		if pos == Vector2.INF:
 			continue
 		placed.append(pos)
-		_spawn_one(arena, pos)
+		# Rough weights: 40% solid pillar, 35% destructible crumble, 25% spikes.
+		var roll := randf()
+		var scene_path: String = PILLAR_SCENE.resource_path
+		if roll >= 0.4 and roll < 0.75:
+			scene_path = CRUMBLE_SCENE.resource_path
+		elif roll >= 0.75:
+			scene_path = SPIKES_SCENE.resource_path
+		layout.append({"scene": scene_path, "pos": pos})
+	return layout
+
+
+## Clears baked presets and places the given obstacle layout. Shared by the host
+## (its own generated layout) and clients (the layout received from the host).
+func _apply_layout(arena: Node2D, layout: Array) -> void:
+	if arena == null:
+		return
+	# Removes any obstacles baked into the arena scene at authoring time (we now
+	# replace fixed presets with the shared placement). Obstacles are identified
+	# by group so we clear every type (solid / destructible / hazard).
+	_clear_preset_obstacles(arena)
+	for entry: Dictionary in layout:
+		var scn: PackedScene = load(str(entry["scene"]))
+		if scn == null:
+			continue
+		var inst: Node = scn.instantiate()
+		if inst == null:
+			continue
+		arena.add_child(inst)
+		(inst as Node2D).global_position = entry["pos"]
+
+
+## Client -> host: this machine is ready and needs the authoritative obstacle
+## layout. The host answers with sync_obstacles (or queues us if it hasn't
+## generated its layout yet).
+@rpc("any_peer", "reliable")
+func request_obstacle_layout() -> void:
+	if not multiplayer.is_server():
+		return
+	var from: int = multiplayer.get_remote_sender_id()
+	if _layout.is_empty():
+		_pending_requests.append(from)
+	else:
+		sync_obstacles.rpc_id(from, _layout)
+
+
+## Host -> a client: the authoritative obstacle layout for this arena.
+@rpc("authority", "reliable")
+func sync_obstacles(layout: Array) -> void:
+	if multiplayer.is_server():
+		return  # host already applied its own layout
+	_apply_layout(get_parent() as Node2D, layout)
+
+
+func _is_network_client() -> bool:
+	var net: Node = get_node_or_null("/root/Net")
+	if net == null or not net.active():
+		return false
+	return not multiplayer.is_server()
 
 
 func _clear_preset_obstacles(arena: Node) -> void:
@@ -111,22 +191,6 @@ func _find_valid_position(bounds: Rect2, player_spawn: Vector2, door_pos: Vector
 			continue
 		return p
 	return Vector2.INF
-
-
-func _spawn_one(arena: Node, pos: Vector2) -> void:
-	# Rough weights: 40% solid pillar, 35% destructible crumble, 25% spikes.
-	var roll := randf()
-	var inst: Node = null
-	if roll < 0.4:
-		inst = PILLAR_SCENE.instantiate()
-	elif roll < 0.75:
-		inst = CRUMBLE_SCENE.instantiate()
-	else:
-		inst = SPIKES_SCENE.instantiate()
-	if inst == null:
-		return
-	arena.add_child(inst)
-	(inst as Node2D).global_position = pos
 
 
 func _find_floor(node: Node) -> GridBackground:

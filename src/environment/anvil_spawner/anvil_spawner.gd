@@ -50,6 +50,8 @@ func _physics_process(delta: float) -> void:
 	# Stop spawning entirely once the room is cleared (boss dead).
 	if not is_active:
 		return
+	if _is_network_client():
+		return  # Co-op: the HOST decides when/where an anvil spawns.
 	# Stay dormant until the first weapon box has spawned.
 	if not _enabled:
 		var chest: Node = get_tree().get_first_node_in_group("chest_spawner")
@@ -64,23 +66,54 @@ func _physics_process(delta: float) -> void:
 	_timer -= delta
 	if _timer <= 0.0:
 		_timer = spawn_interval
-		_spawn_anvil()
+		_do_spawn_anvil()
 
 
-func _spawn_anvil() -> void:
-	if _player == null or not is_instance_valid(_player):
-		_player = get_tree().get_first_node_in_group("player") as Node2D
-		if _player == null:
-			return
+## Co-op: the host picks the position + golden flag (host-only RNG) and
+## broadcasts them so every machine spawns the SAME anvil at the SAME spot.
+## Single-player just spawns locally with no network round-trip.
+func _do_spawn_anvil() -> void:
+	var pos: Vector2 = _random_arena_position()
+	var golden: bool = randf() < 0.05
+	if _is_coop():
+		spawn_anvil.rpc(pos, golden, 0)  # standard anvil kind 0; authority RPC
+	else:
+		_spawn_anvil_at(pos, golden, 0)
 
+
+## Host -> every machine: place an anvil at the shared position. Each machine
+## spawns its OWN interactive copy (like shared pickups) so its local player can
+## use it; using it frees only that machine's copy.
+@rpc("authority", "reliable", "call_local")
+func spawn_anvil(pos: Vector2, golden: bool, kind: int) -> void:
+	_spawn_anvil_at(pos, golden, kind)
+
+
+func _spawn_anvil_at(pos: Vector2, golden: bool, kind: int) -> void:
+	if get_tree().current_scene == null:
+		return
 	var anvil: Node2D = anvil_scene.instantiate() as Node2D
-	# 5% of anvils are golden — they guarantee a signature upgrade choice.
-	if anvil.has_method("set"):
-		anvil.set("is_golden", randf() < 0.05)
-	anvil.global_position = _random_arena_position()
+	anvil.set("is_golden", golden)
+	anvil.set("anvil_kind", kind)
+	anvil.global_position = pos
 	get_tree().current_scene.add_child(anvil)
 	_active_anvils.append(anvil)
 	anvil.tree_exited.connect(_on_anvil_exited.bind(anvil))
+
+
+## True when a live co-op session is active (host or client).
+func _is_coop() -> bool:
+	var net: Node = get_node_or_null("/root/Net")
+	return net != null and net.active()
+
+
+## True on a co-op CLIENT (not the host). Such a machine never spawns an anvil
+## on its own — it only reacts to the host's spawn_anvil RPC.
+func _is_network_client() -> bool:
+	var net: Node = get_node_or_null("/root/Net")
+	if net == null or not net.active():
+		return false
+	return not multiplayer.is_server()
 
 
 func _on_anvil_exited(anvil: Node) -> void:
