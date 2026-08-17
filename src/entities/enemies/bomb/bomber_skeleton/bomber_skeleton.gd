@@ -7,12 +7,14 @@ extends EnemyBase
 ## it before the fuse runs out.
 
 @export var arming_range: float = 14.0
-@export var fuse_time: float = 2.0
+@export var fuse_time: float = 1.0
 @export var explosion_damage: int = 45
-@export var explosion_radius: float = 60.0
+@export var explosion_radius: float = 100.0
 
 var _fuse_remaining: float = -1.0  # -1 = not armed
 var _armed: bool = false
+
+@onready var telegraph: Node2D = get_node_or_null("Telegraph")
 
 
 func _ready() -> void:
@@ -21,7 +23,7 @@ func _ready() -> void:
 	doodle_size = 8.0
 	add_to_group("bombers")
 	speed = 215.0                # Just barely faster than the player's default 200
-	max_health = 120             # More HP than a standard skeleton (50)
+	max_health = 60              # Squishy — the threat is the boom, not the body
 	contact_damage = 0           # No contact damage — it explodes instead
 	xp_value = 4
 	xp_orb_tier = 2
@@ -71,7 +73,11 @@ func _physics_process(delta: float) -> void:
 func _arm() -> void:
 	_armed = true
 	_fuse_remaining = fuse_time
-	# Telegraph the imminent detonation with a red flash.
+	# Telegraph the detonation zone as a warning circle, reusing the boss AoE
+	# indicator (same BossTelegraph script) so the player can see the danger area.
+	if telegraph and telegraph.has_method("show_circle"):
+		telegraph.show_circle(explosion_radius, Color(1, 0.3, 0.2, 0.35))
+	# Red flash as a secondary "it's about to blow" cue on the body itself.
 	modulate = Color(1, 0.4, 0.3, 1)
 
 
@@ -81,6 +87,9 @@ func _pulse_telegraph() -> void:
 
 
 func _detonate() -> void:
+	# Clear the warning circle the moment the boom resolves.
+	if telegraph and telegraph.has_method("hide_telegraph"):
+		telegraph.hide_telegraph()
 	if target_player and is_instance_valid(target_player):
 		var dist: float = global_position.distance_to(target_player.global_position)
 		if dist <= explosion_radius and target_player.has_method("take_damage"):
@@ -89,6 +98,9 @@ func _detonate() -> void:
 
 
 func die() -> void:
+	# Clear the warning circle if the player kills the bomber mid-fuse.
+	if telegraph and telegraph.has_method("hide_telegraph"):
+		telegraph.hide_telegraph()
 	# Standard kill: drops XP/gold and frees. The big boom only happens on the
 	# fuse detonating (_detonate), not when the player destroys the bomber.
 	super.die()

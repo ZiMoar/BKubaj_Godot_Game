@@ -1,7 +1,8 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://src/entities/enemies/bomb/bomber_skeleton/bomber_skeleton.gd" id="1_bomber_script"]
 [ext_resource type="Texture2D" uid="uid://umo5mym72jl2" path="res://icon.svg" id="2_texture"]
+[ext_resource type="Script" path="res://src/entities/enemies/bosses/boss_telegraph.gd" id="3_telegraph_script"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_bomber"]
 size = Vector2(14, 14)
@@ -34,3 +35,7 @@ offset_right = 14.0
 offset_bottom = 20.0
 show_percentage = false
 clip_contents = true
+
+[node name="Telegraph" type="Node2D" parent="."]
+visible = false
+script = ExtResource("3_telegraph_script")
