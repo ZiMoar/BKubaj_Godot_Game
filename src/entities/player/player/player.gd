@@ -136,8 +136,6 @@ const MOMENTUM_DAMAGE_MULT: float = 1.50
 
 # --- Artefact system ---
 const MAX_ARTEFACT_SLOTS: int = 5
-# Cursed relics have their own slot pool, so normal relic slots aren't consumed.
-const MAX_CURSED_ARTEFACT_SLOTS: int = 3
 # Artefact IDs (see Artefact class registry).
 const ARTEFACT_ARMOR_TO_THORNS: String = "armor_to_thorns"
 const ARTEFACT_LIFESTEAL_CRIT: String = "lifesteal_crit"
@@ -566,7 +564,8 @@ func add_artefact(artefact_id: String) -> bool:
 
 
 ## Adds a cursed relic. Cursed relics share the SAME 5-slot inventory as normal
-## relics (they only differ in source), so the cap is the combined count.
+## relics (they only differ in source), so the cap is the combined count. There
+## is no separate cap on how many may be cursed.
 func add_cursed_artefact(artefact_id: String) -> bool:
 	if artefact_id.is_empty() or has_artefact(artefact_id):
 		return false
@@ -596,10 +595,6 @@ func get_cursed_artefact_count() -> int:
 
 func get_artefact_slot_capacity() -> int:
 	return MAX_ARTEFACT_SLOTS
-
-
-func get_cursed_artefact_slot_capacity() -> int:
-	return MAX_CURSED_ARTEFACT_SLOTS
 
 
 ## The display order across the shared 5 slots is: normal relics first, then
