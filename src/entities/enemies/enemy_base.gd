@@ -898,7 +898,9 @@ func _apply_difficulty_scaling() -> void:
 	current_health = max_health
 	# Damage scales at a FRACTION of the health scale (damage_scale_ratio) so
 	# enemies get tougher without becoming one-shot meat-grinders late-game.
-	var damage_mult: float = 1.0 + stat_scale_per_difficulty * damage_scale_ratio * difficulty
+	# The extra 0.5 factor halves damage growth with difficulty so late-game mobs
+	# stay threatening but far less punishing than their health scaling implies.
+	var damage_mult: float = 1.0 + 0.5 * stat_scale_per_difficulty * damage_scale_ratio * difficulty
 	contact_damage = max(0, int(round(float(contact_damage) * damage_mult)))
 	# Speed scales at a reduced rate so enemies don't outpace the player and
 	# pile up on them (the "stick like glue" feeling). speed_scale_per_difficulty
