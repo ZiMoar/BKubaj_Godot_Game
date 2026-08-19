@@ -34,6 +34,7 @@ const UPGRADES: Array[Dictionary] = [
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	add_to_group("blocking_ui")
 	visible = false
 	_bind_buttons()
 

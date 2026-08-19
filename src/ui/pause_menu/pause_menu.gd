@@ -15,6 +15,7 @@ const MAIN_MENU_PATH: String = "res://src/ui/main_menu/main_menu.tscn"
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	add_to_group("blocking_ui")
 	visible = false
 	_bind_buttons()
 

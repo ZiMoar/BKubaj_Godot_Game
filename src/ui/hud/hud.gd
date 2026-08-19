@@ -385,6 +385,8 @@ func _close_level_up_menu() -> void:
 func show_weapon_choice() -> void:
 	if weapon_choice_menu == null or current_player == null:
 		return
+	if weapon_choice_menu.visible:
+		return
 
 	PauseCoord.begin_block()
 	weapon_choice_menu.open_menu()
@@ -401,6 +403,8 @@ func _on_weapon_choice_selected(weapon_scene: PackedScene) -> void:
 
 func show_anvil_upgrade(golden: bool = false, kind: int = 0) -> void:
 	if anvil_upgrade_menu == null or current_player == null:
+		return
+	if anvil_upgrade_menu.visible:
 		return
 	PauseCoord.begin_block()
 	anvil_upgrade_menu.open_menu(golden, kind)
@@ -422,6 +426,8 @@ func show_dash_upgrade() -> void:
 	if dash_upgrade_menu == null or current_player == null:
 		return
 	if not current_player.has_method("add_dash_charge"):
+		return
+	if dash_upgrade_menu.visible:
 		return
 	PauseCoord.begin_block()
 	dash_upgrade_menu.open_menu()
@@ -455,15 +461,25 @@ func show_artefact_choice(cursed_only: bool = false) -> void:
 	# separate cap on cursed relics.
 	if current_player.get_artefact_count() >= current_player.get_artefact_slot_capacity():
 		return
+	# Already open -> don't stack another pause block (would leak when only the
+	# first open's pick fires its single end_block).
+	if artefact_choice_menu.visible:
+		return
 
 	PauseCoord.begin_block()
 	artefact_choice_menu.open_for_player(current_player, cursed_only)
 
 
 func _on_artefact_choice_selected(artefact_id: String) -> void:
-	if current_player and current_player.has_method("add_artefact"):
-		current_player.add_artefact(artefact_id)
-	artefact_choice_menu.close_menu()
+	# Apply the relic on the NEXT idle frame so an error inside add_artefact (or
+	# the artefacts_changed HUD handler it fires) can never abort this function
+	# before the menu closes and the game unpauses. Otherwise a single runtime
+	# error here leaves _local_blocks > 0 -> permanent freeze/perma-pause.
+	var p: Player = current_player
+	if p and p.has_method("add_artefact"):
+		p.call_deferred("add_artefact", artefact_id)
+	if artefact_choice_menu:
+		artefact_choice_menu.close_menu()
 	PauseCoord.end_block()
 
 func _on_difficulty_timer_timeout() -> void:

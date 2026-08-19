@@ -86,6 +86,7 @@ const REROLL_BASE_COST: int = 10
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	add_to_group("blocking_ui")
 	rng.randomize()
 	visible = false
 	_bind_buttons()

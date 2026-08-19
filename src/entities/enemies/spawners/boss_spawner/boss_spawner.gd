@@ -65,12 +65,14 @@ func _set_spawner_suppression(suppress: bool) -> void:
 		return
 	_suppress_active = suppress
 	# Guard against the tree being torn down (e.g. scene reload after death)
-	# when the boss's tree_exited fires: at that point the group is no longer
-	# reachable, and a fresh BossSpawner on the next run starts un-suppressed anyway.
-	var tree := get_tree()
-	if tree == null:
+	# when the boss's tree_exited fires: at that point this node is already
+	# detached and the group is no longer reachable, so skip. A fresh BossSpawner
+	# on the next run starts un-suppressed anyway. Use is_inside_tree() so we
+	# never call get_tree() on a node that's mid-teardown (which prints a
+	# "data.tree is null" error before returning null).
+	if not is_inside_tree():
 		return
-	for spawner in tree.get_nodes_in_group("regular_spawner"):
+	for spawner in get_tree().get_nodes_in_group("regular_spawner"):
 		if spawner.has_method("set_suppressed"):
 			spawner.set_suppressed(suppress, suppression_factor)
 

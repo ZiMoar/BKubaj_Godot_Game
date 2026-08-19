@@ -34,6 +34,21 @@ var _peer_blocks: Dictionary = {}
 
 var _last_scene: Node = null
 
+## Millisecond timestamp of the last begin/end_block activity. Used by the leak
+## watchdog so it only clears blocks that have been static for a long time.
+var _last_block_activity_ms: int = 0
+
+## Stack origins (caller function/file/line) of every begin_block currently open,
+## in open order. When the leak watchdog fires we dump these so the exact menu
+## whose end_block() never ran is identifiable from the log.
+var _block_sources: Array[Dictionary] = []
+
+## Safety net against a permanently-frozen game: if the game stays paused with
+## NO blocking UI visible for this long, a blocking menu was destroyed without
+## its matching end_block() (a leaked block). Clear the stale blocks and unpause
+## so the run isn't soft-locked forever.
+const LEAK_RESET_MS: int = 8000
+
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -48,12 +63,31 @@ func _process(_delta: float) -> void:
 	if cs != _last_scene:
 		_last_scene = cs
 		_reset_for_new_scene()
+	# Leak watchdog: if we are paused but NO blocking UI is actually on screen,
+	# a menu was destroyed without its end_block() and the block can never be
+	# released on its own -> soft-lock. After a grace period, clear it so the
+	# game recovers instead of freezing forever. Safe: while a blocking menu is
+	# visible (ESC pause, relic, level-up, etc.) this never fires.
+	if _local_blocks > 0 and _paused and not _any_blocking_ui_visible():
+		if Time.get_ticks_msec() - _last_block_activity_ms > LEAK_RESET_MS:
+			push_warning("PauseCoord: leaked pause block detected (%d open) with no blocking UI visible — auto-unpausing. Unmatched begin_block() sources: %s" % [_local_blocks, str(_block_sources)])
+			_block_sources.clear()
+			_local_blocks = 0
+			_report_local_to_host()
 
 
 ## Open a blocking UI on THIS machine. Pauses locally immediately, then tells the
 ## host so everyone else pauses too.
 func begin_block() -> void:
 	_local_blocks += 1
+	_last_block_activity_ms = Time.get_ticks_msec()
+	var st: Array = get_stack()
+	if _block_sources.size() < 64 and st.size() > 1:
+		_block_sources.append({
+			"caller": str(st[1].get("function", "?")),
+			"file": str(st[1].get("source", "?")),
+			"line": int(st[1].get("line", -1)),
+		})
 	_report_local_to_host()
 	# Immediate local pause for responsiveness (authoritative state may lag).
 	if _local_blocks == 1:
@@ -67,8 +101,24 @@ func end_block() -> void:
 	if _local_blocks <= 0:
 		return
 	_local_blocks -= 1
+	_last_block_activity_ms = Time.get_ticks_msec()
+	if not _block_sources.is_empty():
+		_block_sources.pop_back()
 	_report_local_to_host()
 	_notify_waiting()
+
+
+## True while any blocking UI is currently visible. Menus that pause the game
+## add themselves to the "blocking_ui" group so the leak watchdog can tell a
+## legitimate (visible) pause apart from a leaked block with nothing on screen.
+func _any_blocking_ui_visible() -> bool:
+	if not is_inside_tree():
+		return false
+	for node: Node in get_tree().get_nodes_in_group("blocking_ui"):
+		var control: Control = node as Control
+		if control != null and control.visible:
+			return true
+	return false
 
 
 func is_paused() -> bool:

@@ -19,8 +19,13 @@ func _ready() -> void:
 	add_to_group("destructibles")
 
 # Matches the player-weapon damage contract used on enemies
-# (take_damage(amount, is_critical)).
-func take_damage(amount: int, _is_critical: bool = false) -> void:
+# (take_damage(amount, is_critical, damage_type, suppress_ailment,
+# ailment_multiplier)). Destructibles ignore the elemental/ailment params — they
+# exist so a single weapon/projectile call site can hit enemies AND destructibles
+# without a "Expected N argument(s)" runtime error. (CrumblingPillar etc. are in
+# the "destructibles" group and are damaged by area weapons with the full enemy
+# signature, e.g. explosive_charge, magic_bolt, aura.)
+func take_damage(amount: int, _is_critical: bool = false, _damage_type: int = 0, _suppress_ailment: bool = false, _ailment_multiplier: float = 1.0) -> void:
 	current_health -= amount
 	queue_redraw()
 
