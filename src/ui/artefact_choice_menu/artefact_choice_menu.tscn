@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://btx4iqf8dquh4"]
 
-[ext_resource type="Script" path="res://src/ui/artefact_choice_menu/artefact_choice_menu.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://cbofc1cqc32vo" path="res://src/ui/artefact_choice_menu/artefact_choice_menu.gd" id="1_script"]
 
 [node name="ArtefactChoiceMenu" type="Control" unique_id=2067477587]
 process_mode = 3
@@ -76,3 +76,8 @@ autowrap_mode = 3
 custom_minimum_size = Vector2(0, 36)
 layout_mode = 2
 text = "Reroll (300g)"
+
+[node name="SacrificeContainer" type="VBoxContainer" parent="CenterContainer/Panel/Vertical" unique_id=1772111705]
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 6

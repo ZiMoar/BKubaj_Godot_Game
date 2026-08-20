@@ -15,7 +15,7 @@ var deceleration: float = 0.0
 var lifetime: float = 4.0
 var bolt_interval: float = 0.5
 var bolt_count: int = 3
-var bolt_damage: int = 14
+var bolt_damage: int = 30
 # Reach of each secondary hit (initial zap from the orb, and every chain hop),
 # scaled by the weapon's area multiplier and set from the weapon on spawn.
 var bolt_range: float = 150.0
@@ -95,20 +95,26 @@ func _fire_volley() -> void:
 	if source_weapon.has_method("get_effective_chain_count"):
 		chain_count = int(source_weapon.get_effective_chain_count(0))
 
+	# Every bolt strikes a DISTINCT enemy: an enemy already hit by any bolt or
+	# chain hop in this volley is excluded from later ones, so a single orb can't
+	# focus-fire all its bolts onto the nearest target (previously 3 bolts with one
+	# enemy nearby all zapped the same one = "double hits"). If fewer enemies than
+	# bolts are in reach, the surplus bolts simply don't fire.
+	var used: Dictionary = {}
 	for i in range(maxi(1, bolt_count)):
-		var target: Node2D = _nearest_enemy(enemies)
+		var target: Node2D = _nearest_enemy_from(enemies, global_position, used)
 		if target == null:
-			continue
+			break
 		_zap(global_position, target, player)
+		used[target.get_instance_id()] = true
 		if chain_count > 0:
-			var hit: Dictionary = { target.get_instance_id(): true }
 			var from: Vector2 = target.global_position
 			for c in range(chain_count):
-				var next: Node2D = _nearest_enemy_from(enemies, from, hit)
+				var next: Node2D = _nearest_enemy_from(enemies, from, used)
 				if next == null:
 					break
 				_zap(from, next, player)
-				hit[next.get_instance_id()] = true
+				used[next.get_instance_id()] = true
 				from = next.global_position
 
 
@@ -145,21 +151,7 @@ func _zap(origin: Vector2, target: Node2D, player: Node) -> void:
 			source_weapon.apply_explosion_on_kill(target.global_position, dmg)
 
 
-func _nearest_enemy(enemies: Array) -> Node2D:
-	var best: Node2D = null
-	var best_d: float = bolt_range * bolt_range
-	for e: Node in enemies:
-		if not is_instance_valid(e):
-			continue
-		var en: Node2D = e as Node2D
-		var d: float = global_position.distance_squared_to(en.global_position)
-		if d < best_d:
-			best_d = d
-			best = en
-	return best
-
-
-## Nearest enemy to a given point (for chaining), skipping already-hit nodes,
+## Nearest enemy to a given point, skipping already-hit nodes,
 ## within bolt_range.
 func _nearest_enemy_from(enemies: Array, from: Vector2, used: Dictionary) -> Node2D:
 	var best: Node2D = null

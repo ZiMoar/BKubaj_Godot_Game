@@ -3,8 +3,9 @@ extends Area2D
 
 ## A boss relic drop. When the player walks over it, an ArtefactChoiceMenu
 ## opens offering a choice of 3 random artefacts (with their descriptions).
-## If all 5 slots are full, the relic is refused. Setting `cursed` makes this a
-## cursed relic (offers only cursed relics from their own slot pool, in purple).
+## If all 5 slots are full it opens the Replace/Sell overflow prompt instead, so
+## the relic is never wasted. Setting `cursed` makes this a cursed relic (offers
+## only cursed relics from their own slot pool, in purple).
 
 var _taken: bool = false
 
@@ -57,10 +58,9 @@ func _on_body_entered(body: Node) -> void:
 	if not body.has_method("get_artefact_count") or not body.has_method("get_artefact_slot_capacity"):
 		return
 
-	if body.get_artefact_count() >= body.get_artefact_slot_capacity():
-		_flash_refusal()
-		return
-
+	# NOTE: no slots-full refusal here — the choice menu detects a full inventory
+	# and shows the Replace/Sell overflow prompt instead, so an over-cap relic is
+	# never wasted.
 	_taken = true
 	var hud: HUD = get_tree().get_first_node_in_group("hud") as HUD
 	if hud == null or not hud.has_method("show_artefact_choice"):
@@ -68,9 +68,3 @@ func _on_body_entered(body: Node) -> void:
 		return
 	hud.show_artefact_choice(cursed)
 	queue_free()
-
-
-func _flash_refusal() -> void:
-	var tween := create_tween()
-	tween.tween_property(self, "modulate:a", 0.3, 0.15)
-	tween.tween_property(self, "modulate:a", 1.0, 0.15)

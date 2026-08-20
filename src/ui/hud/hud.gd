@@ -251,8 +251,8 @@ func _connect_to_level_up_menu() -> void:
 		weapon_choice_menu.weapon_selected.connect(_on_weapon_choice_selected)
 	if anvil_upgrade_menu and not anvil_upgrade_menu.upgrade_applied.is_connected(_on_anvil_upgrade_applied):
 		anvil_upgrade_menu.upgrade_applied.connect(_on_anvil_upgrade_applied)
-	if artefact_choice_menu and not artefact_choice_menu.artefact_selected.is_connected(_on_artefact_choice_selected):
-		artefact_choice_menu.artefact_selected.connect(_on_artefact_choice_selected)
+	if artefact_choice_menu and not artefact_choice_menu.closed.is_connected(_on_artefact_menu_closed):
+		artefact_choice_menu.closed.connect(_on_artefact_menu_closed)
 
 func _connect_to_session_timer() -> void:
 	if session_timer and not session_timer.timeout.is_connected(_on_session_timer_timeout):
@@ -457,29 +457,22 @@ func show_artefact_choice(cursed_only: bool = false) -> void:
 		current_player = get_tree().get_first_node_in_group("player") as Player
 		if artefact_choice_menu == null or current_player == null:
 			return
-	# Cursed and normal relics share the same 5-slot inventory; there is no
-	# separate cap on cursed relics.
-	if current_player.get_artefact_count() >= current_player.get_artefact_slot_capacity():
-		return
 	# Already open -> don't stack another pause block (would leak when only the
 	# first open's pick fires its single end_block).
 	if artefact_choice_menu.visible:
 		return
 
+	# NOTE: slots-full is NOT refused here anymore — open_for_player detects it
+	# and shows the Replace/Sell overflow prompt instead.
 	PauseCoord.begin_block()
 	artefact_choice_menu.open_for_player(current_player, cursed_only)
 
 
-func _on_artefact_choice_selected(artefact_id: String) -> void:
-	# Apply the relic on the NEXT idle frame so an error inside add_artefact (or
-	# the artefacts_changed HUD handler it fires) can never abort this function
-	# before the menu closes and the game unpauses. Otherwise a single runtime
-	# error here leaves _local_blocks > 0 -> permanent freeze/perma-pause.
-	var p: Player = current_player
-	if p and p.has_method("add_artefact"):
-		p.call_deferred("add_artefact", artefact_id)
-	if artefact_choice_menu:
-		artefact_choice_menu.close_menu()
+## The menu self-resolves (pick / replace / sell) and emits `closed` when it
+## finishes; releasing the pause block here keeps it balanced with the begin_block
+## in show_artefact_choice, so no leaked block can leave the game permanently
+## paused. (The relic application itself happens inside the menu.)
+func _on_artefact_menu_closed() -> void:
 	PauseCoord.end_block()
 
 func _on_difficulty_timer_timeout() -> void:

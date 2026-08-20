@@ -576,6 +576,23 @@ func add_cursed_artefact(artefact_id: String) -> bool:
 	return true
 
 
+## Removes a relic (normal or cursed) from the inventory. Returns true if it was
+## equipped. Used by the overflow "replace" flow to sacrifice an existing relic
+## and free a slot for a new one.
+func remove_artefact(artefact_id: String) -> bool:
+	if artefact_id.is_empty():
+		return false
+	if artefact_id in artefact_ids:
+		artefact_ids.erase(artefact_id)
+		artefacts_changed.emit()
+		return true
+	if artefact_id in cursed_artefact_ids:
+		cursed_artefact_ids.erase(artefact_id)
+		artefacts_changed.emit()
+		return true
+	return false
+
+
 ## Checks both normal and cursed pools.
 func has_artefact(artefact_id: String) -> bool:
 	return artefact_id in artefact_ids or artefact_id in cursed_artefact_ids
