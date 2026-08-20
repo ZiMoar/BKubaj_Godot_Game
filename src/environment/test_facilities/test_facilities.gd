@@ -40,10 +40,11 @@ const SPAWN_KEY: Key = KEY_K
 const SKELETON_SCENE: PackedScene = preload("res://src/entities/enemies/swarmer/skeleton/skeleton_enemy.tscn")
 
 ## Test-map altar: spawns the Altar of Ascension pedestal (subclass pick) once so
-## the flow can be tested without playing to room 10. Offset places it just
-## up-left of the player spawn (~(1040, 870) world) so it's immediately visible.
+## the flow can be tested without playing to room 10. Offset places it well LEFT
+## of the 2x4 facility grid (which spans world x 740..1460) so it reads as its own
+## tidy station at world ~(580, 760) instead of cluttering the pickup row.
 const ALTAR_SCENE: PackedScene = preload("res://src/environment/altar_room/altar_pedestal.tscn")
-const ALTAR_OFFSET: Vector2 = Vector2(-60, 110)
+const ALTAR_OFFSET: Vector2 = Vector2(-520, 0)
 
 var _nodes: Dictionary = {}   # slot_id -> live pickup node
 var _waiting: Dictionary = {} # slot_id -> bool (collected, waiting to respawn)

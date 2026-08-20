@@ -98,6 +98,15 @@ theme_override_font_sizes/font_size = 9
 text = "Map Difficulty: 0"
 vertical_alignment = 1
 
+[node name="RoomLabel" type="Label" parent="Control/TopBar/Header/Row" unique_id=400000001]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.8, 0.45, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 2
+theme_override_font_sizes/font_size = 9
+text = "Room: 1"
+vertical_alignment = 1
+
 [node name="SessionTimerLabel" type="Label" parent="Control/TopBar/Header/Row" unique_id=2138253793]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.85, 0.7, 0.95, 1)

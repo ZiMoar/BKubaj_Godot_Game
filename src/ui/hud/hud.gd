@@ -8,6 +8,7 @@ const DASH_UPGRADE_MENU_SCENE: PackedScene = preload("res://src/ui/dash_upgrade_
 @onready var xp_bar: ProgressBar = get_node_or_null("Control/TopBar/Header/Row/XPBar") as ProgressBar
 @onready var difficulty_label: Label = get_node_or_null("Control/TopBar/Header/Row/DifficultyLabel") as Label
 @onready var session_timer_label: Label = get_node_or_null("Control/TopBar/Header/Row/SessionTimerLabel") as Label
+@onready var room_label: Label = get_node_or_null("Control/TopBar/Header/Row/RoomLabel") as Label
 @onready var level_label: Label = get_node_or_null("Control/TopBar/Header/Row/LevelLabel") as Label
 @onready var xp_text_label: Label = get_node_or_null("Control/TopBar/Header/Row/XPTextLabel") as Label
 @onready var level_up_menu: LevelUpMenu = get_node_or_null("LevelUpMenu") as LevelUpMenu
@@ -217,6 +218,7 @@ func _connect_to_xp_manager() -> void:
 			level_label.text = "Team Lv. " + str(manager.team_level)
 		_update_difficulty_meter()
 		_update_session_timer_label()
+		_update_room_label()
 
 ## Returns the Player this machine actually controls — the one whose network
 ## authority matches the local peer. Falls back to the first player in the
@@ -519,6 +521,14 @@ func _on_session_timer_timeout() -> void:
 		current_player.advance_runtime_difficulty(current_player.difficulty_runtime_per_minute)
 	_update_difficulty_meter()
 	_update_session_timer_label()
+	_update_room_label()
+
+func _update_room_label() -> void:
+	if room_label == null:
+		return
+	var gs: Node = get_node_or_null("/root/GameState")
+	var room: int = gs.stage if gs != null else 1
+	room_label.text = "Room: %d" % room
 
 func _update_difficulty_meter() -> void:
 	if current_player == null:
