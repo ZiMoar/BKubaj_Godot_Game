@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://b25mfdq07ayi0"]
 
 [ext_resource type="PackedScene" uid="uid://ch71iywhtq2is" path="res://src/entities/player/player/player.tscn" id="1_player"]
-[ext_resource type="PackedScene" path="res://src/ui/hud/hud.tscn" id="2_hud"]
+[ext_resource type="PackedScene" uid="uid://6axic314dm5n" path="res://src/ui/hud/hud.tscn" id="2_hud"]
 [ext_resource type="Script" uid="uid://dwd47lt1h3cpo" path="res://src/environment/grid_background.gd" id="3_grid"]
 [ext_resource type="Script" uid="uid://byx0vv2w1j4cr" path="res://src/managers/xp_orb_spatial_manager.gd" id="4_xp_spatial"]
 [ext_resource type="PackedScene" path="res://src/managers/team_xp_manager/team_xp_manager.tscn" id="5_team_xp"]
@@ -86,3 +86,44 @@ position = Vector2(1100, 1150)
 
 [node name="Player" parent="." unique_id=494284683 instance=ExtResource("1_player")]
 position = Vector2(1100, 900)
+might_flat_bonus = null
+might_percent_bonus = null
+attack_speed_bonus = null
+critical_hit_chance = null
+critical_hit_damage_multiplier = null
+area_bonus = null
+projectile_speed_bonus = null
+duration_bonus = null
+amount_bonus = null
+armor_penetration_flat_bonus = null
+armor_penetration_percent_bonus = null
+ailment_chance = null
+max_health = null
+max_health_bonus = null
+hp_regen_per_second = null
+armor = null
+evasion_chance = null
+lifesteal_flat = null
+revive_count = null
+revive_health_percent = null
+thorns_flat = null
+shield_capacity = null
+speed = null
+move_speed_percent_bonus = null
+magnet_enabled = null
+magnet_range = null
+dash_charges = null
+dash_cooldown = null
+dash_range_bonus = null
+invincibility_duration = null
+invincibility_frame_bonus = null
+growth_percent_bonus = null
+greed_percent_bonus = null
+luck = null
+gold = null
+rerolls = null
+banish_count = null
+difficulty = null
+difficulty_runtime_per_minute = null
+pierce_bonus = null
+shield_placeholder = null

@@ -42,6 +42,9 @@ const ARTEFACTS: Script = preload("res://src/systems/artefact.gd")
 @export_category("Utility & Movement")
 @export var speed: float = 200.0
 @export var move_speed_percent_bonus: float = 0.0
+## True while the run's subclass is Stormchaser (ranger ascension): move speed
+## bonuses also apply to damage. Set by StormchaserSubclass._apply_passive.
+var stormchaser_active: bool = false
 @export var magnet_enabled: bool = false
 @export_range(0.0, 2000.0, 1.0) var magnet_range: float = 50.0
 @export var dash_charges: int = 1
@@ -174,6 +177,12 @@ const WRATH_NONCRIT_PENALTY: float = 0.70
 const SLOTH_SPEED_MULT: float = 0.80
 const SLOTH_REGEN_MULT: float = 2.0
 const SLOTH_SHIELD_CAP_BONUS: float = 0.25   # +50% of the 0.5 base shield cap
+## Death Knight (knight ascension): damage multiplier while shielded.
+const DEATH_KNIGHT_SHIELD_MULT: float = 1.25
+## Blood Mage (mage ascension): damage multiplier during Mana Overload.
+const BLOOD_MAGE_DAMAGE_MULT: float = 1.6
+## Blood Mage: % of max HP drained per spell cast during Mana Overload.
+const BLOOD_MAGE_CAST_COST_PCT: float = 0.04
 
 var artefact_ids: Array[String] = []
 ## Cursed relics occupy a separate pool so they don't crowd out normal relics.
@@ -197,6 +206,9 @@ func _ready() -> void:
 
 	# Apply the chosen class's starting stat overrides BEFORE computing HP.
 	_apply_class_starting_stats()
+	# Apply the run's subclass passive (chosen at the Altar, room 10) so its stat
+	# bonuses are set before HP is computed.
+	_apply_subclass_passive()
 	# Swap in this class's pixel-art sprite (defaults to a tinted placeholder).
 	_apply_class_sprite()
 	# Continuing a run? Restore the carried-over progression (stats, weapons,
@@ -267,6 +279,9 @@ func get_thorns_damage() -> float:
 	var value: float = maxf(0.0, thorns_flat)
 	if has_artefact(ARTEFACT_ARMOR_TO_THORNS):
 		value += current_armor()
+	# Retaliator (knight ascension): thorns scale with might.
+	if is_subclass("retaliator"):
+		value *= get_might_multiplier()
 	return value
 
 func get_critical_multiplier() -> float:
@@ -340,6 +355,15 @@ func get_attack_damage(base_damage: float) -> int:
 	var envy_bonus: float = get_envy_damage_bonus()
 	if envy_bonus > 0.0:
 		damage *= 1.0 + envy_bonus
+	# Stormchaser (ranger ascension): move speed bonus also applies to damage.
+	if stormchaser_active:
+		damage *= 1.0 + maxf(0.0, move_speed_percent_bonus)
+	# Death Knight (knight ascension): deal more damage while shielded.
+	if is_subclass("death_knight") and current_shield > 0.0:
+		damage *= DEATH_KNIGHT_SHIELD_MULT
+	# Blood Mage (mage ascension): during Mana Overload, spells deal far more.
+	if is_subclass("blood_mage") and is_overload_active():
+		damage *= BLOOD_MAGE_DAMAGE_MULT
 	return max(0, int(round(damage)))
 
 func get_map_difficulty() -> float:
@@ -370,6 +394,23 @@ func get_cooldown_multiplier() -> float:
 func set_cooldown_multiplier(value: float) -> void:
 	_cooldown_multiplier = maxf(0.05, value)
 
+## True while Mana Overload (mage secondary) is active. Used by Blood Mage's
+## drain-damage tradeoff. Set by mage_overload_weapon.
+var overload_active: bool = false
+
+func is_overload_active() -> bool:
+	return overload_active
+
+## Blood Mage (mage ascension): casting a spell during Mana Overload costs HP
+## as the price of the boosted damage.
+func drain_overload_cost() -> void:
+	var cost: float = float(current_max_health()) * BLOOD_MAGE_CAST_COST_PCT
+	current_health = maxi(1, int(round(float(current_health) - cost)))
+	if hp_bar:
+		hp_bar.value = current_health
+	health_changed.emit(current_health, current_max_health())
+	_update_hp_value_label()
+
 func apply_lifesteal() -> void:
 	if lifesteal_flat <= 0.0 or current_health <= 0:
 		return
@@ -395,7 +436,12 @@ func heal(amount: float) -> void:
 	if amount <= 0.0:
 		return
 
-	current_health = min(current_max_health(), int(round(current_health + amount)))
+	var max_hp: int = current_max_health()
+	var new_hp: float = float(current_health) + amount
+	# Death Knight (knight ascension): healing past full health becomes a shield.
+	if new_hp > float(max_hp) and is_subclass("death_knight"):
+		add_shield(new_hp - float(max_hp))
+	current_health = min(max_hp, int(round(new_hp)))
 	if hp_bar:
 		hp_bar.value = current_health
 	health_changed.emit(current_health, current_max_health())
@@ -452,6 +498,42 @@ func _get_selected_class() -> ClassBase:
 	if state.has_method("get_selected_class"):
 		return state.get_selected_class() as ClassBase
 	return null
+
+
+## The resolved class id for this player (per-instance co-op override if set,
+## else the selected class). Used by menus to offer the right subclass options.
+func get_class_id() -> String:
+	var cls: ClassBase = _get_selected_class()
+	return cls.class_id if cls else ""
+
+
+## True if the run's selected subclass (Altar of Ascension) has the given id.
+## Read live by subclass passives (e.g. Hunter's mark, Trickshot's doubling) so
+## they work regardless of spawn timing — no per-spawn flag bookkeeping needed.
+func is_subclass(id: String) -> bool:
+	var state: Node = get_node_or_null("/root/GameState")
+	if state == null or not state.has_method("get_selected_subclass"):
+		return false
+	var sub: Node = state.get_selected_subclass()
+	return sub != null and str(sub.get("class_id")) == id
+
+
+## Applies the run's selected subclass (chosen at the Altar of Ascension, room 10)
+## to this player, if its parent class matches this player's class. Runs on every
+## spawn because the player re-instantiates each arena — the passive must re-apply
+## (static stats + any runtime behavior hooks).
+func _apply_subclass_passive() -> void:
+	var state: Node = get_node_or_null("/root/GameState")
+	if state == null or not state.has_method("get_selected_subclass"):
+		return
+	var sub: SubclassBase = state.get_selected_subclass()
+	if sub == null:
+		return
+	var cls: ClassBase = _get_selected_class()
+	if cls == null or sub.parent_class_id != cls.class_id:
+		return
+	if sub.has_method("apply"):
+		sub.apply(self)
 
 
 ## Applies the selected class's starting stat overrides onto this player.

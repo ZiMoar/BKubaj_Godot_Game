@@ -39,6 +39,12 @@ const SCENES := {
 const SPAWN_KEY: Key = KEY_K
 const SKELETON_SCENE: PackedScene = preload("res://src/entities/enemies/swarmer/skeleton/skeleton_enemy.tscn")
 
+## Test-map altar: spawns the Altar of Ascension pedestal (subclass pick) once so
+## the flow can be tested without playing to room 10. Offset places it just
+## up-left of the player spawn (~(1040, 870) world) so it's immediately visible.
+const ALTAR_SCENE: PackedScene = preload("res://src/environment/altar_room/altar_pedestal.tscn")
+const ALTAR_OFFSET: Vector2 = Vector2(-60, 110)
+
 var _nodes: Dictionary = {}   # slot_id -> live pickup node
 var _waiting: Dictionary = {} # slot_id -> bool (collected, waiting to respawn)
 var _timers: Dictionary = {}  # slot_id -> float countdown
@@ -53,6 +59,15 @@ func _ready() -> void:
 		_waiting[slot_id] = false
 		_timers[slot_id] = respawn_cooldown
 		call_deferred("_spawn_slot", slot_id)
+	call_deferred("_spawn_altar")
+
+
+## Spawns the ascension altar pedestal once at a fixed spot near the player.
+func _spawn_altar() -> void:
+	var inst: Node = ALTAR_SCENE.instantiate()
+	if inst is Node2D:
+		(inst as Node2D).global_position = global_position + ALTAR_OFFSET
+	get_parent().add_child(inst)
 
 
 func _unhandled_input(event: InputEvent) -> void:

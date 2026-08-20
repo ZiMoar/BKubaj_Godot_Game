@@ -1,0 +1,26 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://src/environment/altar_room/altar_room.gd" id="1_alt"]
+[ext_resource type="PackedScene" path="res://src/environment/altar_room/altar_pedestal.tscn" id="2_ped"]
+
+[node name="AltarRoom" type="Node2D"]
+script = ExtResource("1_alt")
+
+[node name="Floor" type="ColorRect" parent="."]
+z_index = -1
+offset_left = -240.0
+offset_top = -150.0
+offset_right = 240.0
+offset_bottom = 150.0
+color = Color(0.14, 0.1, 0.2, 1)
+
+[node name="TitleLabel" type="Label" parent="."]
+offset_left = -150.0
+offset_top = -140.0
+offset_right = 150.0
+offset_bottom = -116.0
+text = "ALTAR OF ASCENSION"
+horizontal_alignment = 1
+
+[node name="Pedestal" parent="." instance=ExtResource("2_ped")]
+position = Vector2(0, 0)

@@ -91,6 +91,10 @@ func try_fire() -> void:
 		var effective_cooldown = get_effective_cooldown()
 		cooldown_timer.start(effective_cooldown)
 		cooldown_started.emit(effective_cooldown)
+		# Blood Mage (mage ascension): casting during Mana Overload costs HP.
+		var owner_plr: Node = _find_owner_player()
+		if owner_plr and owner_plr.has_method("is_subclass") and owner_plr.is_subclass("blood_mage") and owner_plr.has_method("is_overload_active") and owner_plr.is_overload_active():
+			owner_plr.drain_overload_cost()
 
 ## The Player ancestor of this weapon (walks up the tree). Null when the weapon
 ## isn't parented under a Player (e.g. developer/isolated scenes).
@@ -139,6 +143,10 @@ func get_effective_cooldown() -> float:
 	var mult: float = 1.0
 	if player.has_method("get_cooldown_multiplier"):
 		mult = maxf(0.05, float(player.get_cooldown_multiplier()))
+
+	# Wild Mage (mage ascension): each cast randomizes the cooldown 0.5x-1.2x.
+	if player.has_method("is_subclass") and player.is_subclass("wild_mage"):
+		mult *= randf_range(0.5, 1.2)
 
 	return maxf(0.05, base_cooldown * player.get_attack_speed_multiplier() * mult)
 

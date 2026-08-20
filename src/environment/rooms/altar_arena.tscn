@@ -1,0 +1,9 @@
+[gd_scene format=3 uid="uid://byl2a6kyf83b6"]
+
+[ext_resource type="PackedScene" path="res://src/environment/rooms/room_arena.tscn" id="1_base"]
+[ext_resource type="PackedScene" path="res://src/environment/altar_room/altar_room.tscn" id="2_room"]
+
+[node name="AltarArena" type="Node2D" unique_id=1023226269]
+
+[node name="RoomArena" parent="." unique_id=197036172 instance=ExtResource("1_base")]
+room_scene = ExtResource("2_room")

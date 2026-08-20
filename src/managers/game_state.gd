@@ -14,11 +14,34 @@ const KNIGHT_SCENE: PackedScene = preload("res://src/entities/player/classes/kni
 const RANGER_SCENE: PackedScene = preload("res://src/entities/player/classes/ranger/ranger.tscn")
 const MAGE_SCENE: PackedScene = preload("res://src/entities/player/classes/mage/mage.tscn")
 
+# Subclass (ascension) scripts, grouped by the class they belong to. Each is a
+# SubclassBase script instantiated via .new() (no scene children needed).
+const KNIGHT_SUBCLASS_SCRIPTS: Array[Script] = [
+	preload("res://src/entities/player/subclasses/knight/paladin.gd"),
+	preload("res://src/entities/player/subclasses/knight/death_knight.gd"),
+	preload("res://src/entities/player/subclasses/knight/retaliator.gd"),
+]
+const MAGE_SUBCLASS_SCRIPTS: Array[Script] = [
+	preload("res://src/entities/player/subclasses/mage/blood_mage.gd"),
+	preload("res://src/entities/player/subclasses/mage/elementalist.gd"),
+	preload("res://src/entities/player/subclasses/mage/wild_mage.gd"),
+]
+const RANGER_SUBCLASS_SCRIPTS: Array[Script] = [
+	preload("res://src/entities/player/subclasses/ranger/hunter.gd"),
+	preload("res://src/entities/player/subclasses/ranger/stormchaser.gd"),
+	preload("res://src/entities/player/subclasses/ranger/trickshot.gd"),
+]
+
 const CATACOMBS_MAP: PackedScene = preload("res://src/environment/maps/catacombs/catacombs.tscn")
 const TEST_MAP: PackedScene = preload("res://src/environment/maps/test_map/test_map.tscn")
 
 var _classes: Array[ClassBase] = []
 var selected_class_id: String = "knight"
+
+var _subclasses: Array[SubclassBase] = []
+## The subclass chosen at the Altar of Ascension this run. Empty until room 10.
+## Reset on every new run; persists across arena transitions like the class.
+var selected_subclass_id: String = ""
 
 var _maps: Array[MapBase] = []
 var selected_map_id: String = "catacombs"
@@ -28,6 +51,9 @@ func _ready() -> void:
 	register_class(KNIGHT_SCENE)
 	register_class(RANGER_SCENE)
 	register_class(MAGE_SCENE)
+	_register_subclasses(KNIGHT_SUBCLASS_SCRIPTS)
+	_register_subclasses(MAGE_SUBCLASS_SCRIPTS)
+	_register_subclasses(RANGER_SUBCLASS_SCRIPTS)
 	register_map(CATACOMBS_MAP)
 	register_map(TEST_MAP)
 	_register_class_ability_input()
@@ -87,6 +113,47 @@ func set_selected_class(id: String) -> void:
 		selected_class_id = id
 
 
+func _register_subclasses(scripts: Array[Script]) -> void:
+	for script: Script in scripts:
+		register_subclass(script)
+
+
+func register_subclass(script: Script) -> void:
+	var sub: SubclassBase = script.new()
+	add_child(sub)
+	_subclasses.append(sub)
+
+
+## All registered subclasses, in registration order.
+func get_subclass_list() -> Array[SubclassBase]:
+	return _subclasses
+
+
+func get_subclass_by_id(id: String) -> SubclassBase:
+	for sub: SubclassBase in _subclasses:
+		if sub.class_id == id:
+			return sub
+	return null
+
+
+## All subclasses belonging to a given class (e.g. "knight"), in order.
+func get_subclasses_for_class(class_id: String) -> Array[SubclassBase]:
+	var out: Array[SubclassBase] = []
+	for sub: SubclassBase in _subclasses:
+		if sub.parent_class_id == class_id:
+			out.append(sub)
+	return out
+
+
+func get_selected_subclass() -> SubclassBase:
+	return get_subclass_by_id(selected_subclass_id)
+
+
+func set_selected_subclass(id: String) -> void:
+	if get_subclass_by_id(id) != null:
+		selected_subclass_id = id
+
+
 func register_map(scene: PackedScene) -> void:
 	var map: MapBase = scene.instantiate()
 	add_child(map)
@@ -125,6 +192,9 @@ const CATACOMBS_PATH: String = "res://src/environment/catacombs_arena.tscn"
 const SHOP_ARENA_PATH: String = "res://src/environment/rooms/shop_arena.tscn"
 const SPECIAL_ANVIL_ARENA_PATH: String = "res://src/environment/rooms/special_anvil_arena.tscn"
 const RELIC_ARENA_PATH: String = "res://src/environment/rooms/relic_arena.tscn"
+const ALTAR_ARENA_PATH: String = "res://src/environment/rooms/altar_arena.tscn"
+## The room number where the Altar of Ascension (subclass pick) appears.
+const ALTAR_ROOM_NUMBER: int = 10
 const STAGE_DOOR_SCENE: PackedScene = preload("res://src/environment/stage_door/stage_door.tscn")
 const STAGE_CONTROLLER_SCENE: PackedScene = preload("res://src/environment/stage_controller/stage_controller.tscn")
 const OBSTACLE_SPAWNER_SCENE: PackedScene = preload("res://src/environment/obstacles/obstacle_spawner/obstacle_spawner.tscn")
@@ -261,6 +331,8 @@ func begin_run(arena_path: String) -> void:
 	run_elapsed_seconds = 0
 	run_difficulty_at_end = 0.0
 	run_started_at = Time.get_ticks_msec()
+	# A fresh run starts with no ascension; the subclass is chosen at room 10.
+	selected_subclass_id = ""
 
 
 ## Restarts a brand-new run on the first combat arena, keeping the currently
@@ -300,6 +372,9 @@ func get_next_arena_path() -> String:
 	# EVEN rooms are non-combat (random shop / anvil / relic, equal weight) and
 	# ODD rooms are combat. `stage` is already the *next* room number here because
 	# advance_stage() bumps it before asking for the next path.
+	# The Altar of Ascension (subclass pick) is forced at its fixed room number.
+	if stage == ALTAR_ROOM_NUMBER:
+		return ALTAR_ARENA_PATH
 	if stage % 2 == 0:
 		return _random_noncombat_path()
 	return _combat_path()

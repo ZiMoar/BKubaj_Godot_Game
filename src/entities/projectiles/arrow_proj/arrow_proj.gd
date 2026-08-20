@@ -37,6 +37,12 @@ func setup(pos: Vector2, direction: Vector2, arrow_speed: float, dmg: int, crit:
 	chain_left = maxi(0, chain_total)
 	chain_range = chain_range_px
 	rotation = dir.angle()
+	# Trickshot (ranger ascension): arrows pierce and chain to twice as many
+	# enemies. Applies here (not per-weapon) so EVERY arrow weapon of a ranger —
+	# Longbow and Rain of Arrows — doubles its pierce/chain.
+	if player != null and player.has_method("is_subclass") and player.is_subclass("trickshot"):
+		pierce_left *= 2
+		chain_left *= 2
 
 
 func _physics_process(delta: float) -> void:

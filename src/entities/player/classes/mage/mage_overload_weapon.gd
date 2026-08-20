@@ -60,6 +60,7 @@ func _activate() -> void:
 	var p = get_player()
 	if p and p.has_method("set_cooldown_multiplier"):
 		p.set_cooldown_multiplier(0.5)
+		p.overload_active = true
 
 	# Co-op: broadcast a visual copy of the overload aura so a teammate sees the
 	# buff around this player. The remote copy self-follows this player's replica
@@ -85,6 +86,7 @@ func _activate() -> void:
 		aura.visible = false
 	if is_instance_valid(p) and p.has_method("set_cooldown_multiplier"):
 		p.set_cooldown_multiplier(1.0)
+		p.overload_active = false
 
 	# Recharge begins only after the buff ends, using the full cooldown
 	# (not affected by the buff, since the multiplier is back to 1.0).

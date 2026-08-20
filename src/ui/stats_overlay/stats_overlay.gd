@@ -90,6 +90,8 @@ func _populate() -> void:
 	var dr_mult: float = float(player.call("get_damage_reduction_multiplier")) if player.has_method("get_damage_reduction_multiplier") else 1.0
 	var thorns: float = float(player.call("get_thorns_damage")) if player.has_method("get_thorns_damage") else 0.0
 
+	_add_subclass_listing(player)
+
 	_add_section("Vitals")
 	_add_stat("Health", "%d / %d" % [health_cur, health_max])
 	_add_stat("HP regen /s", "%.1f" % float(player.get("hp_regen_per_second")))
@@ -157,6 +159,38 @@ func _populate() -> void:
 	_add_weapon_listing(player)
 
 
+## Shows the run's chosen subclass (from the Altar of Ascension, room 10) and a
+## short description of its effect, so the player can see their ascension and
+## what it does at a glance.
+func _add_subclass_listing(_player: Node) -> void:
+	if stats_box == null:
+		return
+	var state: Node = get_node_or_null("/root/GameState")
+	if state == null or not state.has_method("get_selected_subclass"):
+		return
+	var sub: Node = state.get_selected_subclass()
+	if sub == null:
+		return
+	_add_section("Subclass")
+	var name_l := Label.new()
+	name_l.text = str(sub.get("display_name"))
+	name_l.add_theme_color_override("font_color", Color(0.75, 0.55, 1.0))
+	name_l.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
+	name_l.add_theme_constant_override("outline_size", 1)
+	name_l.add_theme_font_size_override("font_size", 13)
+	stats_box.add_child(name_l)
+	var desc: String = str(sub.get("description"))
+	if not desc.is_empty():
+		var desc_l := Label.new()
+		desc_l.text = desc
+		desc_l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		desc_l.add_theme_color_override("font_color", Color(0.85, 0.85, 0.9))
+		desc_l.add_theme_font_size_override("font_size", 11)
+		desc_l.add_theme_constant_override("line_separation", 0)
+		desc_l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		stats_box.add_child(desc_l)
+
+
 ## Lists every equipped weapon with its per-weapon anvil/signature stat bonuses.
 ## These live on each weapon (not the player), so they're aggregated here per
 ## weapon so the player can see what upgrades each one has taken.
@@ -198,7 +232,7 @@ func _add_weapon_block(weapon: Node) -> void:
 		["Duration", "duration_bonus", true],
 		["Explosion", "explosion_on_kill_chance", true],
 		["Knockback", "knockback_bonus", true],
-		["Ailment dmg", "ailment_effect_bonus", true],
+		["Ailment effect", "ailment_effect_bonus", true],
 		["Close dmg", "close_range_damage_bonus", true],
 		["Far dmg", "far_range_damage_bonus", true],
 	]

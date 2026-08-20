@@ -120,6 +120,15 @@ var brand_timer: float = 0.0
 const BRAND_DURATION: float = 3.0
 const BRAND_DAMAGE_MULT: float = 1.5
 
+# HUNTER (ranger ascension): the player's hits mark the enemy, who then takes
+# increased damage from all sources for a few seconds. Like Brand but the mark
+# is applied by ANY player attack and its own hit benefits immediately.
+var hunter_mark_timer: float = 0.0
+const HUNTER_MARK_DURATION: float = 4.0
+const HUNTER_MARK_DAMAGE_MULT: float = 1.25
+## Elementalist (mage ascension): bonus damage vs enemies with a foreign ailment.
+const ELEMENTALIST_BONUS_MULT: float = 1.35
+
 # POISON -> Stackable DoT: long duration, slow ticks, scaled from the hit but
 # smaller than burn because it stacks. Each stack adds its own per-tick damage.
 var poison_stacks: int = 0
@@ -496,6 +505,31 @@ func count_active_ailments() -> int:
 	return count
 
 
+## True if this enemy currently carries an active ailment whose element DIFFERS
+## from `damage_type`. Used by the Elementalist (mage ascension) to grant bonus
+## damage when the attack exploits a foreign affliction.
+func has_ailment_of_different_type(damage_type: DamageType.Type) -> bool:
+	var active: Array[DamageType.Type] = []
+	if burn_dps > 0.0 or burn_ticks_remaining > 0:
+		active.append(DamageType.Type.FIRE)
+	if poison_stacks > 0 or poison_duration > 0.0:
+		active.append(DamageType.Type.POISON)
+	if shock_timer > 0.0:
+		active.append(DamageType.Type.LIGHTNING)
+	if crit_vuln_timer > 0.0:
+		active.append(DamageType.Type.ARCANE)
+	if decay_timer > 0.0:
+		active.append(DamageType.Type.NECROTIC)
+	if brand_timer > 0.0:
+		active.append(DamageType.Type.HOLY)
+	if impale_pool > 0.0:
+		active.append(DamageType.Type.PHYSICAL)
+	for t in active:
+		if t != damage_type:
+			return true
+	return false
+
+
 # Rolls the player's ailment chance. Returns true if the current hit's damage
 # type should also inflict its matching ailment.
 func _roll_ailment() -> bool:
@@ -601,6 +635,8 @@ func _process_status_dots(delta: float) -> void:
 		decay_timer = maxf(0.0, decay_timer - delta)
 	if brand_timer > 0.0:
 		brand_timer = maxf(0.0, brand_timer - delta)
+	if hunter_mark_timer > 0.0:
+		hunter_mark_timer = maxf(0.0, hunter_mark_timer - delta)
 	if crit_vuln_timer > 0.0:
 		crit_vuln_timer = maxf(0.0, crit_vuln_timer - delta)
 	if shock_timer > 0.0:
@@ -641,6 +677,19 @@ func take_damage(amount: int, is_critical: bool = false, damage_type: DamageType
 	# BRAND (holy): while active, this enemy takes increased damage from all sources.
 	if brand_timer > 0.0:
 		dealt *= BRAND_DAMAGE_MULT
+
+	# HUNTER (ranger ascension): the player's hits mark the enemy, who then takes
+	# increased damage from all sources while marked. The marking hit benefits too.
+	if plr != null and plr.has_method("is_subclass") and plr.is_subclass("hunter"):
+		hunter_mark_timer = HUNTER_MARK_DURATION
+	if hunter_mark_timer > 0.0:
+		dealt *= HUNTER_MARK_DAMAGE_MULT
+
+	# ELEMENTALIST (mage ascension): attacks exploit enemies afflicted by a
+	# different element than the attack's own type -> bonus damage.
+	if plr != null and plr.has_method("is_subclass") and plr.is_subclass("elementalist"):
+		if has_ailment_of_different_type(damage_type):
+			dealt *= ELEMENTALIST_BONUS_MULT
 
 	# FROZEN (Deep Freeze): frozen enemies take bonus damage.
 	if frozen_timer > 0.0:

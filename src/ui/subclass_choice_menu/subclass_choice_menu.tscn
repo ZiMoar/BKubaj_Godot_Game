@@ -1,0 +1,73 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://src/ui/subclass_choice_menu/subclass_choice_menu.gd" id="1_script"]
+
+[node name="SubclassChoiceMenu" type="Control"]
+process_mode = 3
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+
+[node name="Dimmer" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
+color = Color(0, 0, 0, 0.6)
+
+[node name="CenterContainer" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = -280.0
+offset_right = 430.0
+offset_bottom = -8.0
+grow_vertical = 0
+
+[node name="Panel" type="PanelContainer" parent="CenterContainer"]
+custom_minimum_size = Vector2(420, 240)
+layout_mode = 2
+mouse_filter = 1
+
+[node name="Vertical" type="VBoxContainer" parent="CenterContainer/Panel"]
+layout_mode = 2
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="TitleLabel" type="Label" parent="CenterContainer/Panel/Vertical"]
+layout_mode = 2
+text = "Ascend"
+horizontal_alignment = 1
+
+[node name="SubtitleLabel" type="Label" parent="CenterContainer/Panel/Vertical"]
+layout_mode = 2
+text = "Choose your subclass. Its passive lasts the rest of the run."
+horizontal_alignment = 1
+
+[node name="Choice1" type="Button" parent="CenterContainer/Panel/Vertical"]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+text = "Choice 1"
+autowrap_mode = 3
+
+[node name="Choice2" type="Button" parent="CenterContainer/Panel/Vertical"]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+text = "Choice 2"
+autowrap_mode = 3
+
+[node name="Choice3" type="Button" parent="CenterContainer/Panel/Vertical"]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+text = "Choice 3"
+autowrap_mode = 3

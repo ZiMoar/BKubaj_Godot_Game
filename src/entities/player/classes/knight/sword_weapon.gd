@@ -139,6 +139,12 @@ func _on_slash_hit(node: Node) -> void:
 		if not hit_enemies_this_swing.has(target):
 			hit_enemies_this_swing.append(target)
 			target.take_damage(current_attack_damage, current_attack_is_critical, damage_type, false, get_ailment_effect_multiplier())
+			# Retaliator (knight ascension): blade strikes also carry thorn damage.
+			var p = get_player()
+			if p and p.has_method("is_subclass") and p.is_subclass("retaliator") and p.has_method("get_thorns_damage"):
+				var th: float = p.get_thorns_damage()
+				if th > 0.0:
+					target.take_damage(maxi(1, int(round(th))), false, damage_type, false, get_ailment_effect_multiplier())
 			if target.has_method("apply_knockback"):
 				target.apply_knockback(global_position, get_knockback(knockback_force))
 			apply_lifesteal()

@@ -220,6 +220,9 @@ func _update_buttons() -> void:
 
 
 func get_current_reroll_cost() -> int:
+	# Free rerolls on the test map (detected via TestFacilities presence).
+	if get_tree().get_first_node_in_group("test_facilities") != null:
+		return 0
 	return REROLL_BASE_COST * (1 << _rerolls_done)
 
 
@@ -244,6 +247,10 @@ func _update_reroll_ui() -> void:
 	if reroll_button == null:
 		return
 	var cost: int = get_current_reroll_cost()
+	if cost == 0:
+		reroll_button.text = "Reroll (free)"
+		reroll_button.disabled = false
+		return
 	var affordable: bool = _current_player != null and _current_player.can_afford(cost)
 	reroll_button.text = "Reroll (%dg)" % cost
 	reroll_button.disabled = not affordable

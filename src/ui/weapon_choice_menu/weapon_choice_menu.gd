@@ -152,6 +152,10 @@ func _update_reroll_ui() -> void:
 		return
 	var player: Player = _get_player()
 	var cost: int = get_current_reroll_cost()
+	if cost == 0:
+		reroll_button.text = "Reroll (free)"
+		reroll_button.disabled = false
+		return
 	var affordable: bool = player != null and player.can_afford(cost)
 	reroll_button.text = "Reroll (%dg)" % cost
 	reroll_button.disabled = not affordable

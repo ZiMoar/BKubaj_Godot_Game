@@ -17,6 +17,8 @@ extends Weapon
 @export var armor_ratio: float = 1.0
 @export var recharge_time: float = 4.0
 @export var push_force: float = 320.0
+## Paladin (knight ascension): HP regenerated per second while the shield is raised.
+const BLOCK_HEAL_PER_SEC: float = 8.0
 
 var shield_hp: float = 0.0
 var max_shield_hp: float = 0.0
@@ -70,6 +72,10 @@ func _process(delta: float) -> void:
 	else:
 		if active:
 			_drop(p)
+
+	# Paladin (knight ascension): blocking with the raised shield heals the player.
+	if active and p.has_method("is_subclass") and p.is_subclass("paladin"):
+		p.heal(BLOCK_HEAL_PER_SEC * delta)
 
 
 func _raise(p: Node2D) -> void:

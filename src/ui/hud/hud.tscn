@@ -1,17 +1,18 @@
-[gd_scene load_steps=12 format=3]
+[gd_scene format=3 uid="uid://6axic314dm5n"]
 
-[ext_resource type="Script" path="res://src/ui/hud/hud.gd" id="1_hud_script"]
+[ext_resource type="Script" uid="uid://byge6tlg5xxud" path="res://src/ui/hud/hud.gd" id="1_hud_script"]
 [ext_resource type="PackedScene" path="res://src/ui/weapon_slot_ui/weapon_slot_ui.tscn" id="2_slot_scene"]
-[ext_resource type="PackedScene" path="res://src/ui/level_up_menu/level_up_menu.tscn" id="3_level_up_menu"]
-[ext_resource type="PackedScene" path="res://src/ui/weapon_choice_menu/weapon_choice_menu.tscn" id="4_weapon_choice"]
-[ext_resource type="PackedScene" path="res://src/ui/artefact_choice_menu/artefact_choice_menu.tscn" id="5_artefact_choice"]
+[ext_resource type="PackedScene" uid="uid://cyd317qqtqld3" path="res://src/ui/level_up_menu/level_up_menu.tscn" id="3_level_up_menu"]
+[ext_resource type="PackedScene" uid="uid://bwa1gxqkt2y57" path="res://src/ui/weapon_choice_menu/weapon_choice_menu.tscn" id="4_weapon_choice"]
+[ext_resource type="PackedScene" uid="uid://btx4iqf8dquh4" path="res://src/ui/artefact_choice_menu/artefact_choice_menu.tscn" id="5_artefact_choice"]
 [ext_resource type="PackedScene" path="res://src/ui/anvil_upgrade_menu/anvil_upgrade_menu.tscn" id="6_anvil_menu"]
+[ext_resource type="PackedScene" path="res://src/ui/subclass_choice_menu/subclass_choice_menu.tscn" id="7_subclass_choice"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_xp_bg"]
 bg_color = Color(0.06, 0.07, 0.1, 0.6)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_xp_fill"]
-bg_color = Color(0.2, 0.75, 1.0, 1.0)
+bg_color = Color(0.2, 0.75, 1, 1)
 corner_radius_bottom_right = 2
 corner_radius_bottom_left = 2
 
@@ -20,15 +21,15 @@ bg_color = Color(0.1, 0.05, 0.05, 0.7)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_boss_fill"]
 bg_color = Color(0.85, 0.2, 0.2, 1)
+corner_radius_top_left = 2
 corner_radius_top_right = 2
 corner_radius_bottom_right = 2
-corner_radius_top_left = 2
 corner_radius_bottom_left = 2
 
-[node name="HUD" type="CanvasLayer"]
+[node name="HUD" type="CanvasLayer" unique_id=784706442]
 script = ExtResource("1_hud_script")
 
-[node name="Control" type="Control" parent="."]
+[node name="Control" type="Control" parent="." unique_id=1451814064]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -37,7 +38,7 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
-[node name="TopBar" type="Control" parent="Control"]
+[node name="TopBar" type="Control" parent="Control" unique_id=381395956]
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
@@ -45,7 +46,7 @@ offset_bottom = 26.0
 grow_horizontal = 2
 mouse_filter = 2
 
-[node name="Header" type="MarginContainer" parent="Control/TopBar"]
+[node name="Header" type="MarginContainer" parent="Control/TopBar" unique_id=62245250]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -57,12 +58,12 @@ theme_override_constants/margin_top = 4
 theme_override_constants/margin_right = 12
 theme_override_constants/margin_bottom = 4
 
-[node name="Row" type="HBoxContainer" parent="Control/TopBar/Header"]
+[node name="Row" type="HBoxContainer" parent="Control/TopBar/Header" unique_id=2118397580]
 layout_mode = 2
 theme_override_constants/separation = 10
 alignment = 1
 
-[node name="LevelLabel" type="Label" parent="Control/TopBar/Header/Row"]
+[node name="LevelLabel" type="Label" parent="Control/TopBar/Header/Row" unique_id=262914498]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.3, 0.85, 1, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
@@ -71,7 +72,7 @@ theme_override_font_sizes/font_size = 11
 text = "Team Lv. 1"
 vertical_alignment = 1
 
-[node name="XPBar" type="ProgressBar" parent="Control/TopBar/Header/Row"]
+[node name="XPBar" type="ProgressBar" parent="Control/TopBar/Header/Row" unique_id=940743972]
 custom_minimum_size = Vector2(140, 14)
 layout_mode = 2
 size_flags_horizontal = 3
@@ -79,7 +80,7 @@ theme_override_styles/background = SubResource("StyleBoxFlat_xp_bg")
 theme_override_styles/fill = SubResource("StyleBoxFlat_xp_fill")
 show_percentage = false
 
-[node name="XPTextLabel" type="Label" parent="Control/TopBar/Header/Row"]
+[node name="XPTextLabel" type="Label" parent="Control/TopBar/Header/Row" unique_id=1806848465]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.85, 0.85, 0.85, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
@@ -88,7 +89,7 @@ theme_override_font_sizes/font_size = 10
 text = "0 / 10 XP"
 vertical_alignment = 1
 
-[node name="DifficultyLabel" type="Label" parent="Control/TopBar/Header/Row"]
+[node name="DifficultyLabel" type="Label" parent="Control/TopBar/Header/Row" unique_id=239763811]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.7, 0.85, 0.45, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
@@ -97,7 +98,7 @@ theme_override_font_sizes/font_size = 9
 text = "Map Difficulty: 0"
 vertical_alignment = 1
 
-[node name="SessionTimerLabel" type="Label" parent="Control/TopBar/Header/Row"]
+[node name="SessionTimerLabel" type="Label" parent="Control/TopBar/Header/Row" unique_id=2138253793]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.85, 0.7, 0.95, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
@@ -106,7 +107,7 @@ theme_override_font_sizes/font_size = 9
 text = "Session: 00:00"
 vertical_alignment = 1
 
-[node name="BossBar" type="ProgressBar" parent="Control"]
+[node name="BossBar" type="ProgressBar" parent="Control" unique_id=1401254228]
 visible = false
 layout_mode = 1
 anchors_preset = 5
@@ -121,7 +122,7 @@ theme_override_styles/background = SubResource("StyleBoxFlat_boss_bg")
 theme_override_styles/fill = SubResource("StyleBoxFlat_boss_fill")
 show_percentage = false
 
-[node name="BossName" type="Label" parent="Control/BossBar"]
+[node name="BossName" type="Label" parent="Control/BossBar" unique_id=419468296]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -132,10 +133,10 @@ theme_override_colors/font_color = Color(1, 0.85, 0.85, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 2
 theme_override_font_sizes/font_size = 10
-horizontal_alignment = 1
 text = "Boss"
+horizontal_alignment = 1
 
-[node name="GoldLabel" type="Label" parent="Control"]
+[node name="GoldLabel" type="Label" parent="Control" unique_id=193747291]
 layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
@@ -149,10 +150,10 @@ theme_override_colors/font_color = Color(1, 0.82, 0.2, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 2
 theme_override_font_sizes/font_size = 14
-horizontal_alignment = 2
 text = "🪙 0"
+horizontal_alignment = 2
 
-[node name="ArtefactCaption" type="Label" parent="Control"]
+[node name="ArtefactCaption" type="Label" parent="Control" unique_id=163963852]
 layout_mode = 0
 offset_left = 10.0
 offset_top = 52.0
@@ -164,7 +165,7 @@ theme_override_constants/outline_size = 2
 theme_override_font_sizes/font_size = 10
 text = "Artifacts"
 
-[node name="ArtefactBar" type="HBoxContainer" parent="Control"]
+[node name="ArtefactBar" type="HBoxContainer" parent="Control" unique_id=112016451]
 layout_mode = 0
 offset_left = 76.0
 offset_top = 50.0
@@ -172,42 +173,42 @@ offset_right = 226.0
 offset_bottom = 68.0
 theme_override_constants/separation = 3
 
-[node name="ArtSlot0" type="Label" parent="Control/ArtefactBar"]
+[node name="ArtSlot0" type="Label" parent="Control/ArtefactBar" unique_id=219348768]
 layout_mode = 2
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 2
 theme_override_font_sizes/font_size = 16
 text = "◇"
 
-[node name="ArtSlot1" type="Label" parent="Control/ArtefactBar"]
+[node name="ArtSlot1" type="Label" parent="Control/ArtefactBar" unique_id=837169662]
 layout_mode = 2
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 2
 theme_override_font_sizes/font_size = 16
 text = "◇"
 
-[node name="ArtSlot2" type="Label" parent="Control/ArtefactBar"]
+[node name="ArtSlot2" type="Label" parent="Control/ArtefactBar" unique_id=880254341]
 layout_mode = 2
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 2
 theme_override_font_sizes/font_size = 16
 text = "◇"
 
-[node name="ArtSlot3" type="Label" parent="Control/ArtefactBar"]
+[node name="ArtSlot3" type="Label" parent="Control/ArtefactBar" unique_id=697289139]
 layout_mode = 2
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 2
 theme_override_font_sizes/font_size = 16
 text = "◇"
 
-[node name="ArtSlot4" type="Label" parent="Control/ArtefactBar"]
+[node name="ArtSlot4" type="Label" parent="Control/ArtefactBar" unique_id=630862993]
 layout_mode = 2
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 2
 theme_override_font_sizes/font_size = 16
 text = "◇"
 
-[node name="RightBar" type="Control" parent="Control"]
+[node name="RightBar" type="Control" parent="Control" unique_id=1142958912]
 layout_mode = 1
 anchors_preset = 6
 anchor_left = 1.0
@@ -222,7 +223,7 @@ grow_horizontal = 0
 grow_vertical = 2
 mouse_filter = 2
 
-[node name="Margin" type="MarginContainer" parent="Control/RightBar"]
+[node name="Margin" type="MarginContainer" parent="Control/RightBar" unique_id=394894560]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -230,41 +231,40 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="WeaponContainer" type="VBoxContainer" parent="Control/RightBar/Margin"]
+[node name="WeaponContainer" type="VBoxContainer" parent="Control/RightBar/Margin" unique_id=1419582313]
 layout_mode = 2
 theme_override_constants/separation = 4
 alignment = 1
 
-[node name="PrimarySlot" parent="Control/RightBar/Margin/WeaponContainer" instance=ExtResource("2_slot_scene")]
+[node name="PrimarySlot" parent="Control/RightBar/Margin/WeaponContainer" unique_id=1728994431 instance=ExtResource("2_slot_scene")]
 layout_mode = 2
-slot_badge = "LMB"
 
-[node name="SecondarySlot" parent="Control/RightBar/Margin/WeaponContainer" instance=ExtResource("2_slot_scene")]
+[node name="SecondarySlot" parent="Control/RightBar/Margin/WeaponContainer" unique_id=1203976182 instance=ExtResource("2_slot_scene")]
 layout_mode = 2
 slot_badge = "RMB"
 
-[node name="AutoSlot1" parent="Control/RightBar/Margin/WeaponContainer" instance=ExtResource("2_slot_scene")]
+[node name="AutoSlot1" parent="Control/RightBar/Margin/WeaponContainer" unique_id=280226595 instance=ExtResource("2_slot_scene")]
 layout_mode = 2
 slot_badge = "A1"
 
-[node name="AutoSlot2" parent="Control/RightBar/Margin/WeaponContainer" instance=ExtResource("2_slot_scene")]
+[node name="AutoSlot2" parent="Control/RightBar/Margin/WeaponContainer" unique_id=1442351299 instance=ExtResource("2_slot_scene")]
 layout_mode = 2
 slot_badge = "A2"
 
-[node name="AutoSlot3" parent="Control/RightBar/Margin/WeaponContainer" instance=ExtResource("2_slot_scene")]
+[node name="AutoSlot3" parent="Control/RightBar/Margin/WeaponContainer" unique_id=480008177 instance=ExtResource("2_slot_scene")]
 layout_mode = 2
 slot_badge = "A3"
 
-[node name="LevelUpMenu" parent="." instance=ExtResource("3_level_up_menu")]
+[node name="LevelUpMenu" parent="." unique_id=1240038192 instance=ExtResource("3_level_up_menu")]
 
-[node name="WeaponChoiceMenu" parent="." instance=ExtResource("4_weapon_choice")]
+[node name="WeaponChoiceMenu" parent="." unique_id=1212630279 instance=ExtResource("4_weapon_choice")]
 
-[node name="AnvilUpgradeMenu" parent="." instance=ExtResource("6_anvil_menu")]
+[node name="AnvilUpgradeMenu" parent="." unique_id=1400799529 instance=ExtResource("6_anvil_menu")]
 
-[node name="ArtefactChoiceMenu" parent="." instance=ExtResource("5_artefact_choice")]
+[node name="ArtefactChoiceMenu" parent="." unique_id=1987574432 instance=ExtResource("5_artefact_choice")]
 
-[node name="SessionTimer" type="Timer" parent="."]
+[node name="SubclassChoiceMenu" parent="." unique_id=26472721 instance=ExtResource("7_subclass_choice")]
+
+[node name="SessionTimer" type="Timer" parent="." unique_id=861884868]
 process_mode = 3
-wait_time = 1.0
 autostart = true
-one_shot = false

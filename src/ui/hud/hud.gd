@@ -14,6 +14,7 @@ const DASH_UPGRADE_MENU_SCENE: PackedScene = preload("res://src/ui/dash_upgrade_
 @onready var weapon_choice_menu: WeaponChoiceMenu = get_node_or_null("WeaponChoiceMenu") as WeaponChoiceMenu
 @onready var anvil_upgrade_menu: AnvilUpgradeMenu = get_node_or_null("AnvilUpgradeMenu") as AnvilUpgradeMenu
 @onready var artefact_choice_menu: ArtefactChoiceMenu = get_node_or_null("ArtefactChoiceMenu") as ArtefactChoiceMenu
+@onready var subclass_choice_menu: SubclassChoiceMenu = get_node_or_null("SubclassChoiceMenu") as SubclassChoiceMenu
 @onready var session_timer: Timer = get_node_or_null("SessionTimer") as Timer
 @onready var boss_bar: ProgressBar = get_node_or_null("Control/BossBar") as ProgressBar
 @onready var boss_name_label: Label = get_node_or_null("Control/BossBar/BossName") as Label
@@ -253,6 +254,8 @@ func _connect_to_level_up_menu() -> void:
 		anvil_upgrade_menu.upgrade_applied.connect(_on_anvil_upgrade_applied)
 	if artefact_choice_menu and not artefact_choice_menu.closed.is_connected(_on_artefact_menu_closed):
 		artefact_choice_menu.closed.connect(_on_artefact_menu_closed)
+	if subclass_choice_menu and not subclass_choice_menu.closed.is_connected(_on_subclass_menu_closed):
+		subclass_choice_menu.closed.connect(_on_subclass_menu_closed)
 
 func _connect_to_session_timer() -> void:
 	if session_timer and not session_timer.timeout.is_connected(_on_session_timer_timeout):
@@ -473,6 +476,29 @@ func show_artefact_choice(cursed_only: bool = false) -> void:
 ## in show_artefact_choice, so no leaked block can leave the game permanently
 ## paused. (The relic application itself happens inside the menu.)
 func _on_artefact_menu_closed() -> void:
+	PauseCoord.end_block()
+
+# --- Subclass Choice (Altar of Ascension, room 10) ---
+
+## Opens the subclass choice menu for the current player. Same blocking-ui /
+## pause-block pattern as the artefact menu: begin_block on open, end_block when
+## the menu emits `closed`, so no leaked block can leave the game permanently
+## paused.
+func show_subclass_choice() -> void:
+	if subclass_choice_menu == null or current_player == null:
+		# fall back to looking the player up in case HUD initialised early
+		current_player = get_tree().get_first_node_in_group("player") as Player
+		if subclass_choice_menu == null or current_player == null:
+			return
+	if subclass_choice_menu.visible:
+		return
+	PauseCoord.begin_block()
+	subclass_choice_menu.open_for_player(current_player)
+
+
+## The menu self-resolves (pick a subclass) and emits `closed`; releasing the
+## pause block here keeps it balanced with the begin_block in show_subclass_choice.
+func _on_subclass_menu_closed() -> void:
 	PauseCoord.end_block()
 
 func _on_difficulty_timer_timeout() -> void:
