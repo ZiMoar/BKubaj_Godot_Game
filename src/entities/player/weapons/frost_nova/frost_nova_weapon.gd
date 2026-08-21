@@ -4,7 +4,7 @@ extends Weapon
 ## the player, damaging it and briefly slowing it. A drawn ring shows the effect.
 
 @export var nova_radius: float = 105.0
-@export var base_damage: int = 42
+@export var base_damage: int = 46
 @export var slow_duration: float = 2.0
 @export var slow_factor: float = 0.45
 @export var frost_scene: PackedScene
@@ -55,7 +55,8 @@ func fire() -> void:
 		if origin.distance_to(en.global_position) <= eff_radius:
 			# Whether the target was already slowed BEFORE this nova's slow hits.
 			var was_slowed: bool = en.get("slow_timer") != null and float(en.get("slow_timer")) > 0.0
-			en.take_damage(dmg, false, damage_type, false, get_ailment_effect_multiplier())
+			var dealt: int = apply_range_damage_multiplier(dmg, origin.distance_to(en.global_position))
+			en.take_damage(dealt, false, damage_type, false, get_ailment_effect_multiplier())
 			apply_lifesteal()
 			if en.has_method("apply_slow"):
 				en.apply_slow(slow_duration, slow_factor)
@@ -65,7 +66,7 @@ func fire() -> void:
 				en.apply_freeze()
 			if en.is_in_group("enemies"):
 				if en.has_method("has_died") and en.has_died():
-					apply_explosion_on_kill(en.global_position, dmg)
+					apply_explosion_on_kill(en.global_position, dealt)
 
 	if frost_scene:
 		var ring = frost_scene.instantiate()

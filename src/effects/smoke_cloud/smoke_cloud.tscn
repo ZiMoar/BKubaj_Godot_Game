@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://src/effects/smoke_cloud/smoke_cloud.gd" id="1_s"]
+
+[node name="SmokeCloud" type="Node2D"]
+script = ExtResource("1_s")

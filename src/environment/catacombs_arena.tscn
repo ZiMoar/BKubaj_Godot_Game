@@ -18,6 +18,7 @@
 [ext_resource type="PackedScene" path="res://src/environment/obstacles/crumbling_pillar/crumbling_pillar.tscn" id="36_crumble"]
 [ext_resource type="PackedScene" path="res://src/environment/obstacles/spikes/spikes.tscn" id="37_spikes"]
 [ext_resource type="PackedScene" path="res://src/environment/anvil_spawner/anvil_spawner.tscn" id="38_anvil_spawner"]
+[ext_resource type="PackedScene" path="res://src/entities/enemies/spawners/loot_pot_spawner/loot_pot_spawner.tscn" id="39_pot_spawner"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_horiz"]
 size = Vector2(2100, 32)
@@ -45,6 +46,8 @@ spawn_interval = 1.5
 [node name="SkeletonNecromancerSpawner" parent="." unique_id=1844481739 instance=ExtResource("31_necromancer_spawner")]
 
 [node name="BatSpawner" parent="." unique_id=1529980191 instance=ExtResource("32_bat_spawner")]
+
+[node name="LootPotSpawner" parent="." unique_id=1844481740 instance=ExtResource("39_pot_spawner")]
 
 [node name="XPOrbSpatialManager" type="Node" parent="." unique_id=1929542861]
 script = ExtResource("6_xp_orb_spatial")

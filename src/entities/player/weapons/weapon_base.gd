@@ -311,6 +311,14 @@ func get_range_damage_multiplier(distance_from_player: float) -> float:
 	return 1.0
 
 
+## Returns `base` damage adjusted by the close/far range bonus at the given
+## distance from the player. No-op (returns base) if neither range bonus is owned.
+func apply_range_damage_multiplier(base: int, distance: float) -> int:
+	if close_range_damage_bonus <= 0.0 and far_range_damage_bonus <= 0.0:
+		return base
+	return maxi(1, int(round(float(base) * get_range_damage_multiplier(distance))))
+
+
 func _get_screen_reach() -> float:
 	var vp := get_viewport()
 	if vp == null:

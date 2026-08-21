@@ -23,7 +23,7 @@ func _ready() -> void:
 
 
 func supports_projectile_count() -> bool:
-	return true
+	return false
 
 func supports_area() -> bool:
 	return true
@@ -43,7 +43,9 @@ func get_signature_pool() -> Array[Dictionary]:
 
 
 func fire() -> void:
-	var count: int = get_effective_projectile_count(BASE_PULSE_COUNT)
+	# Projectile scaling is intentionally disabled for Magic Pulse: it always
+	# fires a single cone.
+	var count: int = 1
 	var aim: Vector2 = _nearest_enemy_dir()
 	var dmg: int = get_attack_damage(BASE_DAMAGE)
 	var crit: bool = roll_critical_hit()

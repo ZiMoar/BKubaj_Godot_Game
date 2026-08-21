@@ -8,6 +8,7 @@ signal artefacts_changed()
 signal gold_changed(current_gold: int)
 
 const ARTEFACTS: Script = preload("res://src/systems/artefact.gd")
+const RadiusRingScene: PackedScene = preload("res://src/effects/radius_ring/radius_ring.tscn")
 
 # --- Player Stats ---
 @export_category("Offense")
@@ -33,6 +34,15 @@ const ARTEFACTS: Script = preload("res://src/systems/artefact.gd")
 @export var hp_regen_per_second: float = 0.0
 @export var armor: float = 0.0
 @export var evasion_chance: float = 0.0
+## Temporary flat dodge-chance bonus (e.g. Rogue's Smoke Bomb). Added on top of
+## the evasion-derived dodge chance; capped with it so dodge can never exceed 95%.
+var dodge_chance_bonus: float = 0.0
+## Rocketman (engineer ascension): remaining time of the post-Rocket-Jump buff.
+var _rocketman_buff_timer: float = 0.0
+## Phantom (rogue ascension): the next attack after reappearing deals double dmg.
+var _phantom_bonus_attack: bool = false
+## Phantom: while invisible, move faster.
+var _phantom_invis_active: bool = false
 @export var lifesteal_flat: float = 0.0
 @export var revive_count: int = 0
 @export var revive_health_percent: float = 0.25
@@ -124,12 +134,39 @@ const MOBILITY_CONFIG: Dictionary = {
 		"cooldown": 1.5,
 		"invincible": true,
 	},
+	"rocket_jump": {
+		"type": "dash",
+		"speed": 640.0,
+		"duration": 0.34,
+		"cooldown": 4.0,
+		"invincible": true,
+		"shove": 300.0,
+	},
+	"invisibility": {
+		"type": "dash",
+		"speed": 560.0,
+		"duration": 0.55,
+		"cooldown": 6.0,
+		"invincible": false,
+	},
+	"spin_dash": {
+		"type": "dash",
+		"speed": 620.0,
+		"duration": 0.42,
+		"cooldown": 3.5,
+		"invincible": true,
+		"shove": 280.0,
+	},
 }
 var _mobility_active: bool = false
 var _mobility_velocity: Vector2 = Vector2.ZERO
 var _mobility_time_left: float = 0.0
 var _mobility_cd_remaining: float = 0.0
 var _mobility_id: String = ""
+# Launch position captured at dash start (Rocket Jump blasts around this point).
+var _mobility_start_pos: Vector2 = Vector2.ZERO
+# Cooldown between Berserker whirlwind damage ticks while the spin-dash is active.
+var _whirl_timer: float = 0.0
 # Dash charge bank: ready charges. The refill countdown reuses _mobility_cd_remaining.
 var _dash_charges_ready: int = 1
 # Momentum relic: window (s) of +50% damage after a dash/teleport.
@@ -183,6 +220,21 @@ const DEATH_KNIGHT_SHIELD_MULT: float = 1.25
 const BLOOD_MAGE_DAMAGE_MULT: float = 1.6
 ## Blood Mage: % of max HP drained per spell cast during Mana Overload.
 const BLOOD_MAGE_CAST_COST_PCT: float = 0.04
+
+## Sapper (engineer ascension): damage multiplier while a turret is deployed.
+const SAPPER_TURRET_DAMAGE_MULT: float = 1.20
+## Rocketman (engineer ascension): post-jump damage/speed buff.
+const ROCKETMAN_BUFF_DAMAGE_MULT: float = 1.30
+const ROCKETMAN_BUFF_SPEED_MULT: float = 1.15
+const ROCKETMAN_BUFF_TIME: float = 3.0
+## Bladedancer (rogue ascension): damage gain per point of evasion.
+const BLADEDANCER_EVASION_DAMAGE: float = 0.004
+## Phantom (rogue ascension): damage multiplier on the attack after reappearing.
+const PHANTOM_NEXT_ATTACK_MULT: float = 2.0
+const PHANTOM_INVIS_SPEED_MULT: float = 1.25
+## Bloodrager (berserker ascension): attack-speed gain per max HP, low-HP damage.
+const BLOODRAGER_HP_TO_ATTACK_SPEED: float = 0.10
+const BLOODRAGER_LOWHP_MULT: float = 1.30
 
 var artefact_ids: Array[String] = []
 ## Cursed relics occupy a separate pool so they don't crowd out normal relics.
@@ -252,6 +304,9 @@ func get_attack_speed_multiplier() -> float:
 	var bonus: float = attack_speed_bonus
 	if has_artefact(ARTEFACT_REGEN_TO_ATTACK_SPEED):
 		bonus += hp_regen_per_second * REGEN_TO_ATTACK_SPEED_FACTOR
+	# Bloodrager (berserker ascension): maximum health increases attack speed.
+	if is_subclass("bloodrager"):
+		bonus += float(current_max_health()) * BLOODRAGER_HP_TO_ATTACK_SPEED
 	return 100.0 / (100.0 + maxf(0.0, bonus))
 
 # Flat armor with the same diminishing-returns formula as attack speed.
@@ -364,6 +419,22 @@ func get_attack_damage(base_damage: float) -> int:
 	# Blood Mage (mage ascension): during Mana Overload, spells deal far more.
 	if is_subclass("blood_mage") and is_overload_active():
 		damage *= BLOOD_MAGE_DAMAGE_MULT
+	# Bladedancer (rogue ascension): damage scales with evasion.
+	if is_subclass("bladedancer"):
+		damage *= 1.0 + maxf(0.0, evasion_chance) * BLADEDANCER_EVASION_DAMAGE
+	# Phantom (rogue ascension): the attack after reappearing deals double damage.
+	if is_subclass("phantom") and _phantom_bonus_attack:
+		damage *= PHANTOM_NEXT_ATTACK_MULT
+		_phantom_bonus_attack = false
+	# Sapper (engineer ascension): +20% damage while a turret is deployed.
+	if is_subclass("sapper") and not get_tree().get_nodes_in_group("turrets").is_empty():
+		damage *= SAPPER_TURRET_DAMAGE_MULT
+	# Rocketman (engineer ascension): brief damage buff right after a Rocket Jump.
+	if is_subclass("rocketman") and _rocketman_buff_timer > 0.0:
+		damage *= ROCKETMAN_BUFF_DAMAGE_MULT
+	# Bloodrager (berserker ascension): +30% damage while below half health.
+	if is_subclass("bloodrager") and current_health <= current_max_health() * 0.5:
+		damage *= BLOODRAGER_LOWHP_MULT
 	return max(0, int(round(damage)))
 
 func get_map_difficulty() -> float:
@@ -901,6 +972,9 @@ func _physics_process(delta: float) -> void:
 func _process(_delta: float) -> void:
 	if multiplayer.has_multiplayer_peer() and not is_multiplayer_authority():
 		_sync_replicated_hp_ui()
+	# Rocketman (engineer ascension): count down the post-jump buff.
+	if _rocketman_buff_timer > 0.0:
+		_rocketman_buff_timer = maxf(0.0, _rocketman_buff_timer - _delta)
 
 
 ## Rebuilds the HP/Shield bars from the replicated health fields on a ghost.
@@ -937,9 +1011,12 @@ func handle_movement() -> void:
 	if _mobility_active:
 		velocity = _mobility_velocity + current_move_input * current_move_speed() * 0.2
 		move_and_slide()
+		_tick_mobility_effect()
 		_mobility_time_left -= get_physics_process_delta_time()
 		if _mobility_time_left <= 0.0:
 			_mobility_active = false
+			if _mobility_id == "invisibility":
+				modulate = Color.WHITE
 			_apply_mobility_shove()
 		return
 	velocity = current_move_input * current_move_speed()
@@ -953,6 +1030,12 @@ func current_move_speed() -> float:
 	# Sloth (Idle Fortitude): move speed -20%.
 	if has_artefact(ARTEFACT_IDLE_FORTITUDE):
 		base *= SLOTH_SPEED_MULT
+	# Rocketman (engineer ascension): +15% speed right after a Rocket Jump.
+	if is_subclass("rocketman") and _rocketman_buff_timer > 0.0:
+		base *= ROCKETMAN_BUFF_SPEED_MULT
+	# Phantom (rogue ascension): move faster while invisible.
+	if is_subclass("phantom") and _phantom_invis_active:
+		base *= PHANTOM_INVIS_SPEED_MULT
 	return base
 
 # --- Class Mobility Ability (Space) ---
@@ -980,6 +1063,10 @@ func _process_dash_charge_refill(delta: float, cfg: Dictionary) -> void:
 
 ## Default per-dash refill time (config cooldown reduced by dash_cooldown bonus).
 func _effective_dash_cooldown(cfg: Dictionary) -> float:
+	# Whirlmaster (berserker ascension): Whirlwind's cooldown drops to 1s and is
+	# shortened by attack speed.
+	if is_subclass("whirlmaster") and _get_class_ability_id() == "spin_dash":
+		return maxf(0.05, 1.0 * get_attack_speed_multiplier())
 	return maxf(0.05, float(cfg.get("cooldown", 1.0)) * (1.0 - clampf(dash_cooldown, 0.0, 0.8)))
 
 
@@ -1027,6 +1114,9 @@ func get_class_ability_name() -> String:
 		"shield_charge": "Shield Charge",
 		"teleport": "Teleport",
 		"dodge_roll": "Dodge Roll",
+		"rocket_jump": "Rocket Jump",
+		"invisibility": "Invisibility",
+		"spin_dash": "Whirlwind",
 	}
 	return str(names.get(_mobility_id, ""))
 
@@ -1082,6 +1172,7 @@ func _start_dash(cfg: Dictionary, direction: Vector2) -> void:
 		start_mobility_invincibility(_mobility_time_left + 0.1)
 	if has_artefact("momentum"):
 		_momentum_timer = MOMENTUM_WINDOW
+	_on_mobility_start(cfg, direction)
 
 func _do_teleport(cfg: Dictionary, direction: Vector2) -> void:
 	var range_: float = float(cfg.get("range", 240.0))
@@ -1101,6 +1192,143 @@ func _do_teleport(cfg: Dictionary, direction: Vector2) -> void:
 	if has_artefact("momentum"):
 		_momentum_timer = MOMENTUM_WINDOW
 	_apply_mobility_shove()
+
+## Rogue's Smoke Bomb: grants a flat dodge-chance bonus for `duration` seconds,
+## then removes it. Stacks additively with evasion (and Ghost Step) toward the cap.
+func set_smoke_bomb(bonus: float, duration: float) -> void:
+	dodge_chance_bonus = clampf(bonus, 0.0, 1.0)
+	await get_tree().create_timer(maxf(0.01, duration)).timeout
+	if is_instance_valid(self):
+		dodge_chance_bonus = 0.0
+
+
+## Per-class dash special effects, run when a dash starts.
+func _on_mobility_start(_cfg: Dictionary, _direction: Vector2) -> void:
+	_mobility_start_pos = global_position
+	match _mobility_id:
+		"rocket_jump":
+			_rocket_jump_blast(_mobility_start_pos)
+		"invisibility":
+			_start_invisibility(_mobility_time_left)
+		"spin_dash":
+			_spawn_follow_ring(100.0, _mobility_time_left, Color(0.9, 0.4, 0.3, 0.6))
+
+
+## Spawn a radius ring that follows the player (used for the Whirlwind dash's
+## damage radius while it spins).
+func _spawn_follow_ring(radius: float, dur: float, col: Color) -> void:
+	var ring: Node = RadiusRingScene.instantiate()
+	ring.name = "DashRadiusRing"
+	add_child(ring)
+	ring.position = Vector2.ZERO
+	if ring.has_method("setup"):
+		ring.setup(radius, dur, col)
+
+
+## Tick per-frame effects while a dash is active (e.g. the Berserker whirlwind).
+func _tick_mobility_effect() -> void:
+	if _mobility_id == "spin_dash":
+		_spin_dash_whirlwind()
+
+
+## Rocket Jump: deal basic-attack-grade FIRE damage around the launch point, in
+## the same radius as the Grenade Launcher's blast (inheriting its upgrades).
+func _rocket_jump_blast(origin: Vector2) -> void:
+	var weapon: Weapon = _class_primary_weapon()
+	if weapon == null:
+		return
+	var dmg: int = weapon.get_attack_damage(float(weapon.get("damage")))
+	var crit: bool = weapon.roll_critical_hit()
+	if crit:
+		dmg = int(round(float(dmg) * weapon.get_critical_multiplier()))
+	var radius: float = 80.0
+	if "blast_radius" in weapon:
+		radius = float(weapon.blast_radius) * weapon.get_area_multiplier()
+	# Rocketman (engineer ascension): doubled blast radius & knockback + a buff.
+	var rocketman: bool = is_subclass("rocketman")
+	if rocketman:
+		radius *= 2.0
+		_rocketman_buff_timer = ROCKETMAN_BUFF_TIME
+	var knockback_force: float = 440.0 if rocketman else 220.0
+	for e: Node in get_tree().get_nodes_in_group("enemies"):
+		if not is_instance_valid(e):
+			continue
+		var en: Node2D = e as Node2D
+		if origin.distance_to(en.global_position) <= radius:
+			var dmg_dealt: int = weapon.apply_range_damage_multiplier(dmg, origin.distance_to(en.global_position))
+			en.take_damage(dmg_dealt, crit, weapon.damage_type if weapon != null else DamageType.Type.FIRE, false, weapon.get_ailment_effect_multiplier())
+			if en.has_method("apply_knockback"):
+				en.apply_knockback(origin, knockback_force)
+			apply_lifesteal()
+			if en.has_method("has_died") and en.has_died():
+				weapon.apply_explosion_on_kill(en.global_position, dmg_dealt)
+	# Visual: show the blast radius at the launch point.
+	var ring: Node = RadiusRingScene.instantiate()
+	ring.name = "RocketJumpRing"
+	get_tree().current_scene.add_child(ring)
+	ring.global_position = origin
+	if ring.has_method("setup"):
+		ring.setup(radius, 0.7, Color(1.0, 0.55, 0.2, 0.7))
+
+
+## Invisibility: become see-through and invincible for the dash's duration.
+func _start_invisibility(duration: float) -> void:
+	is_invincible = true
+	modulate = Color(1, 1, 1, 0.25)
+	# Phantom (rogue ascension): vanish slows nearby enemies and speeds you up.
+	var phantom: bool = is_subclass("phantom")
+	if phantom:
+		_phantom_invis_active = true
+		for e: Node in get_tree().get_nodes_in_group("enemies"):
+			if not is_instance_valid(e):
+				continue
+			var en: Node2D = e as Node2D
+			if en.global_position.distance_to(global_position) <= 180.0 and en.has_method("apply_slow"):
+				en.apply_slow(2.0, 0.5)
+	await get_tree().create_timer(maxf(0.01, duration)).timeout
+	if not is_instance_valid(self):
+		return
+	modulate = Color.WHITE
+	is_invincible = false
+	if phantom:
+		_phantom_invis_active = false
+		# The next attack after reappearing deals double damage.
+		_phantom_bonus_attack = true
+
+
+## Whirlwind: while the Berserker's spin-dash is active, periodically damage
+## everything in a radius around the player (like the Spin Axe).
+func _spin_dash_whirlwind() -> void:
+	_whirl_timer -= get_physics_process_delta_time()
+	if _whirl_timer > 0.0:
+		return
+	_whirl_timer = 0.15
+	var weapon: Weapon = _class_primary_weapon()
+	if weapon == null:
+		return
+	var dmg: int = weapon.get_attack_damage(float(weapon.get("damage")))
+	var radius: float = 100.0
+	for e: Node in get_tree().get_nodes_in_group("enemies"):
+		if not is_instance_valid(e):
+			continue
+		var en: Node2D = e as Node2D
+		if global_position.distance_to(en.global_position) <= radius:
+			var dmg_dealt: int = weapon.apply_range_damage_multiplier(dmg, global_position.distance_to(en.global_position))
+			en.take_damage(dmg_dealt, false, weapon.damage_type if weapon != null else DamageType.Type.PHYSICAL, false, weapon.get_ailment_effect_multiplier())
+			apply_lifesteal()
+			if en.has_method("has_died") and en.has_died():
+				weapon.apply_explosion_on_kill(en.global_position, dmg_dealt)
+
+
+## The class's primary weapon (used to share basic-attack damage with dashes).
+func _class_primary_weapon() -> Weapon:
+	if weapons_container == null:
+		return null
+	for w: Node in weapons_container.get_children():
+		if w is Weapon and w.trigger_type == Weapon.TriggerType.PRIMARY:
+			return w as Weapon
+	return null
+
 
 func start_mobility_invincibility(duration: float) -> void:
 	_start_invincibility_effect(duration, Color(0.6, 0.8, 1.0, 0.7))
@@ -1216,11 +1444,16 @@ func take_damage(amount: int, source: Node = null) -> void:
 	# Evasion is a FLAT stat like armor: chance to be hit = 100/(100+evasion), so
 	# dodge chance = 1 - that = evasion/(100+evasion). The Ghost Step relic adds a
 	# flat +20% dodge chance while a dash charge is ready.
-	var dodge_chance: float = get_evasion_dodge_chance()
+	var dodge_chance: float = get_evasion_dodge_chance() + dodge_chance_bonus
 	if has_artefact("ghost_step") and is_class_ability_ready():
 		dodge_chance = clampf(dodge_chance + 0.20, 0.0, 0.95)
+	dodge_chance = clampf(dodge_chance, 0.0, 0.95)
 
-	if randf() < dodge_chance:
+	var dodged: bool = randf() < dodge_chance
+	# Bladedancer (rogue ascension): lucky dodge — roll twice, dodge if either hits.
+	if not dodged and is_subclass("bladedancer"):
+		dodged = randf() < dodge_chance
+	if dodged:
 		trigger_evasion()
 		return
 

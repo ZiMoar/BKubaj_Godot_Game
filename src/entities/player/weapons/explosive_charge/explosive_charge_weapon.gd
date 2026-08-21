@@ -8,7 +8,7 @@ extends Weapon
 const ExplosiveChargeScene: PackedScene = preload("res://src/entities/projectiles/explosive_charge/explosive_charge.tscn")
 
 const BASE_BOMB_COUNT: int = 1
-const BASE_DAMAGE: int = 26
+const BASE_DAMAGE: int = 33
 const MAX_FUSE: float = 2.2
 const MIN_FUSE: float = 1.0
 const BOMB_RADIUS: float = 95.0

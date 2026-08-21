@@ -111,7 +111,7 @@ func _attack() -> void:
 	if target == null or not is_instance_valid(target):
 		return
 	if target.has_method("take_damage"):
-		target.take_damage(damage, is_critical, DamageType.Type.NECROTIC, false, source_weapon.get_ailment_effect_multiplier() if source_weapon != null else 1.0)
+		target.take_damage(damage, is_critical, source_weapon.damage_type if source_weapon != null else DamageType.Type.NECROTIC, false, source_weapon.get_ailment_effect_multiplier() if source_weapon != null else 1.0)
 		if source_player and source_player.has_method("apply_lifesteal"):
 			source_player.apply_lifesteal()
 		if source_weapon and target.is_in_group("enemies"):

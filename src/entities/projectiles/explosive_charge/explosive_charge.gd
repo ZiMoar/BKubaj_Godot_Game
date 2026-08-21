@@ -85,7 +85,7 @@ func _explode() -> void:
 			continue
 		var en: Node2D = e as Node2D
 		if origin.distance_to(en.global_position) <= radius:
-			en.take_damage(dmg, is_critical, DamageType.Type.FIRE, false, source_weapon.get_ailment_effect_multiplier() if source_weapon != null else 1.0)
+			en.take_damage(dmg, is_critical, source_weapon.damage_type if source_weapon != null else DamageType.Type.FIRE, false, source_weapon.get_ailment_effect_multiplier() if source_weapon != null else 1.0)
 			if source_player and source_player.has_method("apply_lifesteal"):
 				source_player.apply_lifesteal()
 			if en.has_method("apply_knockback"):

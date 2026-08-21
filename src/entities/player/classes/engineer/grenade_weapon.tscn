@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://src/entities/player/classes/engineer/grenade_weapon.gd" id="1_s"]
+
+[node name="grenade_weapon" type="Node2D"]
+script = ExtResource("1_s")

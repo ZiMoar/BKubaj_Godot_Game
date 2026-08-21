@@ -5,7 +5,7 @@ extends Weapon
 
 @export var dagger_scene: PackedScene
 @export var dagger_count: int = 8
-@export var base_damage: int = 25
+@export var base_damage: int = 44
 @export var dagger_speed: float = 380.0
 ## Enemies each dagger pierces through (default 3). Can be raised later via a pierce stat.
 @export var pierce_count: int = 3

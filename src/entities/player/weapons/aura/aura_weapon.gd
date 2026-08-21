@@ -2,8 +2,8 @@ extends Weapon
 
 const AuraFieldVisualScene: PackedScene = preload("res://src/entities/player/weapons/aura/aura_field_visual.tscn")
 
-@export var aura_radius: float = 72.0
-@export var base_damage: int = 6
+@export var aura_radius: float = 144.0
+@export var base_damage: int = 9
 
 @onready var aura_area: Area2D = $AuraArea
 @onready var aura_shape: CollisionShape2D = $AuraArea/CollisionShape2D
@@ -118,11 +118,12 @@ func _apply_pulse_damage() -> void:
 			if hit_this_pulse.has(body_id):
 				continue
 			hit_this_pulse[body_id] = true
-			body.take_damage(final_damage, false, damage_type, false, get_ailment_effect_multiplier())
+			var dealt: int = apply_range_damage_multiplier(final_damage, global_position.distance_to(body.global_position))
+			body.take_damage(dealt, false, damage_type, false, get_ailment_effect_multiplier())
 			apply_lifesteal()
 			if body.is_in_group("enemies"):
 				if body.has_method("has_died") and body.has_died():
-					apply_explosion_on_kill(body.global_position, final_damage)
+					apply_explosion_on_kill(body.global_position, dealt)
 
 	for area: Area2D in aura_area.get_overlapping_areas():
 		var parent: Node = area.get_parent()
@@ -131,11 +132,12 @@ func _apply_pulse_damage() -> void:
 			if hit_this_pulse.has(parent_id):
 				continue
 			hit_this_pulse[parent_id] = true
-			parent.take_damage(final_damage, false, damage_type, false, get_ailment_effect_multiplier())
+			var dealt: int = apply_range_damage_multiplier(final_damage, global_position.distance_to(parent.global_position))
+			parent.take_damage(dealt, false, damage_type, false, get_ailment_effect_multiplier())
 			apply_lifesteal()
 			if parent.is_in_group("enemies"):
 				if parent.has_method("has_died") and parent.has_died():
-					apply_explosion_on_kill(parent.global_position, final_damage)
+					apply_explosion_on_kill(parent.global_position, dealt)
 
 
 func _on_body_entered(_body: Node2D) -> void:

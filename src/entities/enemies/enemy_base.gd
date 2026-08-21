@@ -155,7 +155,7 @@ var _impale_echo_per_hit: float = 0.0
 # by a tint — genuinely hard to tell apart mid-swarm. Each subclass sets a small
 # doodle (distinct shape + color) which is drawn here with _draw() primitives so
 # each type reads clearly at a glance. doodle_kind: 0=circle 1=square 2=diamond
-# 3=triangle 4=bomb(fuse) 5=star 6=hexagon.
+# 3=triangle 4=bomb(fuse) 5=star 6=hexagon 7=pot.
 var doodle_kind: int = 0
 var doodle_color: Color = Color(0.9, 0.9, 0.95)
 var doodle_size: float = 6.0
@@ -376,6 +376,11 @@ func _draw() -> void:
 				pts2.append(Vector2(cos(ang2), sin(ang2)) * s)
 			draw_colored_polygon(pts2, c)
 			draw_circle(Vector2.ZERO, s * 0.2, Color(0, 0, 0, 0.35))
+		7:  # pot / jug (breakable loot vessel)
+			draw_circle(Vector2(0, 1), s * 0.85, c)                       # body
+			draw_rect(Rect2(-s * 0.5, -s * 0.55, s * 1.0, s * 0.7), c)    # shoulders
+			draw_rect(Rect2(-s * 0.26, -s * 1.15, s * 0.52, s * 0.6), c)  # neck
+			draw_rect(Rect2(-s * 0.42, -s * 1.45, s * 0.84, s * 0.3), c)  # rim
 
 
 func _physics_process(delta: float) -> void:

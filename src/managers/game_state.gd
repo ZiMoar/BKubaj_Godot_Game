@@ -13,6 +13,9 @@ extends Node
 const KNIGHT_SCENE: PackedScene = preload("res://src/entities/player/classes/knight/knight.tscn")
 const RANGER_SCENE: PackedScene = preload("res://src/entities/player/classes/ranger/ranger.tscn")
 const MAGE_SCENE: PackedScene = preload("res://src/entities/player/classes/mage/mage.tscn")
+const ENGINEER_SCENE: PackedScene = preload("res://src/entities/player/classes/engineer/engineer.tscn")
+const ROGUE_SCENE: PackedScene = preload("res://src/entities/player/classes/rogue/rogue.tscn")
+const BERSERKER_SCENE: PackedScene = preload("res://src/entities/player/classes/berserker/berserker.tscn")
 
 # Subclass (ascension) scripts, grouped by the class they belong to. Each is a
 # SubclassBase script instantiated via .new() (no scene children needed).
@@ -30,6 +33,21 @@ const RANGER_SUBCLASS_SCRIPTS: Array[Script] = [
 	preload("res://src/entities/player/subclasses/ranger/hunter.gd"),
 	preload("res://src/entities/player/subclasses/ranger/stormchaser.gd"),
 	preload("res://src/entities/player/subclasses/ranger/trickshot.gd"),
+]
+const ENGINEER_SUBCLASS_SCRIPTS: Array[Script] = [
+	preload("res://src/entities/player/subclasses/engineer/demolitionist.gd"),
+	preload("res://src/entities/player/subclasses/engineer/sapper.gd"),
+	preload("res://src/entities/player/subclasses/engineer/rocketman.gd"),
+]
+const ROGUE_SUBCLASS_SCRIPTS: Array[Script] = [
+	preload("res://src/entities/player/subclasses/rogue/shadowblade.gd"),
+	preload("res://src/entities/player/subclasses/rogue/phantom.gd"),
+	preload("res://src/entities/player/subclasses/rogue/bladedancer.gd"),
+]
+const BERSERKER_SUBCLASS_SCRIPTS: Array[Script] = [
+	preload("res://src/entities/player/subclasses/berserker/slayer.gd"),
+	preload("res://src/entities/player/subclasses/berserker/bloodrager.gd"),
+	preload("res://src/entities/player/subclasses/berserker/whirlmaster.gd"),
 ]
 
 const CATACOMBS_MAP: PackedScene = preload("res://src/environment/maps/catacombs/catacombs.tscn")
@@ -51,9 +69,15 @@ func _ready() -> void:
 	register_class(KNIGHT_SCENE)
 	register_class(RANGER_SCENE)
 	register_class(MAGE_SCENE)
+	register_class(ENGINEER_SCENE)
+	register_class(ROGUE_SCENE)
+	register_class(BERSERKER_SCENE)
 	_register_subclasses(KNIGHT_SUBCLASS_SCRIPTS)
 	_register_subclasses(MAGE_SUBCLASS_SCRIPTS)
 	_register_subclasses(RANGER_SUBCLASS_SCRIPTS)
+	_register_subclasses(ENGINEER_SUBCLASS_SCRIPTS)
+	_register_subclasses(ROGUE_SUBCLASS_SCRIPTS)
+	_register_subclasses(BERSERKER_SUBCLASS_SCRIPTS)
 	register_map(CATACOMBS_MAP)
 	register_map(TEST_MAP)
 	_register_class_ability_input()

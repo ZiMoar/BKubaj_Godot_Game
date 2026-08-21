@@ -5,17 +5,18 @@ extends Weapon
 ## then it loops back to step 1. (Nerfed from 3/4/5 up to 1/2/3.) The combo is
 ## always centered on the cursor.
 @export var arrow_scene: PackedScene
-@export var damage: int = 18
+@export var damage: int = 20
 @export var arrow_speed: float = 540.0
 @export var pierce_total: int = 6
 ## Once the arrow exhausts its pierce it can chain-bounce to another enemy within this range.
 @export var chain_range: float = 200.0
 
 # Combo definition: [arrow_count, total_spread_degrees] per step.
+# Spread tightened on the multi-arrow steps so the volley stays focused.
 const COMBO: Array[Vector2i] = [
 	Vector2i(1, 10),
-	Vector2i(2, 30),
-	Vector2i(3, 60),
+	Vector2i(2, 18),
+	Vector2i(3, 40),
 ]
 
 var combo_step: int = 0

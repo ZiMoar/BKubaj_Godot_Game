@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://src/entities/player/classes/rogue/rogue.gd" id="1_rogue"]
+
+[node name="Rogue" type="Node"]
+script = ExtResource("1_rogue")
