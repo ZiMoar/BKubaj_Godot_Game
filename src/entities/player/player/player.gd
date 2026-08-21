@@ -1306,15 +1306,19 @@ func _spin_dash_whirlwind() -> void:
 	var weapon: Weapon = _class_primary_weapon()
 	if weapon == null:
 		return
+	# Inherit the Spin Axe's damage, crit, area, element & status upgrades.
 	var dmg: int = weapon.get_attack_damage(float(weapon.get("damage")))
-	var radius: float = 100.0
+	var crit: bool = weapon.roll_critical_hit()
+	if crit:
+		dmg = int(round(float(dmg) * weapon.get_critical_multiplier()))
+	var radius: float = 100.0 * weapon.get_area_multiplier()
 	for e: Node in get_tree().get_nodes_in_group("enemies"):
 		if not is_instance_valid(e):
 			continue
 		var en: Node2D = e as Node2D
 		if global_position.distance_to(en.global_position) <= radius:
 			var dmg_dealt: int = weapon.apply_range_damage_multiplier(dmg, global_position.distance_to(en.global_position))
-			en.take_damage(dmg_dealt, false, weapon.damage_type if weapon != null else DamageType.Type.PHYSICAL, false, weapon.get_ailment_effect_multiplier())
+			en.take_damage(dmg_dealt, crit, weapon.damage_type if weapon != null else DamageType.Type.PHYSICAL, false, weapon.get_ailment_effect_multiplier())
 			apply_lifesteal()
 			if en.has_method("has_died") and en.has_died():
 				weapon.apply_explosion_on_kill(en.global_position, dmg_dealt)

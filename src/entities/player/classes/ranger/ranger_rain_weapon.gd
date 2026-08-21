@@ -56,7 +56,9 @@ func fire() -> void:
 			continue
 		var enemy: Node2D = node as Node2D
 		if enemy.global_position.distance_to(center) <= eff_radius:
-			enemy.take_damage(total, false, damage_type, false, get_ailment_effect_multiplier())
+			# Inherit the Longbow's element too, so infusing the bow changes the rain.
+			var dmg_type: DamageType.Type = (bow.damage_type if bow else damage_type)
+			enemy.take_damage(total, false, dmg_type, false, get_ailment_effect_multiplier())
 			apply_lifesteal()
 			if enemy.has_method("apply_knockback"):
 				enemy.apply_knockback(center, get_knockback(220.0))
