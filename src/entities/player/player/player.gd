@@ -33,6 +33,12 @@ const RadiusRingScene: PackedScene = preload("res://src/effects/radius_ring/radi
 @export var max_health_bonus: int = 0
 @export var hp_regen_per_second: float = 0.0
 @export var armor: float = 0.0
+## Bonus armor granted by the Fire Aura "Defensive Pyre" signature (kept in sync
+## while the aura is active). Added to the player's total armor.
+var defensive_pyre_armor: float = 0.0
+## Damage multiplier granted by the Radiant Barrier "Blessed Shield" signature
+## while the barrier is active (1.0 = no buff). Kept in sync by the barrier.
+var blessed_shield_mult: float = 1.0
 @export var evasion_chance: float = 0.0
 ## Temporary flat dodge-chance bonus (e.g. Rogue's Smoke Bomb). Added on top of
 ## the evasion-derived dodge chance; capped with it so dodge can never exceed 95%.
@@ -316,6 +322,7 @@ func current_armor() -> float:
 	var value: float = maxf(0.0, armor)
 	if has_artefact(ARTEFACT_MAXHP_TO_ARMOR):
 		value += float(current_max_health()) * IRON_HEART_ARMOR_RATIO
+	value += defensive_pyre_armor
 	return value
 
 func get_damage_reduction_multiplier() -> float:
@@ -435,6 +442,8 @@ func get_attack_damage(base_damage: float) -> int:
 	# Bloodrager (berserker ascension): +30% damage while below half health.
 	if is_subclass("bloodrager") and current_health <= current_max_health() * 0.5:
 		damage *= BLOODRAGER_LOWHP_MULT
+	# Blessed Shield (Radiant Barrier signature): damage buff while the barrier is up.
+	damage *= blessed_shield_mult
 	return max(0, int(round(damage)))
 
 func get_map_difficulty() -> float:

@@ -77,7 +77,14 @@ custom_minimum_size = Vector2(0, 36)
 layout_mode = 2
 text = "Reroll (300g)"
 
-[node name="SacrificeContainer" type="VBoxContainer" parent="CenterContainer/Panel/Vertical" unique_id=1772111705]
+[node name="SacrificeScroll" type="ScrollContainer" parent="CenterContainer/Panel/Vertical"]
+layout_mode = 2
+size_flags_vertical = 3
+custom_minimum_size = Vector2(0, 150)
+horizontal_scroll_mode = 0
+
+[node name="SacrificeContainer" type="VBoxContainer" parent="CenterContainer/Panel/Vertical/SacrificeScroll"]
 visible = false
 layout_mode = 2
+size_flags_horizontal = 3
 theme_override_constants/separation = 6

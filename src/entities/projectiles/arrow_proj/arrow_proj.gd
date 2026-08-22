@@ -14,6 +14,8 @@ var chain_range: float = 200.0
 var source_weapon: Node = null
 ## Flat damage added per chain-hop (Dancing Arrows signature).
 var damage_per_chain: int = 0
+## Slight homing toward the nearest enemy (Magic Arrows signature). 0 = off.
+var homing_strength: float = 0.0
 ## Number of chain-hops already made; multiplies damage_per_chain.
 var _chain_damage_ramp: int = 0
 var _lifetime: float = 2.0
@@ -50,7 +52,28 @@ func _physics_process(delta: float) -> void:
 	if _lifetime <= 0.0:
 		queue_free()
 		return
+	# Magic Arrows: curve gently toward the nearest enemy.
+	if homing_strength > 0.0:
+		var target: Node2D = _nearest_enemy()
+		if target != null:
+			var desired: Vector2 = (target.global_position - global_position).normalized()
+			dir = dir.slerp(desired, minf(1.0, homing_strength * delta)).normalized()
+			rotation = dir.angle()
 	global_position += dir * speed * delta
+
+
+func _nearest_enemy() -> Node2D:
+	var best: Node2D = null
+	var best_d: float = INF
+	for e: Node in get_tree().get_nodes_in_group("enemies"):
+		if not is_instance_valid(e):
+			continue
+		var en: Node2D = e as Node2D
+		var d: float = global_position.distance_squared_to(en.global_position)
+		if d < best_d:
+			best_d = d
+			best = en
+	return best
 
 
 func _on_body_entered(body: Node2D) -> void:

@@ -40,7 +40,21 @@ func get_signature_pool() -> Array[Dictionary]:
 		{
 			"id": "executioner",
 			"title": "Executioner",
-			"description": "Spin Axe's outer-edge hits gain +40% crit chance (on top of the double damage).",
+			"description": "Spin Axe's outer-edge hits gain +40% crit chance.",
+			"value": 1,
+			"apply": func(_w: Weapon) -> void: pass,
+		},
+		{
+			"id": "bloodthirst",
+			"title": "Bloodthirst",
+			"description": "An outer-edge hit heals you once per swing.",
+			"value": 1,
+			"apply": func(_w: Weapon) -> void: pass,
+		},
+		{
+			"id": "twin_throw",
+			"title": "Twin Throw",
+			"description": "Your Axe Throw hurls a second axe alongside the first.",
 			"value": 1,
 			"apply": func(_w: Weapon) -> void: pass,
 		},
@@ -54,6 +68,8 @@ func fire() -> void:
 	var eff_reach: float = reach * get_area_multiplier()
 	var edge: float = eff_reach * outer_ratio
 	var executioner: bool = has_signature("executioner")
+	var bloodthirst: bool = has_signature("bloodthirst")
+	var bloodthirsted: bool = false
 
 	for e: Node in get_tree().get_nodes_in_group("enemies"):
 		if not is_instance_valid(e):
@@ -64,6 +80,12 @@ func fire() -> void:
 			# Outer edge hits for double damage.
 			var edge_hit: bool = dist >= edge
 			var eff_dmg: int = base if not edge_hit else int(round(float(base) * outer_damage_mult))
+			# "Bloodthirst": an outer-edge hit heals the player (once per swing).
+			if bloodthirst and edge_hit and not bloodthirsted:
+				bloodthirsted = true
+				var p: Node = get_player()
+				if p != null and p.has_method("heal"):
+					p.heal(maxf(1.0, float(eff_dmg) * 0.15))
 			# Roll crit per target; Executioner adds +40% crit chance on the edge.
 			var c: bool = roll_critical_hit()
 			if executioner and edge_hit and randf() < 0.40:

@@ -16,7 +16,8 @@ enum Mode { CHOOSE, PROMPT, SACRIFICE }
 @onready var button_2: Button = get_node_or_null("CenterContainer/Panel/Vertical/Choice2") as Button
 @onready var button_3: Button = get_node_or_null("CenterContainer/Panel/Vertical/Choice3") as Button
 @onready var reroll_button: Button = get_node_or_null("CenterContainer/Panel/Vertical/RerollButton") as Button
-@onready var sacrifice_container: VBoxContainer = get_node_or_null("CenterContainer/Panel/Vertical/SacrificeContainer") as VBoxContainer
+@onready var sacrifice_container: VBoxContainer = get_node_or_null("CenterContainer/Panel/Vertical/SacrificeScroll/SacrificeContainer") as VBoxContainer
+@onready var sacrifice_scroll: ScrollContainer = get_node_or_null("CenterContainer/Panel/Vertical/SacrificeScroll") as ScrollContainer
 
 var rng := RandomNumberGenerator.new()
 var current_choices: Array[String] = []
@@ -99,6 +100,8 @@ func _update_choose_ui() -> void:
 	_clear_sacrifice()
 	if sacrifice_container:
 		sacrifice_container.visible = false
+	if sacrifice_scroll:
+		sacrifice_scroll.visible = false
 	if reroll_button:
 		reroll_button.visible = true
 	_set_button_row_visible(true)
@@ -114,6 +117,8 @@ func _update_prompt_ui() -> void:
 	_clear_sacrifice()
 	if sacrifice_container:
 		sacrifice_container.visible = false
+	if sacrifice_scroll:
+		sacrifice_scroll.visible = false
 	if reroll_button:
 		reroll_button.visible = false
 	if button_1:
@@ -146,6 +151,8 @@ func _update_sacrifice_ui() -> void:
 		close_menu()
 		return
 	sacrifice_container.visible = true
+	if sacrifice_scroll:
+		sacrifice_scroll.visible = true
 	_clear_sacrifice()
 	for i in range(_current_player.get_artefact_count()):
 		var id: String = _current_player.get_artefact_at_slot(i)

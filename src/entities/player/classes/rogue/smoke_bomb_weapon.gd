@@ -20,15 +20,8 @@ func _ready() -> void:
 
 
 func get_signature_pool() -> Array[Dictionary]:
-	return [
-		{
-			"id": "toxic_cloud",
-			"title": "Toxic Cloud",
-			"description": "Smoke Bomb also poisons enemies inside the cloud.",
-			"value": 1,
-			"apply": func(_w: Weapon) -> void: pass,
-		},
-	]
+	# This is an ability (secondary), not selectable in the anvil — no signatures.
+	return []
 
 
 func fire() -> void:

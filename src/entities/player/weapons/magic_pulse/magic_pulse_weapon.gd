@@ -39,6 +39,20 @@ func get_signature_pool() -> Array[Dictionary]:
 			"value": 1,
 			"apply": func(_w: Weapon) -> void: pass,
 		},
+		{
+			"id": "concentrated_blast",
+			"title": "Concentrated Blast",
+			"description": "Your pulse is 4x narrower but deals double damage.",
+			"value": 2,
+			"apply": func(_w: Weapon) -> void: pass,
+		},
+		{
+			"id": "extinguish",
+			"title": "Extinguish",
+			"description": "Hitting an enemy instantly ends all its damage-over-time effects, dealing their remaining total at once.",
+			"value": 1,
+			"apply": func(_w: Weapon) -> void: pass,
+		},
 	]
 
 
@@ -48,6 +62,10 @@ func fire() -> void:
 	var count: int = 1
 	var aim: Vector2 = _nearest_enemy_dir()
 	var dmg: int = get_attack_damage(BASE_DAMAGE)
+	# Concentrated Blast: 4x narrower cone, double damage.
+	var concentrated: bool = has_signature("concentrated_blast")
+	if concentrated:
+		dmg = int(round(float(dmg) * 2.0))
 	var crit: bool = roll_critical_hit()
 	if crit:
 		dmg = int(round(float(dmg) * get_critical_multiplier()))
@@ -62,6 +80,8 @@ func fire() -> void:
 		pulse.global_position = global_position
 		if pulse.has_method("setup"):
 			pulse.setup(self, get_player(), cone_dir, dmg, crit, PULSE_RANGE * get_area_multiplier(), PULSE_KNOCKBACK)
+			if concentrated:
+				pulse.half_angle = 0.175
 		get_tree().current_scene.add_child(pulse)
 		var net: Node = get_node_or_null("/root/Net")
 		if net and net.has_method("sync_player_effect"):

@@ -35,6 +35,20 @@ func get_signature_pool() -> Array[Dictionary]:
 			"value": 1,
 			"apply": func(_w: Weapon) -> void: pass,
 		},
+		{
+			"id": "endless_spiral",
+			"title": "Endless Spiral",
+			"description": "Your books keep spiraling outward forever instead of stopping at their orbit.",
+			"value": 1,
+			"apply": func(_w: Weapon) -> void: pass,
+		},
+		{
+			"id": "enlightened",
+			"title": "Enlightened",
+			"description": "Your books deal +3 damage per team level.",
+			"value": 3,
+			"apply": func(_w: Weapon) -> void: pass,
+		},
 	]
 
 func _physics_process(delta: float) -> void:
@@ -42,7 +56,11 @@ func _physics_process(delta: float) -> void:
 	active_books = active_books.filter(func(item): return is_instance_valid(item))
 	
 	# 2. Drive the orbit position for each surviving book
+	var endless: bool = has_signature("endless_spiral")
 	for proj in active_books:
+		# Endless Spiral: keep growing the orbit target so books spiral out forever.
+		if endless and is_instance_valid(proj):
+			proj.target_radius += delta * 45.0
 		if proj.has_method("update_orbit"):
 			proj.update_orbit(delta, global_position)
 
@@ -63,6 +81,11 @@ func fire() -> void:
 	var angle_step = (2.0 * PI) / eff_count
 	var attack_is_critical = roll_critical_hit()
 	var attack_damage = get_attack_damage(14)
+	# Enlightened: books gain +3 damage per team level.
+	if has_signature("enlightened"):
+		var mgr: Node = get_tree().get_first_node_in_group("team_xp_manager")
+		if mgr:
+			attack_damage += int(mgr.get("team_level")) * 3
 	if attack_is_critical:
 		attack_damage = int(round(float(attack_damage) * get_critical_multiplier()))
 	

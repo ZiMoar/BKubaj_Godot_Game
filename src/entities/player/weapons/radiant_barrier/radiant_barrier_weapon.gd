@@ -43,6 +43,20 @@ func get_signature_pool() -> Array[Dictionary]:
 			"value": 100,
 			"apply": func(_w: Weapon) -> void: pass,
 		},
+		{
+			"id": "condemn",
+			"title": "Condemn",
+			"description": "Your holy wave always brands enemies, and deals +20% damage if it is holy-aligned.",
+			"value": 20,
+			"apply": func(_w: Weapon) -> void: pass,
+		},
+		{
+			"id": "blessed_shield",
+			"title": "Blessed Shield",
+			"description": "While the barrier is active you deal +25% damage.",
+			"value": 25,
+			"apply": func(_w: Weapon) -> void: pass,
+		},
 	]
 
 
@@ -60,6 +74,11 @@ func _activate_barrier() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	# Blessed Shield: keep the player's damage buff in sync while the barrier is up.
+	var blessed: bool = has_signature("blessed_shield")
+	var player: Node = get_player()
+	if player != null:
+		player.blessed_shield_mult = 1.25 if (blessed and _barrier_active) else 1.0
 	if _barrier_active:
 		_barrier_timer -= delta
 		if _barrier_timer <= 0.0:
@@ -93,6 +112,9 @@ func _release_holy_wave(blocked_damage: int) -> void:
 	else:
 		# Stronger barriers scale the wave a bit with the blocked amount too.
 		wave_dmg += int(round(float(blocked_damage) * 0.25))
+	# Condemn: bonus damage if the barrier is holy-aligned.
+	if has_signature("condemn") and damage_type == DamageType.Type.HOLY:
+		wave_dmg = int(round(float(wave_dmg) * 1.2))
 	var origin: Vector2 = global_position
 	var eff_radius: float = WAVE_RADIUS * get_area_multiplier()
 
@@ -105,6 +127,9 @@ func _release_holy_wave(blocked_damage: int) -> void:
 		var en: Node2D = e as Node2D
 		if origin.distance_to(en.global_position) <= eff_radius:
 			en.take_damage(wave_dmg, false, damage_type, false, get_ailment_effect_multiplier())
+			# Condemn: always brand enemies, regardless of element.
+			if has_signature("condemn") and en.has_method("apply_brand"):
+				en.apply_brand()
 			apply_lifesteal()
 			if en.has_method("apply_knockback"):
 				en.apply_knockback(origin, get_knockback(WAVE_KNOCKBACK))

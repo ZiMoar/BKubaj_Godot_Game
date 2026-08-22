@@ -40,6 +40,20 @@ func get_signature_pool() -> Array[Dictionary]:
 			"value": 1,
 			"apply": func(_w: Weapon) -> void: pass,
 		},
+		{
+			"id": "sustain",
+			"title": "Sustain",
+			"description": "Each kill extends your skull's duration, up to double its original lifetime.",
+			"value": 1,
+			"apply": func(_w: Weapon) -> void: pass,
+		},
+		{
+			"id": "popcorn_skulls",
+			"title": "Popcorn Skulls",
+			"description": "Skulls explode on expiration, dealing 5x their hit damage in a 100px blast.",
+			"value": 1,
+			"apply": func(_w: Weapon) -> void: pass,
+		},
 	]
 
 

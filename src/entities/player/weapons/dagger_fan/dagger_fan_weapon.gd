@@ -46,6 +46,20 @@ func get_signature_pool() -> Array[Dictionary]:
 			"value": 1,
 			"apply": func(_w: Weapon) -> void: pass,
 		},
+		{
+			"id": "impaling_blades",
+			"title": "Impaling Blades",
+			"description": "Your daggers always impale, no matter their element. Physical daggers deal +25% damage.",
+			"value": 25,
+			"apply": func(_w: Weapon) -> void: pass,
+		},
+		{
+			"id": "splitting_steel",
+			"title": "Splitting Steel",
+			"description": "Hitting an enemy releases 2 additional daggers at 90 degrees to each side.",
+			"value": 1,
+			"apply": func(_w: Weapon) -> void: pass,
+		},
 	]
 
 

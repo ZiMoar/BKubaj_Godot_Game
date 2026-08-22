@@ -43,6 +43,20 @@ func get_signature_pool() -> Array[Dictionary]:
 			"value": 1,
 			"apply": func(_w: Weapon) -> void: pass,
 		},
+		{
+			"id": "stinging_gas",
+			"title": "Stinging Gas",
+			"description": "The spray's waves now deal direct poison damage on top of applying the ailment.",
+			"value": 1,
+			"apply": func(_w: Weapon) -> void: pass,
+		},
+		{
+			"id": "corrosive",
+			"title": "Corrosive",
+			"description": "Poisoned enemies take +15% damage from all sources.",
+			"value": 15,
+			"apply": func(_w: Weapon) -> void: pass,
+		},
 	]
 
 

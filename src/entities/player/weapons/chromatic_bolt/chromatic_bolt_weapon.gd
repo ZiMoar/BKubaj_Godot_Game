@@ -48,10 +48,45 @@ func get_signature_pool() -> Array[Dictionary]:
 			"value": 20,
 			"apply": func(_w: Weapon) -> void: pass,
 		},
+		{
+			"id": "boomerang",
+			"title": "Boomerang",
+			"description": "The orb's speed can go negative, so it returns backwards instead of stopping in place.",
+			"value": 1,
+			"apply": func(_w: Weapon) -> void: pass,
+		},
+		{
+			"id": "disco_ball",
+			"title": "Disco Ball",
+			"description": "The orb floats above your head, its targeting range grows to 400px, and projectile upgrades raise bolt count instead of orb count.",
+			"value": 1,
+			"apply": func(_w: Weapon) -> void: pass,
+		},
 	]
 
 
 func fire() -> void:
+	# Disco Ball: a single orb floats above the player's head; projectile
+	# upgrades raise the BOLT count instead of the number of orbs.
+	if has_signature("disco_ball"):
+		var orb: Node = ChromaticOrbScene.instantiate()
+		orb.name = "ChromaticOrb"
+		orb.global_position = global_position
+		var bcount: int = BASE_BOLT_COUNT + (get_effective_projectile_count(1) - 1)
+		if orb.has_method("setup"):
+			orb.setup(self, get_player(), Vector2.RIGHT, BASE_BOLT_DAMAGE, bcount)
+		orb.follow_player = true
+		orb.speed = 0.0
+		orb.deceleration = 0.0
+		orb.lifetime = get_effective_duration(ORB_LIFETIME)
+		orb.bolt_interval = BOLT_INTERVAL
+		orb.bolt_range = 400.0
+		get_tree().current_scene.add_child(orb)
+		var net: Node = get_node_or_null("/root/Net")
+		if net and net.has_method("sync_player_projectile"):
+			net.sync_player_projectile(orb, ChromaticOrbScene)
+		return
+
 	# Aim the throw at the nearest enemy, else a random direction.
 	var dir_start: Vector2 = _aim_direction()
 

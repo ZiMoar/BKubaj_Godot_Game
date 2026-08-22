@@ -9,7 +9,7 @@ func _init() -> void:
 	class_id = "paladin"
 	parent_class_id = "knight"
 	display_name = "Paladin"
-	description = "Blocking with your Tower Shield heals you. +HP regen and a sturdier body."
+	description = "Blocking with your Tower Shield heals you. Gain HP regeneration and bonus max health."
 	starting_stats = {
 		"hp_regen_per_second": 2.0,
 		"max_health_bonus": 20,

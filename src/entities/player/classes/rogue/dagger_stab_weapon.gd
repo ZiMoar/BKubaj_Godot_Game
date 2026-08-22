@@ -43,6 +43,20 @@ func get_signature_pool() -> Array[Dictionary]:
 			"value": 1,
 			"apply": func(_w: Weapon) -> void: pass,
 		},
+		{
+			"id": "venom",
+			"title": "Venom",
+			"description": "Your stabs apply poison regardless of their element. Poison-element stabs deal +50% more poison damage.",
+			"value": 1,
+			"apply": func(_w: Weapon) -> void: pass,
+		},
+		{
+			"id": "flurry",
+			"title": "Flurry",
+			"description": "A third thrust joins the stab — a flurry of three quick strikes.",
+			"value": 1,
+			"apply": func(_w: Weapon) -> void: pass,
+		},
 	]
 
 
@@ -66,7 +80,12 @@ func fire() -> void:
 	var aim: Vector2 = get_global_mouse_position() - global_position
 	if aim.length_squared() < 1.0:
 		aim = Vector2.RIGHT
-	_stab(aim.normalized(), dmg, crit, hit)
+	var aim_dir: Vector2 = aim.normalized()
+	_stab(aim_dir, dmg, crit, hit)
+
+	# "Flurry": a third thrust in a slight fan for broader coverage.
+	if has_signature("flurry"):
+		_stab(aim_dir.rotated(deg_to_rad(25.0)), dmg, crit, hit)
 
 	# Dual wield: a second simultaneous stab at the nearest enemy.
 	var nearest_dir: Vector2 = _nearest_enemy_dir()
@@ -97,11 +116,20 @@ func _stab(dir: Vector2, dmg: int, crit: bool, hit: Dictionary) -> void:
 				# Bleeding (impaled) enemies take +30% damage from stabs.
 				if "impale_pool" in en and float(en.impale_pool) > 0.0:
 					dealt = int(round(float(dealt) * SHADOWBLADE_BLEED_MULT))
-				if en.has_method("apply_impale"):
-					en.apply_impale(float(dealt))
 			if crit:
 				_crit_accel = true
 			en.take_damage(dealt, crit, damage_type, false, get_ailment_effect_multiplier())
+			if shadowblade and en.has_method("apply_impale"):
+				# Apply the bleed AFTER the hit so the pool persists and releases
+				# on the NEXT stab (take_damage pays out the stored pool at its
+				# start, so applying before the hit would consume it immediately
+				# and the enemy would never count as "bleeding").
+				en.apply_impale(float(dealt))
+			# "Venom": always apply poison regardless of element; poison-element
+			# stabs deal +50% more poison damage.
+			if has_signature("venom") and en.has_method("apply_poison"):
+				var poison_dmg: float = float(dealt) * (1.5 if damage_type == DamageType.Type.POISON else 1.0)
+				en.apply_poison(poison_dmg)
 			if en.has_method("apply_knockback"):
 				en.apply_knockback(origin, get_knockback(knockback_force))
 			apply_lifesteal()

@@ -37,6 +37,20 @@ func get_signature_pool() -> Array[Dictionary]:
 			"value": 20,
 			"apply": func(_w: Weapon) -> void: pass,
 		},
+		{
+			"id": "tesla",
+			"title": "Tesla",
+			"description": "Strikes every 0.5s at reduced damage for the same overall DPS.",
+			"value": 1,
+			"apply": func(_w: Weapon) -> void: pass,
+		},
+		{
+			"id": "refract",
+			"title": "Refract",
+			"description": "Each chain hop also strikes the furthest enemy in range alongside the closest.",
+			"value": 1,
+			"apply": func(_w: Weapon) -> void: pass,
+		},
 	]
 
 
@@ -48,6 +62,14 @@ func chain_ramp_multiplier(hops_remaining: int) -> float:
 
 
 const CHAIN_RAMP_STEP: float = 0.2   # +20% damage per chain remaining
+
+
+## Tesla: the strike fires every 0.5s (instead of the base cooldown).
+func get_effective_cooldown() -> float:
+	var cd: float = super.get_effective_cooldown()
+	if has_signature("tesla"):
+		cd = minf(cd, 0.5)
+	return cd
 
 
 func fire() -> void:
@@ -76,27 +98,42 @@ func fire() -> void:
 	if first == null:
 		return
 
-	# Greedily chain to the nearest enemy within chain_range of the previous hit.
+	# Greedily chain. Refract: each hop also strikes the FURTHEST enemy in range.
+	var refract: bool = has_signature("refract")
 	var seq: Array[Node2D] = [first]
 	var hit_ids: Dictionary = { first.get_instance_id(): true }
 	var last_pos: Vector2 = first.global_position
 	for i in range(eff_max_targets - 1):
 		var next: Node2D = null
 		var nd: float = INF
+		var far: Node2D = null
+		var fd: float = -1.0
 		for e: Node in enemies:
 			if not is_instance_valid(e) or hit_ids.has(e.get_instance_id()):
 				continue
 			var d: float = last_pos.distance_squared_to((e as Node2D).global_position)
-			if d <= eff_chain_range * eff_chain_range and d < nd:
-				nd = d
-				next = e as Node2D
-		if next == null:
+			if d <= eff_chain_range * eff_chain_range:
+				if d < nd:
+					nd = d
+					next = e as Node2D
+				if d > fd:
+					fd = d
+					far = e as Node2D
+		if next != null:
+			seq.append(next)
+			hit_ids[next.get_instance_id()] = true
+			last_pos = next.global_position
+		if refract and far != null and far != next:
+			seq.append(far)
+			hit_ids[far.get_instance_id()] = true
+			last_pos = far.global_position
+		if next == null and not (refract and far != null):
 			break
-		seq.append(next)
-		hit_ids[next.get_instance_id()] = true
-		last_pos = next.global_position
 
 	var dmg: int = get_attack_damage(base_damage)
+	# Tesla: reduced damage so the 0.5s cadence keeps the same overall DPS.
+	if has_signature("tesla"):
+		dmg = maxi(1, int(round(float(dmg) * 0.25)))
 	var crit: bool = roll_critical_hit()
 	if crit:
 		dmg = int(round(float(dmg) * get_critical_multiplier()))

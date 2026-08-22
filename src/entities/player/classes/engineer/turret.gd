@@ -35,12 +35,47 @@ func setup(gscene: PackedScene, interval: float, life: float, player: Node, gren
 func _physics_process(delta: float) -> void:
 	_time += delta
 	if _time >= lifetime:
+		_detonate_on_expiry()
 		queue_free()
 		return
 	_fire_t -= delta
 	if _fire_t <= 0.0:
 		_fire_t = fire_interval
 		_fire_at_nearest()
+
+
+## "Detonation" (Grenade Launcher signature): when the turret's lifetime ends it
+## explodes for double damage and double blast radius of a regular grenade.
+func _detonate_on_expiry() -> void:
+	if source_grenade_weapon == null:
+		return
+	if not source_grenade_weapon.has_signature("detonation"):
+		return
+	var w: Weapon = source_grenade_weapon
+	var dmg: int = w.get_attack_damage(w.damage)
+	var crit: bool = w.roll_critical_hit()
+	if crit:
+		dmg = int(round(float(dmg) * w.get_critical_multiplier()))
+	dmg = int(round(float(dmg) * 2.0))
+	var radius: float = w.blast_radius * w.get_area_multiplier() * 2.0
+	for e: Node in get_tree().get_nodes_in_group("enemies"):
+		if not is_instance_valid(e):
+			continue
+		var en: Node2D = e as Node2D
+		var dist: float = global_position.distance_to(en.global_position)
+		if dist <= radius:
+			var dealt: int = w.apply_range_damage_multiplier(dmg, dist)
+			en.take_damage(dealt, crit, w.damage_type if w != null else DamageType.Type.FIRE, false, w.get_ailment_effect_multiplier())
+			if en.has_method("apply_knockback"):
+				en.apply_knockback(global_position, 240.0)
+			if en.has_method("has_died") and en.has_died():
+				w.apply_explosion_on_kill(en.global_position, dealt)
+	var ring: Node = RadiusRing.new()
+	ring.name = "TurretDetonationRing"
+	get_tree().current_scene.add_child(ring)
+	ring.global_position = global_position
+	if ring.has_method("setup"):
+		ring.setup(radius, 0.6, Color(1.0, 0.55, 0.2, 0.7))
 
 
 func _fire_at_nearest() -> void:

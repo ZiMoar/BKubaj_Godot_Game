@@ -46,10 +46,65 @@ func _physics_process(delta: float) -> void:
 	if _exploded:
 		return
 	_age += delta
+
+	var walking: bool = source_weapon != null and source_weapon.has_method("has_signature") and source_weapon.has_signature("walking_bomb")
+	var mine: bool = source_weapon != null and source_weapon.has_method("has_signature") and source_weapon.has_signature("mine")
+
+	# Walking Bomb: chase the nearest enemy at the player's move speed.
+	if walking:
+		_move_toward_nearest(delta)
+
+	if mine:
+		# Mine: don't explode on the fuse; wait for an enemy to come within the
+		# blast radius. The fuse still counts toward the damage scaling.
+		if _enemy_in_range():
+			_explode()
+			return
+		queue_redraw()
+		return
+
 	if _age >= fuse:
 		_explode()
 		return
 	queue_redraw()
+
+
+## Walking Bomb: move toward the nearest enemy at the player's move speed.
+func _move_toward_nearest(delta: float) -> void:
+	var best: Node2D = _nearest_enemy()
+	if best == null:
+		return
+	var speed: float = 150.0
+	if source_player != null and source_player.has_method("current_move_speed"):
+		speed = float(source_player.current_move_speed())
+	var to: Vector2 = best.global_position - global_position
+	if to.length_squared() < 1.0:
+		return
+	global_position += to.normalized() * speed * delta
+
+
+func _nearest_enemy() -> Node2D:
+	var best: Node2D = null
+	var best_d: float = INF
+	for e: Node in get_tree().get_nodes_in_group("enemies"):
+		if not is_instance_valid(e):
+			continue
+		var en: Node2D = e as Node2D
+		var d: float = global_position.distance_squared_to(en.global_position)
+		if d < best_d:
+			best_d = d
+			best = en
+	return best
+
+
+## Mine: whether any enemy is currently within the blast radius (touch trigger).
+func _enemy_in_range() -> bool:
+	for e: Node in get_tree().get_nodes_in_group("enemies"):
+		if not is_instance_valid(e):
+			continue
+		if global_position.distance_to((e as Node2D).global_position) <= radius:
+			return true
+	return false
 
 
 ## Co-op: configure a remote visual-only copy from broadcast data (no weapon/

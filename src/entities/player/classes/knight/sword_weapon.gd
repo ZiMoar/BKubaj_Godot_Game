@@ -34,18 +34,33 @@ func _ready() -> void:
 	col_poly.disabled = true
 
 func fire() -> void:
-	# Advance the combo: 1 slash, 2 slash, 3 stab, then loop.
+	var fencing: bool = has_signature("fencing")
+	var cyclone: bool = has_signature("cyclone")
+	# Advance the combo. Fencing stabs on the 2nd hit; otherwise 3rd (unless
+	# Cyclone removes the stab entirely — then it's always a swing).
 	combo_step += 1
-	if combo_step > 3:
-		combo_step = 1
-	var is_stab: bool = (combo_step == 3)
+	var is_stab: bool = false
+	var stab_mult: float = stab_damage_multiplier
+	if fencing:
+		if combo_step > 2:
+			combo_step = 1
+		is_stab = (combo_step == 2)
+		stab_mult = 2.0
+	elif cyclone:
+		if combo_step > 3:
+			combo_step = 1
+		is_stab = false
+	else:
+		if combo_step > 3:
+			combo_step = 1
+		is_stab = (combo_step == 3)
 
 	_apply_combo_shape(is_stab)
 
 	hit_enemies_this_swing.clear()
 	current_attack_damage = get_attack_damage(damage)
 	if is_stab:
-		current_attack_damage = int(round(float(current_attack_damage) * stab_damage_multiplier))
+		current_attack_damage = int(round(float(current_attack_damage) * stab_mult))
 	current_attack_is_critical = roll_critical_hit()
 	if current_attack_is_critical:
 		current_attack_damage = int(round(float(current_attack_damage) * get_critical_multiplier()))
@@ -91,8 +106,9 @@ func _apply_combo_shape(is_stab: bool) -> void:
 		draw_poly.color = Color(1.0, 0.95, 0.55, 1)  # brighter for the finishing stab
 	else:
 		# A 100-degree pie-slice sector pointing forward (+X), tip at the player.
+		# Cyclone: the swing becomes a full 360-degree circle.
 		var r: float = reach * area_mult
-		var span: float = deg_to_rad(slash_angle_deg)
+		var span: float = TAU if has_signature("cyclone") else deg_to_rad(slash_angle_deg)
 		var half: float = span * 0.5
 		pts = PackedVector2Array([Vector2.ZERO])
 		for i in range(slash_arc_segments + 1):
@@ -114,6 +130,20 @@ func get_signature_pool() -> Array[Dictionary]:
 			"title": "Defensive Stance",
 			"description": "Sword hits restore +8% of the Tower Shield's HP.",
 			"value": 8,
+			"apply": func(_w: Weapon) -> void: pass,
+		},
+		{
+			"id": "cyclone",
+			"title": "Cyclone",
+			"description": "Your swings become full 360-degree circles, and the finishing stab is replaced by a third full swing.",
+			"value": 1,
+			"apply": func(_w: Weapon) -> void: pass,
+		},
+		{
+			"id": "fencing",
+			"title": "Fencing",
+			"description": "The stab comes every 2nd attack instead of the 3rd, and deals 2x damage instead of 1.5x.",
+			"value": 2,
 			"apply": func(_w: Weapon) -> void: pass,
 		},
 	]

@@ -23,15 +23,8 @@ func _ready() -> void:
 
 
 func get_signature_pool() -> Array[Dictionary]:
-	return [
-		{
-			"id": "overclock",
-			"title": "Overclock",
-			"description": "Your turret fires twice as fast but lasts half as long.",
-			"value": 1,
-			"apply": func(_w: Weapon) -> void: pass,
-		},
-	]
+	# This is an ability (secondary), not selectable in the anvil — no signatures.
+	return []
 
 
 ## The Grenade Launcher is this ability's upgrade source: the turret reads the
@@ -74,10 +67,6 @@ func fire() -> void:
 			# turret fires, not to the turret.
 			eff_interval = maxf(0.15, fire_interval)
 			eff_life = grenade.get_effective_duration(turret_lifetime)
-		# "Overclock" signature: fire 2x faster, half lifetime.
-		if has_signature("overclock"):
-			eff_interval = maxf(0.1, eff_interval * 0.5)
-			eff_life *= 0.5
 		# Sapper (engineer ascension): turret fires 30% faster.
 		if player.has_method("is_subclass") and player.is_subclass("sapper"):
 			eff_interval = maxf(0.1, eff_interval * 0.7)

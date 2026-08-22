@@ -488,14 +488,15 @@ func _roll_stats(weapon: Weapon) -> Array[Dictionary]:
 	if _anvil_kind == AnvilKind.INVERTED:
 		return _roll_special(normal_pool, _filter_supported(weapon, INVERTED_STAT_POOL))
 
-	# Remaining (not-yet-taken) signature upgrades for this weapon.
+	# Signatures are mutually exclusive per weapon: once a weapon owns ANY
+	# signature, none of its other signatures are offered (locked forever).
 	var sig_pool: Array[Dictionary] = []
-	for sig: Dictionary in weapon.get_signature_pool():
-		if weapon.has_signature(sig.get("id", "")):
-			continue
-		var entry := sig.duplicate()
-		entry["weight"] = weapon.get_signature_weight()
-		sig_pool.append(entry)
+	var owns_any_sig: bool = not weapon.get_signature_ids_owned().is_empty()
+	if not owns_any_sig:
+		for sig: Dictionary in weapon.get_signature_pool():
+			var entry := sig.duplicate()
+			entry["weight"] = weapon.get_signature_weight()
+			sig_pool.append(entry)
 
 	# Golden anvil: exactly one signature guaranteed among the three choices.
 	if _is_golden:

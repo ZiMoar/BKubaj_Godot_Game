@@ -61,6 +61,20 @@ func get_signature_pool() -> Array[Dictionary]:
 			"value": 20,
 			"apply": func(_w: Weapon) -> void: pass,
 		},
+		{
+			"id": "magic_arrows",
+			"title": "Magic Arrows",
+			"description": "Your arrows slightly home toward enemies.",
+			"value": 1,
+			"apply": func(_w: Weapon) -> void: pass,
+		},
+		{
+			"id": "multishot",
+			"title": "Multishot",
+			"description": "Doubles the projectile bonuses your Longbow receives.",
+			"value": 1,
+			"apply": func(_w: Weapon) -> void: pass,
+		},
 	]
 
 
@@ -80,7 +94,10 @@ func fire() -> void:
 
 	# Combo step sets the base arrow count; "+ projectile" anvil upgrades add
 	# arrows on top of it (get_effective_projectile_count handles the floor).
+	# Multishot: the projectile BONUS (not the base count) is doubled.
 	var arrow_count: int = get_effective_projectile_count(step.x)
+	if has_signature("multishot"):
+		arrow_count = step.x + (arrow_count - step.x) * 2
 	var total_spread: float = deg_to_rad(float(step.y))
 
 	var base_dir: Vector2 = (get_global_mouse_position() - global_position).normalized()
@@ -113,6 +130,9 @@ func fire() -> void:
 		if arrow.has_method("setup"):
 			arrow.setup(global_position, dir, eff_speed, arrow_damage, arrow_is_critical, get_player(), total_pierce, total_chain, eff_chain_range, self)
 			arrow.set("damage_per_chain", dmg_per_chain)
+			# Magic Arrows: slight homing toward enemies.
+			if has_signature("magic_arrows"):
+				arrow.set("homing_strength", 2.5)
 			arrow.scale *= get_area_multiplier()
 		get_tree().current_scene.add_child(arrow)
 		var net: Node = get_node_or_null("/root/Net")

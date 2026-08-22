@@ -1,6 +1,8 @@
 class_name DaggerProj
 extends Area2D
 
+const DaggerScene: PackedScene = preload("res://src/entities/projectiles/dagger_proj/dagger_proj.tscn")
+
 var damage: int = 12
 var is_critical: bool = false
 var source_player: Player = null
@@ -100,7 +102,20 @@ func _hit(node: Node) -> void:
 			var dist: float = (source_weapon.global_position - (node as Node2D).global_position).length()
 			dealt = maxi(1, int(round(float(dealt) * source_weapon.get_range_damage_multiplier(dist))))
 
+		# Impaling Blades: physical daggers deal +25% damage.
+		var impaling: bool = source_weapon != null and source_weapon.has_method("has_signature") and source_weapon.has_signature("impaling_blades")
+		if impaling and source_weapon.damage_type == DamageType.Type.PHYSICAL:
+			dealt = int(round(float(dealt) * 1.25))
+
 		node.take_damage(dealt, false, source_weapon.damage_type if source_weapon != null else DamageType.Type.PHYSICAL, false, source_weapon.get_ailment_effect_multiplier() if source_weapon != null else 1.0)
+		# Impaling Blades: always impale, regardless of element (physical already
+		# impales through take_damage, so only force it for other elements).
+		if impaling and source_weapon.damage_type != DamageType.Type.PHYSICAL and node.has_method("apply_impale"):
+			node.apply_impale(float(dealt))
+		# Splitting Steel: hitting an enemy releases 2 daggers at 90° to each side.
+		if source_weapon != null and source_weapon.has_method("has_signature") and source_weapon.has_signature("splitting_steel") and node.is_in_group("enemies"):
+			_spawn_split(dir.rotated(PI * 0.5), dealt)
+			_spawn_split(dir.rotated(-PI * 0.5), dealt)
 		if source_player and source_player.has_method("apply_lifesteal"):
 			source_player.apply_lifesteal()
 
@@ -137,3 +152,12 @@ func _find_chain_target() -> Node2D:
 			best_d = d
 			best = e as Node2D
 	return best
+
+
+## Splitting Steel: spawn a fresh dagger flying in `split_dir`.
+func _spawn_split(split_dir: Vector2, dmg: int) -> void:
+	var d: Area2D = DaggerScene.instantiate()
+	get_tree().current_scene.add_child(d)
+	if d.has_method("setup"):
+		d.setup(global_position, split_dir, speed, dmg, is_critical, source_player, 1, 0, chain_range, source_weapon, false)
+	d.scale = scale

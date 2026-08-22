@@ -35,6 +35,11 @@ func _physics_process(delta: float) -> void:
 	# Keep aura centered on the player's world position
 	aura_area.global_position = global_position
 
+	# Defensive Pyre: grant the player bonus armor while the aura is active.
+	var player: Node = get_player()
+	if player != null:
+		player.defensive_pyre_armor = 40.0 if has_signature("defensive_pyre") else 0.0
+
 	# Area stat can change mid-run (upgrades), so refresh the radius each frame.
 	_apply_area_radius()
 
@@ -84,6 +89,20 @@ func get_signature_pool() -> Array[Dictionary]:
 			"value": 5,
 			"apply": func(_w: Weapon) -> void: pass,
 		},
+		{
+			"id": "molten",
+			"title": "Molten",
+			"description": "Your Fire Aura's ignites can stack — repeated pulses accumulate into a stronger burn.",
+			"value": 1,
+			"apply": func(_w: Weapon) -> void: pass,
+		},
+		{
+			"id": "defensive_pyre",
+			"title": "Defensive Pyre",
+			"description": "While the aura is active you gain +40 armor.",
+			"value": 40,
+			"apply": func(_w: Weapon) -> void: pass,
+		},
 	]
 
 
@@ -120,6 +139,9 @@ func _apply_pulse_damage() -> void:
 			hit_this_pulse[body_id] = true
 			var dealt: int = apply_range_damage_multiplier(final_damage, global_position.distance_to(body.global_position))
 			body.take_damage(dealt, false, damage_type, false, get_ailment_effect_multiplier())
+			# Molten: each pulse adds a stacking burn on top.
+			if has_signature("molten") and body.has_method("apply_burn_stack"):
+				body.apply_burn_stack(float(dealt))
 			apply_lifesteal()
 			if body.is_in_group("enemies"):
 				if body.has_method("has_died") and body.has_died():
@@ -134,6 +156,9 @@ func _apply_pulse_damage() -> void:
 			hit_this_pulse[parent_id] = true
 			var dealt: int = apply_range_damage_multiplier(final_damage, global_position.distance_to(parent.global_position))
 			parent.take_damage(dealt, false, damage_type, false, get_ailment_effect_multiplier())
+			# Molten: each pulse adds a stacking burn on top.
+			if has_signature("molten") and parent.has_method("apply_burn_stack"):
+				parent.apply_burn_stack(float(dealt))
 			apply_lifesteal()
 			if parent.is_in_group("enemies"):
 				if parent.has_method("has_died") and parent.has_died():

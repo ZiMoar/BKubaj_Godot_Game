@@ -41,7 +41,21 @@ func get_signature_pool() -> Array[Dictionary]:
 		{
 			"id": "dead_center",
 			"title": "Dead Center",
-			"description": "Enemies take more damage the closer they are to the center of the explosion (up to +50% at ground zero).",
+			"description": "Enemies take more damage the closer they are to the center of the explosion.",
+			"value": 1,
+			"apply": func(_w: Weapon) -> void: pass,
+		},
+		{
+			"id": "nuke",
+			"title": "Nuke",
+			"description": "Projectile-count upgrades launch a single oversized grenade with +100% damage and +50% blast radius per projectile.",
+			"value": 1,
+			"apply": func(_w: Weapon) -> void: pass,
+		},
+		{
+			"id": "detonation",
+			"title": "Detonation",
+			"description": "When your turret's duration ends it explodes for double damage and double blast radius of a regular grenade.",
 			"value": 1,
 			"apply": func(_w: Weapon) -> void: pass,
 		},
@@ -60,6 +74,13 @@ func fire() -> void:
 	var crit: bool = roll_critical_hit()
 	if crit:
 		dmg = int(round(float(dmg) * get_critical_multiplier()))
+	var blast: float = blast_radius * get_area_multiplier()
+	# "Nuke": projectile-count upgrades fold into a single oversized grenade
+	# instead of spawning extras (+100% damage & +50% blast per projectile).
+	if has_signature("nuke") and count > 1:
+		dmg = int(round(float(dmg) * float(count)))
+		blast = blast * (1.0 + 0.5 * float(count - 1))
+		count = 1
 
 	var spread_deg: float = 12.0
 	for i in range(count):
@@ -72,7 +93,7 @@ func fire() -> void:
 		grenade.name = "Grenade"
 		grenade.global_position = global_position
 		if grenade.has_method("setup"):
-			grenade.setup(global_position, target, get_effective_projectile_speed(throw_speed), dmg, crit, blast_radius * get_area_multiplier(), get_player(), self)
+			grenade.setup(global_position, target, get_effective_projectile_speed(throw_speed), dmg, crit, blast, get_player(), self)
 		get_tree().current_scene.add_child(grenade)
 		var net: Node = get_node_or_null("/root/Net")
 		if net and net.has_method("sync_player_projectile"):

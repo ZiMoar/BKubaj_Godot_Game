@@ -49,6 +49,20 @@ func get_signature_pool() -> Array[Dictionary]:
 			"value": 1,
 			"apply": func(_w: Weapon) -> void: pass,
 		},
+		{
+			"id": "barrage",
+			"title": "Barrage",
+			"description": "Fires +2 bolts and launches the entire volley at once instead of in sequence.",
+			"value": 2,
+			"apply": func(_w: Weapon) -> void: pass,
+		},
+		{
+			"id": "guided_missiles",
+			"title": "Guided Missiles",
+			"description": "Bolts home far more aggressively and pierce through 4 enemies.",
+			"value": 1,
+			"apply": func(_w: Weapon) -> void: pass,
+		},
 	]
 
 
@@ -68,11 +82,22 @@ func _fire_bolt(index: int, aim: Vector2) -> void:
 	if is_crit:
 		attack_damage = int(round(float(attack_damage) * get_critical_multiplier()))
 
+	var guided: bool = has_signature("guided_missiles")
+	var pierce: int = 4 if guided else 0
+
 	var bolt: Area2D = bolt_scene.instantiate() as Area2D
 	get_tree().current_scene.add_child(bolt)
 	if bolt.has_method("setup"):
-		bolt.setup(global_position, bolt_dir, eff_speed, attack_damage, is_crit, get_player(), self)
+		bolt.setup(global_position, bolt_dir, eff_speed, attack_damage, is_crit, get_player(), self, pierce)
 		bolt.scale *= get_area_multiplier()
+	# Guided Missiles: far more aggressive homing (stronger, faster ramp).
+	if guided:
+		if "_homing_strength" in bolt:
+			bolt._homing_strength = 3.2
+		if "homing_ramp" in bolt:
+			bolt.homing_ramp = 5.0
+		if "homing_ramp_time" in bolt:
+			bolt.homing_ramp_time = 0.5
 	var net: Node = get_node_or_null("/root/Net")
 	if net and net.has_method("sync_player_projectile"):
 		net.sync_player_projectile(bolt, bolt_scene)
@@ -92,10 +117,14 @@ func fire() -> void:
 			_fire_anomaly(aim)
 			return
 
-	# Fire the volley as a sequence (mirrors the anvil Repeat mechanic):
-	# the first bolt leaves immediately; each following bolt fires shortly
-	# after (0.08 s apart) with a larger allowed deviation.
+	# Fire the volley. Barrage: +2 bolts and the whole volley fires at once
+	# (no staggering). Otherwise the bolts fire in sequence (mirrors the anvil
+	# Repeat mechanic) with a larger allowed deviation per later bolt.
 	var bolts_to_fire: int = get_effective_projectile_count(bolt_count)
+	if has_signature("barrage"):
+		for i: int in range(bolts_to_fire + 2):
+			_fire_bolt(i, aim)
+		return
 	_fire_bolt(0, aim)
 	for i: int in range(1, bolts_to_fire):
 		await get_tree().create_timer(STAGGER_TIME * float(i)).timeout

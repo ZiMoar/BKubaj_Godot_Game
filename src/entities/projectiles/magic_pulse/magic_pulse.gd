@@ -61,6 +61,11 @@ func _apply_pulse() -> void:
 		if not _in_cone(en.global_position):
 			continue
 		en.take_damage(damage, is_critical, source_weapon.damage_type if source_weapon != null else DamageType.Type.ARCANE, false, source_weapon.get_ailment_effect_multiplier() if source_weapon != null else 1.0)
+		# Extinguish: instantly pay out all remaining DoT on the enemy as one hit.
+		if source_weapon != null and source_weapon.has_method("has_signature") and source_weapon.has_signature("extinguish") and en.has_method("extinguish_dots"):
+			var burst: int = en.extinguish_dots()
+			if burst > 0:
+				en.take_damage(burst, false, source_weapon.damage_type if source_weapon != null else DamageType.Type.ARCANE, false, source_weapon.get_ailment_effect_multiplier() if source_weapon != null else 1.0)
 		if source_player and source_player.has_method("apply_lifesteal"):
 			source_player.apply_lifesteal()
 		if en.has_method("apply_knockback"):

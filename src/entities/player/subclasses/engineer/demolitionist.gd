@@ -9,7 +9,7 @@ func _init() -> void:
 	class_id = "demolitionist"
 	parent_class_id = "engineer"
 	display_name = "Demolitionist"
-	description = "Your grenades and explosions leave burning ground that burns enemies inside it."
+	description = "Your grenades and explosions leave burning ground that damages enemies inside it."
 	starting_stats = {
 		"area_bonus": 0.15,
 	}

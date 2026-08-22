@@ -44,6 +44,20 @@ func get_signature_pool() -> Array[Dictionary]:
 			"value": 1,
 			"apply": func(_w: Weapon) -> void: pass,
 		},
+		{
+			"id": "walking_bomb",
+			"title": "Walking Bomb",
+			"description": "Your bombs chase the nearest enemy at your movement speed.",
+			"value": 1,
+			"apply": func(_w: Weapon) -> void: pass,
+		},
+		{
+			"id": "mine",
+			"title": "Mine",
+			"description": "Your bombs only detonate when an enemy touches them, but still charge up with fuse duration.",
+			"value": 1,
+			"apply": func(_w: Weapon) -> void: pass,
+		},
 	]
 
 

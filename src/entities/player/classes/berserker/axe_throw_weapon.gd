@@ -26,15 +26,9 @@ func supports_duration() -> bool:
 
 
 func get_signature_pool() -> Array[Dictionary]:
-	return [
-		{
-			"id": "ricochet",
-			"title": "Ricochet",
-			"description": "Your axe ricochets to one more enemy on each throw and bounces never lose damage.",
-			"value": 1,
-			"apply": func(_w: Weapon) -> void: pass,
-		},
-	]
+	# This is an ability (secondary), not selectable in the anvil — no signatures.
+	# It inherits the Spin Axe's signatures (e.g. Twin Throw boosts the throw).
+	return []
 
 
 ## The Spin Axe is this weapon's upgrade source: the thrown axe inherits the
@@ -65,12 +59,17 @@ func fire() -> void:
 	if spin:
 		damage_type = spin.damage_type
 
-	var axe: Node = BouncingAxeScene.instantiate()
-	axe.name = "BouncingAxe"
-	axe.global_position = global_position
-	if axe.has_method("setup"):
-		axe.setup(global_position, dmg, crit, get_effective_projectile_speed(axe_speed), get_player(), self, get_effective_duration(lifetime))
-	get_tree().current_scene.add_child(axe)
-	var net: Node = get_node_or_null("/root/Net")
-	if net and net.has_method("sync_player_projectile"):
-		net.sync_player_projectile(axe, BouncingAxeScene)
+	# "Twin Throw" (Spin Axe signature): hurl a second axe alongside the first.
+	var throws: int = 2 if (spin != null and spin.has_signature("twin_throw")) else 1
+	for i in range(throws):
+		var axe: Node = BouncingAxeScene.instantiate()
+		axe.name = "BouncingAxe"
+		axe.global_position = global_position
+		# Give the twin a slight angular offset so the two axes fan out.
+		axe.rotation = deg_to_rad((i - 0.5) * 14.0)
+		if axe.has_method("setup"):
+			axe.setup(global_position, dmg, crit, get_effective_projectile_speed(axe_speed), get_player(), self, get_effective_duration(lifetime))
+		get_tree().current_scene.add_child(axe)
+		var net: Node = get_node_or_null("/root/Net")
+		if net and net.has_method("sync_player_projectile"):
+			net.sync_player_projectile(axe, BouncingAxeScene)

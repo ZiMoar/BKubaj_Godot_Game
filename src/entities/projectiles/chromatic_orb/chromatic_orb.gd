@@ -21,6 +21,11 @@ var bolt_damage: int = 30
 var bolt_range: float = 150.0
 var bolt_speed: float = 340.0
 
+## Disco Ball: the orb floats above the player's head and follows them.
+var follow_player: bool = false
+## Boomerang: the orb's speed can go negative so it reverses and returns backward.
+var _boomerang: bool = false
+
 var _age: float = 0.0
 var _bolt_timer: float = 0.0
 var _stopped: bool = false
@@ -34,6 +39,8 @@ func setup(weapon: Node, player: Node, start_dir: Vector2, dmg: int, count: int)
 		dir = Vector2.RIGHT
 	bolt_damage = dmg
 	bolt_count = count
+	if weapon != null and weapon.has_method("has_signature"):
+		_boomerang = weapon.has_signature("boomerang")
 
 
 func _physics_process(delta: float) -> void:
@@ -42,13 +49,23 @@ func _physics_process(delta: float) -> void:
 		queue_free()
 		return
 
-	# Decelerate until stopped; once stopped, linger in place.
-	if not _stopped:
-		speed = maxf(0.0, speed - deceleration * delta)
-		if speed <= 0.0:
-			_stopped = true
-		else:
-			global_position += dir * speed * delta
+	if follow_player:
+		# Disco Ball: the orb floats above the player's head, following them.
+		var p: Node2D = source_player as Node2D
+		if not is_instance_valid(p):
+			p = get_tree().get_first_node_in_group("player") as Node2D
+		if is_instance_valid(p):
+			global_position = p.global_position + Vector2(0, -46)
+	else:
+		# Decelerate until stopped; Boomerang lets the speed go negative so the
+		# orb reverses and returns backwards instead of lingering in place.
+		if not _stopped:
+			speed -= deceleration * delta
+			if not _boomerang and speed <= 0.0:
+				speed = 0.0
+				_stopped = true
+			else:
+				global_position += dir * speed * delta
 
 	# Fire bolts periodically. The rate scales with the player's attack speed
 	# (the same multiplier that shortens the throw cooldown), so stacking attack

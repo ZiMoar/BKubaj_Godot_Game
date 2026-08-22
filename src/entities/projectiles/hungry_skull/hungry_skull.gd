@@ -19,6 +19,10 @@ var source_weapon: Node = null
 var _attached: Node2D = null
 var _age: float = 0.0
 var _attack_timer: float = 0.0
+## Original lifetime passed in at setup; Sustain extends `lifetime` from here,
+## capped at 2x this value.
+var _base_lifetime: float = 6.0
+const SUSTAIN_MAX_MULT: float = 2.0
 
 enum State { HOMING, ATTACHED }
 var state: State = State.HOMING
@@ -46,12 +50,13 @@ func setup(pos: Vector2, dmg: int, crit: bool, player: Node, weapon: Node, skull
 	source_weapon = weapon
 	speed = skull_speed
 	lifetime = dur
+	_base_lifetime = dur
 
 
 func _physics_process(delta: float) -> void:
 	_age += delta
 	if _age >= lifetime:
-		queue_free()
+		_pop_on_expire()
 		return
 
 	match state:
@@ -90,6 +95,9 @@ func _attached_process(delta: float) -> void:
 	var target := _attached
 	# Detach & re-home if the target is gone or dead.
 	if target == null or not is_instance_valid(target) or (target.has_method("has_died") and target.has_died()):
+		# Sustain: a kill extends the skull's duration (up to double).
+		if not get_meta("visual_copy", false) and source_weapon != null and source_weapon.has_method("has_signature") and source_weapon.has_signature("sustain"):
+			_extend_lifetime()
 		_try_fissure()
 		_attached = null
 		state = State.HOMING
@@ -168,6 +176,37 @@ func _nearest_enemy() -> Node2D:
 			best_d = d
 			best = en
 	return best
+
+
+## Sustain: extend the skull's lifetime by 1s per kill, capped at 2x original.
+func _extend_lifetime() -> void:
+	lifetime = minf(_base_lifetime * SUSTAIN_MAX_MULT, lifetime + 1.0)
+
+
+## Popcorn Skulls: on expiration, deal 5x the skull's hit damage in a 100px blast.
+func _pop_on_expire() -> void:
+	# Co-op visual copy: never deals real damage — just disappears.
+	if not get_meta("visual_copy", false) and source_weapon != null and source_weapon.has_method("has_signature") and source_weapon.has_signature("popcorn_skulls"):
+		var boom_dmg: int = maxi(1, int(round(float(damage) * 5.0)))
+		var boom_radius: float = 100.0
+		for e: Node in get_tree().get_nodes_in_group("enemies"):
+			if not is_instance_valid(e):
+				continue
+			var en: Node2D = e as Node2D
+			if global_position.distance_to(en.global_position) <= boom_radius:
+				en.take_damage(boom_dmg, is_critical, source_weapon.damage_type if source_weapon else DamageType.Type.NECROTIC, false, source_weapon.get_ailment_effect_multiplier() if source_weapon else 1.0)
+				if source_player and source_player.has_method("apply_lifesteal"):
+					source_player.apply_lifesteal()
+				if source_weapon and en.is_in_group("enemies") and en.has_method("has_died") and en.has_died():
+					source_weapon.apply_explosion_on_kill(en.global_position, boom_dmg)
+		if get_tree() and get_tree().current_scene:
+			var ring: Node = RadiusRing.new()
+			ring.name = "PopcornRing"
+			get_tree().current_scene.add_child(ring)
+			ring.global_position = global_position
+			if ring.has_method("setup"):
+				ring.setup(boom_radius, 0.5, Color(0.6, 0.9, 0.7, 0.7))
+	queue_free()
 
 
 func _on_hit(body: Node2D) -> void:

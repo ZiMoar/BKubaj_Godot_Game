@@ -119,6 +119,11 @@ const DECAY_DAMAGE_MULT: float = 0.8  # enemy deals 20% less damage
 var brand_timer: float = 0.0
 const BRAND_DURATION: float = 3.0
 const BRAND_DAMAGE_MULT: float = 1.5
+## Corrosive (Poison Spray signature): poisoned enemies take +15% damage from all
+## sources. Applied when poison lands under the Corrosive signature.
+var corrosive_timer: float = 0.0
+const CORROSIVE_DURATION: float = 3.0
+const CORROSIVE_DAMAGE_MULT: float = 1.15
 
 # HUNTER (ranger ascension): the player's hits mark the enemy, who then takes
 # increased damage from all sources for a few seconds. Like Brand but the mark
@@ -445,6 +450,16 @@ func apply_burn(hit_damage: float) -> void:
 		burn_timer = 0.0  # fire the first tick immediately (t=0)
 
 
+## FIRE -> Stacking burn (Molten signature on the Fire Aura): each application
+## ADDS to the per-tick damage instead of keeping only the strongest, so
+## repeated ignites accumulate into a stronger fire.
+func apply_burn_stack(hit_damage: float) -> void:
+	burn_dps += hit_damage * BURN_TICK_PCT
+	burn_ticks_remaining = mini(burn_ticks_remaining + BURN_TICKS, BURN_MAX_TICKS)
+	if burn_timer <= 0.0:
+		burn_timer = 0.0
+
+
 # POISON -> Stackable DoT: long duration, slow ticks. Each stack adds its own
 # per-tick damage (hit_damage * POISON_TICK_PCT), smaller than burn per stack.
 func apply_poison(hit_damage: float) -> void:
@@ -455,6 +470,26 @@ func apply_poison(hit_damage: float) -> void:
 		poison_timer = POISON_TICK_INTERVAL
 	if poison_tick_dps > 0.0 and poison_timer > POISON_TICK_INTERVAL:
 		poison_timer = POISON_TICK_INTERVAL
+
+
+## Magic Pulse "Extinguish" signature: immediately ends all damage-over-time
+## effects on this enemy, converting their remaining total into one instant hit.
+## Returns the total damage to deal (already rounded), and clears the DoTs.
+func extinguish_dots() -> int:
+	var total: float = 0.0
+	# Burn: each of the remaining ticks deals burn_dps.
+	if burn_ticks_remaining > 0 and burn_dps > 0.0:
+		total += burn_dps * float(burn_ticks_remaining)
+		burn_ticks_remaining = 0
+		burn_dps = 0.0
+	# Poison: remaining time * per-tick dps.
+	if poison_duration > 0.0 and poison_tick_dps > 0.0:
+		total += poison_tick_dps * (poison_duration / POISON_TICK_INTERVAL)
+		poison_duration = 0.0
+		poison_stacks = 0
+		poison_tick_dps = 0.0
+		poison_timer = -1.0
+	return maxi(1, int(round(total)))
 
 
 # PHYSICAL -> Impale: store a % of the hit; released on the NEXT hit taken.
@@ -479,6 +514,11 @@ func apply_decay() -> void:
 # HOLY -> Brand: enemy takes increased damage from all sources.
 func apply_brand() -> void:
 	brand_timer = maxf(brand_timer, BRAND_DURATION)
+
+
+# POISON (Corrosive signature) -> enemy takes increased damage from all sources.
+func apply_corrosive() -> void:
+	corrosive_timer = maxf(corrosive_timer, CORROSIVE_DURATION)
 
 
 # LIGHTNING -> Shock: mark this enemy as briefly Shocked (Static Conduit relic).
@@ -640,6 +680,8 @@ func _process_status_dots(delta: float) -> void:
 		decay_timer = maxf(0.0, decay_timer - delta)
 	if brand_timer > 0.0:
 		brand_timer = maxf(0.0, brand_timer - delta)
+	if corrosive_timer > 0.0:
+		corrosive_timer = maxf(0.0, corrosive_timer - delta)
 	if hunter_mark_timer > 0.0:
 		hunter_mark_timer = maxf(0.0, hunter_mark_timer - delta)
 	if crit_vuln_timer > 0.0:
@@ -682,6 +724,9 @@ func take_damage(amount: int, is_critical: bool = false, damage_type: DamageType
 	# BRAND (holy): while active, this enemy takes increased damage from all sources.
 	if brand_timer > 0.0:
 		dealt *= BRAND_DAMAGE_MULT
+	# CORROSIVE (Poison Spray): poison-laced enemies take extra damage too.
+	if corrosive_timer > 0.0:
+		dealt *= CORROSIVE_DAMAGE_MULT
 
 	# HUNTER (ranger ascension): the player's hits mark the enemy, who then takes
 	# increased damage from all sources while marked. The marking hit benefits too.

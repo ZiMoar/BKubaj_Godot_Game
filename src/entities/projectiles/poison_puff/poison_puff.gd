@@ -58,8 +58,15 @@ func _apply() -> void:
 			continue
 		if en.has_method("apply_poison"):
 			en.apply_poison(float(hit_value))
+			# Corrosive: while the poison signature is owned, the enemy also takes
+			# +15% damage from all sources.
+			if source_weapon and source_weapon.has_method("has_signature") and source_weapon.has_signature("corrosive") and en.has_method("apply_corrosive"):
+				en.apply_corrosive()
 			if source_weapon and source_weapon.has_method("apply_lifesteal"):
 				source_weapon.apply_lifesteal()
+			# Stinging Gas: the wave itself also deals direct poison damage.
+			if source_weapon and source_weapon.has_method("has_signature") and source_weapon.has_signature("stinging_gas") and en.has_method("take_damage"):
+				en.take_damage(maxi(1, hit_value), false, DamageType.Type.POISON, true, 1.0)
 
 
 func _in_cone(target: Vector2) -> bool:
