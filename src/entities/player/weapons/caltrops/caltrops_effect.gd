@@ -76,6 +76,8 @@ func _process(delta: float) -> void:
 				continue
 			if _inside(en.global_position):
 				en.take_damage(tick_damage, false, DamageType.Type.PHYSICAL, true)
+				if source_weapon and en.has_method("has_died") and en.has_died():
+					source_weapon.apply_explosion_on_kill(en.global_position, tick_damage)
 				if source_weapon and source_weapon.rusty_spikes and en.has_method("apply_impale"):
 					en.apply_impale(float(tick_damage))
 				if source_weapon and source_weapon.barbed_field and en.has_method("apply_slow"):

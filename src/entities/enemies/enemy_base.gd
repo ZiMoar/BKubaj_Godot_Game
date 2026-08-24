@@ -13,7 +13,7 @@ extends CharacterBody2D
 @export var knockback_decay: float = 160.0
 @export var stat_scale_per_difficulty: float = 0.0  # stat growth multiplier per difficulty point
 @export var damage_scale_ratio: float = 1.0  # damage grows at this fraction of stat_scale_per_difficulty (1.0 = same as health)
-@export var speed_scale_per_difficulty: float = 0.2  # movement speed grows at this rate per difficulty (nerfed, and can be 0 to disable)
+@export var speed_scale_per_difficulty: float = 0.1  # movement speed grows at this rate per difficulty (nerfed, and can be 0 to disable)
 @export var separation_radius: float = 42.0  # how close to another enemy before we push apart
 @export var separation_strength: float = 240.0  # how hard enemies push each other apart
 @export var engage_radius: float = 16.0  # stop closing beyond this distance to the player; orbit instead of jamming into them
@@ -810,7 +810,7 @@ func take_damage(amount: int, is_critical: bool = false, damage_type: DamageType
 	tween.tween_property(self, "modulate", Color.RED, 0.05)
 	tween.tween_property(self, "modulate", Color.WHITE, 0.05)
 	
-	if current_health <= 0:
+	if current_health <= 0 and not _is_dead:
 		die()
 
 func _ensure_hp_value_label() -> void:
@@ -1046,7 +1046,10 @@ func _apply_difficulty_scaling() -> void:
 	# Speed scales at a reduced rate so enemies don't outpace the player and
 	# pile up on them (the "stick like glue" feeling). speed_scale_per_difficulty
 	# can be 0 on specific enemies (e.g. bomber) to disable the scaling entirely.
-	speed = speed * (1.0 + stat_scale_per_difficulty * speed_scale_per_difficulty * difficulty)
+	# The result is hard-capped at 2x the original base speed so scaling can
+	# never make enemies outsprint the player.
+	var base_speed: float = speed
+	speed = minf(base_speed * 2.0, base_speed * (1.0 + stat_scale_per_difficulty * speed_scale_per_difficulty * difficulty))
 
 	if hp_bar:
 		hp_bar.max_value = max_health

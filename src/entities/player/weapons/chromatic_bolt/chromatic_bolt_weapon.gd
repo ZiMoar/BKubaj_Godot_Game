@@ -58,7 +58,7 @@ func get_signature_pool() -> Array[Dictionary]:
 		{
 			"id": "disco_ball",
 			"title": "Disco Ball",
-			"description": "The orb floats above your head, its targeting range grows to 400px, and projectile upgrades raise bolt count instead of orb count.",
+			"description": "The orb floats above your head, its targeting range grows to 200px, and projectile upgrades raise bolt count instead of orb count.",
 			"value": 1,
 			"apply": func(_w: Weapon) -> void: pass,
 		},
@@ -80,7 +80,7 @@ func fire() -> void:
 		orb.deceleration = 0.0
 		orb.lifetime = get_effective_duration(ORB_LIFETIME)
 		orb.bolt_interval = BOLT_INTERVAL
-		orb.bolt_range = 400.0
+		orb.bolt_range = 200.0
 		get_tree().current_scene.add_child(orb)
 		sync_projectile(orb, ChromaticOrbScene)
 		return

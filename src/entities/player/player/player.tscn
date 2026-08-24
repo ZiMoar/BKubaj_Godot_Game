@@ -1,7 +1,67 @@
 [gd_scene format=3 uid="uid://ch71iywhtq2is"]
 
-[ext_resource type="Script" path="res://src/entities/player/player/player.gd" id="1_4m8ck"]
+[ext_resource type="Script" uid="uid://b7ksmn7t7o5l1" path="res://src/entities/player/player/player.gd" id="1_4m8ck"]
 [ext_resource type="Texture2D" uid="uid://umo5mym72jl2" path="res://icon.svg" id="2_vt6n5"]
+[ext_resource type="Texture2D" uid="uid://cvhvaincdljor" path="res://assets/knight_walk/knight_walk_0.png" id="3_284hy"]
+[ext_resource type="Texture2D" uid="uid://dfjr0jfodysb8" path="res://assets/knight_walk/knight_walk_1.png" id="4_0sybb"]
+[ext_resource type="Texture2D" uid="uid://b7wdh77igj1yq" path="res://assets/knight_walk/knight_walk_2.png" id="5_gvw1q"]
+[ext_resource type="Texture2D" uid="uid://cwlcjcgjrlhmj" path="res://assets/knight_walk/knight_walk_3.png" id="6_ufurj"]
+[ext_resource type="Texture2D" uid="uid://cht5lcio42w6k" path="res://assets/knight_walk/knight_walk_4.png" id="7_l1hgy"]
+[ext_resource type="Texture2D" uid="uid://cf7t7k07hex5w" path="res://assets/knight_walk/knight_walk_5.png" id="8_btjcq"]
+[ext_resource type="Texture2D" uid="uid://b6xuf2kobjk8h" path="res://assets/knight_walk/knight_walk_6.png" id="9_0oci3"]
+[ext_resource type="Texture2D" uid="uid://bv60eryj8tyaf" path="res://assets/knight_walk/knight_walk_7.png" id="10_kb83u"]
+[ext_resource type="Texture2D" uid="uid://bgb7pgky0dhk6" path="res://assets/knight_walk/knight_walk_8.png" id="11_c6ws4"]
+[ext_resource type="Texture2D" uid="uid://bs26uespp2g8j" path="res://assets/knight_walk/knight_walk_9.png" id="12_dnmar"]
+[ext_resource type="Texture2D" uid="uid://c2tmnvh6wm11h" path="res://assets/knight_walk/knight_walk_10.png" id="13_rrsji"]
+[ext_resource type="Texture2D" uid="uid://cdp4b37pr5yoo" path="res://assets/knight_walk/knight_walk_11.png" id="14_5dymy"]
+[ext_resource type="Texture2D" uid="uid://bpa7dbot8kgn7" path="res://assets/knight_walk/knight_walk_12.png" id="15_rv4cu"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_qrg6g"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("3_284hy")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_0sybb")
+}, {
+"duration": 1.0,
+"texture": ExtResource("5_gvw1q")
+}, {
+"duration": 1.0,
+"texture": ExtResource("6_ufurj")
+}, {
+"duration": 1.0,
+"texture": ExtResource("7_l1hgy")
+}, {
+"duration": 1.0,
+"texture": ExtResource("8_btjcq")
+}, {
+"duration": 1.0,
+"texture": ExtResource("9_0oci3")
+}, {
+"duration": 1.0,
+"texture": ExtResource("10_kb83u")
+}, {
+"duration": 1.0,
+"texture": ExtResource("11_c6ws4")
+}, {
+"duration": 1.0,
+"texture": ExtResource("12_dnmar")
+}, {
+"duration": 1.0,
+"texture": ExtResource("13_rrsji")
+}, {
+"duration": 1.0,
+"texture": ExtResource("14_5dymy")
+}, {
+"duration": 1.0,
+"texture": ExtResource("15_rv4cu")
+}],
+"loop": 1,
+"name": &"walk",
+"speed": 12.0
+}]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_g4v7s"]
 size = Vector2(16, 16)
@@ -16,7 +76,7 @@ bg_color = Color(0.2, 0.85, 0.3, 1)
 bg_color = Color(0.1, 0.1, 0.1, 0.7)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_shield_fill"]
-bg_color = Color(0.3, 0.6, 1.0, 1)
+bg_color = Color(0.3, 0.6, 1, 1)
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_magnet"]
 radius = 50.0
@@ -33,6 +93,13 @@ modulate = Color(0, 1, 1, 1)
 scale = Vector2(0.125, 0.125)
 texture = ExtResource("2_vt6n5")
 
+[node name="WalkSprite" type="AnimatedSprite2D" parent="." unique_id=1118943748]
+visible = false
+scale = Vector2(0.9, 0.9)
+sprite_frames = SubResource("SpriteFrames_qrg6g")
+animation = &"walk"
+autoplay = "walk"
+
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=623290788]
 shape = SubResource("RectangleShape2D_g4v7s")
 
@@ -47,7 +114,7 @@ theme_override_styles/fill = SubResource("StyleBoxFlat_player_hp_fill")
 value = 100.0
 show_percentage = false
 
-[node name="ShieldBar" type="ProgressBar" parent="."]
+[node name="ShieldBar" type="ProgressBar" parent="." unique_id=1916355358]
 visible = false
 clip_contents = true
 offset_left = -22.0
@@ -56,7 +123,6 @@ offset_right = 22.0
 offset_bottom = 8.0
 theme_override_styles/background = SubResource("StyleBoxFlat_shield_bg")
 theme_override_styles/fill = SubResource("StyleBoxFlat_shield_fill")
-value = 0.0
 show_percentage = false
 
 [node name="MagnetArea" type="Area2D" parent="." unique_id=364405028]

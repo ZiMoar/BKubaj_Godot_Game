@@ -7,7 +7,7 @@ extends Weapon
 
 const BeehiveScene: PackedScene = preload("res://src/entities/player/weapons/beehive/beehive_effect.tscn")
 
-const SPAWN_INTERVAL: float = 1.2
+const SPAWN_INTERVAL: float = 1.6
 const BASE_SWARM_COUNT: int = 2
 const BASE_SWARM_DAMAGE: int = 8
 const SWARM_SPEED: float = 260.0

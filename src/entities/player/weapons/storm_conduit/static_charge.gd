@@ -62,6 +62,8 @@ func _process(delta: float) -> void:
 				continue
 			if center.distance_to(en.global_position) <= radius and en.has_method("take_damage"):
 				en.take_damage(damage, false, DamageType.Type.LIGHTNING, false)
+				if source_weapon and en.has_method("has_died") and en.has_died():
+					source_weapon.apply_explosion_on_kill(en.global_position, damage)
 		_spawn_zap_visual()
 	queue_redraw()
 

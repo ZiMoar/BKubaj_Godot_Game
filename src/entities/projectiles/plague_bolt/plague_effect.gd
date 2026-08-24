@@ -107,6 +107,8 @@ func _process(delta: float) -> void:
 				dmg = maxi(1, int(round(float(base_tick_damage) * _ramp)))
 				_ramp *= ramp_mult
 			target.take_damage(dmg, false, DamageType.Type.NECROTIC, true)
+			if weapon and target.has_method("has_died") and target.has_died():
+				weapon.apply_explosion_on_kill(target.global_position, dmg)
 
 	if _target_dead():
 		_spread()
@@ -161,13 +163,14 @@ func _spread() -> void:
 			if not (weapon and weapon._has_plague(en)):
 				fresh_pool.append(en)
 
-	# Contagion: may target already-plagued enemies (stacking). Otherwise prefer
-	# fresh hosts, falling back to any if none remain (so the plague doesn't die).
+	# Contagion: may target already-plagued enemies (stacking). Without it, spread
+	# only ever hits fresh hosts — re-infecting a plagued enemy is Contagion's
+	# exclusive mechanic (a skipped spread simply lets the plague die off).
 	var pool: Array[Node2D]
 	if weapon and weapon.contagion:
 		pool = all_pool
 	else:
-		pool = fresh_pool if not fresh_pool.is_empty() else all_pool
+		pool = fresh_pool
 
 	pool.shuffle()
 	var n: int = mini(spread_count, pool.size())
@@ -176,6 +179,12 @@ func _spread() -> void:
 
 
 func _spawn_plague_on(enemy: Node2D) -> void:
+	# Safety choke point: never stack on a plagued host unless Contagion is active
+	# (covers the Black Death leak path, which bypasses _spread's fresh-only pool).
+	if weapon and weapon.has_method("_has_plague") and weapon._has_plague(enemy):
+		var can_stack: bool = "contagion" in weapon and bool(weapon.get("contagion"))
+		if not can_stack:
+			return
 	var pe: Node = preload("res://src/entities/projectiles/plague_bolt/plague_effect.tscn").instantiate()
 	pe.global_position = enemy.global_position
 	if pe.has_method("setup"):

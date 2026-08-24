@@ -102,6 +102,8 @@ func _process(delta: float) -> void:
 				if source_weapon and source_weapon.singularity and center.distance_to(en.global_position) <= radius * 0.35:
 					dmg = maxi(1, int(round(float(dmg) * 2.0)))
 				en.take_damage(dmg, false, DamageType.Type.ARCANE, false)
+				if source_weapon and en.has_method("has_died") and en.has_died():
+					source_weapon.apply_explosion_on_kill(en.global_position, dmg)
 	queue_redraw()
 
 
@@ -137,6 +139,8 @@ func _implode() -> void:
 			continue
 		if center.distance_to(en.global_position) <= blast_radius and en.has_method("take_damage"):
 			en.take_damage(dmg, false, DamageType.Type.ARCANE, false)
+			if source_weapon and en.has_method("has_died") and en.has_died():
+				source_weapon.apply_explosion_on_kill(en.global_position, dmg)
 	_spawn_collapse_visual(center, blast_radius)
 
 

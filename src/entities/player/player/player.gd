@@ -250,7 +250,12 @@ var cursed_artefact_ids: Array[String] = []
 @onready var weapons_container: Node2D = $Weapons
 @onready var hp_bar: Control = get_node_or_null("HPBar")
 @onready var sprite: Sprite2D = $Sprite2D
+@onready var walk_sprite: AnimatedSprite2D = get_node_or_null("WalkSprite") as AnimatedSprite2D
 @onready var magnet_area: Area2D = get_node_or_null("MagnetArea") as Area2D
+
+## Whether the current class has a dedicated walk animation to play while moving
+## (only the Knight has a walk grid so far). When false, the static sprite is used.
+var _has_walk_anim: bool = false
 @onready var magnet_shape: CollisionShape2D = get_node_or_null("MagnetArea/CollisionShape2D") as CollisionShape2D
 @onready var hp_value_label: Label = null
 
@@ -678,6 +683,11 @@ func _apply_class_sprite() -> void:
 			sprite.modulate = Color.WHITE
 			# 24px art with a 16-px collision box: render slightly larger.
 			sprite.scale = Vector2(0.9, 0.9)
+	# Only the Knight has a walk grid so far; show it only while moving.
+	_has_walk_anim = cls != null and cls.class_id == "knight"
+	if walk_sprite != null:
+		walk_sprite.visible = false
+		walk_sprite.stop()
 
 
 ## Equips the class-defined Primary + Secondary weapons from the selected class.
@@ -1043,6 +1053,21 @@ func apply_network_damage(amount: int) -> void:
 
 
 # --- Movement & Aiming ---
+## Swaps between the static class sprite (idle) and the walk animation based on
+## whether the player is actually moving. Only active for classes with a walk grid.
+func _update_walk_animation() -> void:
+	if walk_sprite == null or not _has_walk_anim:
+		return
+	var walking: bool = velocity.length() > 1.0
+	walk_sprite.visible = walking
+	sprite.visible = not walking
+	walk_sprite.flip_h = sprite.flip_h
+	if walking and not walk_sprite.is_playing():
+		walk_sprite.play("walk")
+	elif not walking and walk_sprite.is_playing():
+		walk_sprite.stop()
+
+
 func handle_movement() -> void:
 	current_move_input = Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	# While a mobility trick is active, override normal movement with the dash.
@@ -1056,9 +1081,11 @@ func handle_movement() -> void:
 			if _mobility_id == "invisibility":
 				modulate = Color.WHITE
 			_apply_mobility_shove()
+		_update_walk_animation()
 		return
 	velocity = current_move_input * current_move_speed()
 	move_and_slide()
+	_update_walk_animation()
 
 func current_max_health() -> int:
 	return max(1, max_health + max_health_bonus)

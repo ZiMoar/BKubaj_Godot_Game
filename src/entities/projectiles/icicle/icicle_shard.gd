@@ -81,6 +81,8 @@ func _resolve_hit(node: Node) -> void:
 		return
 	_hit = true
 	node.take_damage(damage, false, DamageType.Type.COLD, false, source_weapon.get_ailment_effect_multiplier() if source_weapon else 1.0)
+	if source_weapon and node.has_method("has_died") and node.has_died():
+		source_weapon.apply_explosion_on_kill(node.global_position, damage)
 	if source_player and source_player.has_method("apply_lifesteal"):
 		source_player.apply_lifesteal()
 	queue_free()

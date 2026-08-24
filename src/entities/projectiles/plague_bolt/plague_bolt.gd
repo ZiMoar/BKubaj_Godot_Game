@@ -94,6 +94,8 @@ func _resolve_hit(node: Node) -> void:
 		return
 	_hit = true
 	node.take_damage(damage, false, DamageType.Type.NECROTIC, false, source_weapon.get_ailment_effect_multiplier() if source_weapon else 1.0)
+	if source_weapon and node.has_method("has_died") and node.has_died():
+		source_weapon.apply_explosion_on_kill(node.global_position, damage)
 	if source_player and source_player.has_method("apply_lifesteal"):
 		source_player.apply_lifesteal()
 	# Inflict the plague DoT on enemies (not destructibles).
@@ -103,6 +105,12 @@ func _resolve_hit(node: Node) -> void:
 
 
 func _spawn_plague(tgt: Node2D) -> void:
+	# Only Contagion may re-infect an enemy already carrying plague. Without it, a
+	# second bolt on a plagued target is skipped so plagues never stack.
+	if source_weapon and source_weapon.has_method("_has_plague") and source_weapon._has_plague(tgt):
+		var can_stack: bool = "contagion" in source_weapon and bool(source_weapon.get("contagion"))
+		if not can_stack:
+			return
 	var scene: PackedScene = preload("res://src/entities/projectiles/plague_bolt/plague_effect.tscn")
 	var pe: Node = scene.instantiate()
 	pe.global_position = tgt.global_position

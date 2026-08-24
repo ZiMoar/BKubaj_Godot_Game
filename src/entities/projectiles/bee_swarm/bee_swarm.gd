@@ -125,6 +125,8 @@ func _poison_burst() -> void:
 			continue
 		if center.distance_to(en.global_position) <= area_radius and en.has_method("take_damage"):
 			en.take_damage(damage, false, DamageType.Type.POISON, false, source_weapon.get_ailment_effect_multiplier() if source_weapon else 1.0)
+			if source_weapon and en.has_method("has_died") and en.has_died():
+				source_weapon.apply_explosion_on_kill(en.global_position, damage)
 			# Sticky Honey: stung enemies are slowed by honey.
 			if source_weapon and source_weapon.sticky_honey and en.has_method("apply_slow"):
 				en.apply_slow(1.0, 0.6)

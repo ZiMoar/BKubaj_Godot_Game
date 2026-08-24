@@ -5,7 +5,7 @@ extends Weapon
 ## is released as a wave of holy damage around the target, damaging nearby foes.
 
 const SMITE_RANGE: float = 300.0
-const BASE_DAMAGE: int = 40
+const BASE_DAMAGE: int = 55
 const WAVE_RADIUS: float = 150.0
 const WAVE_DAMAGE_RATIO: float = 1.0   # the wave deals the full overkill amount
 const COOLDOWN: float = 2.5
@@ -135,6 +135,8 @@ func _smite_strike_at(target: Node2D, origin: Vector2, depth: int) -> void:
 	apply_lifesteal()
 
 	var killed: bool = (target.has_method("has_died") and target.has_died()) or int(target.get("current_health")) <= 0
+	if killed:
+		apply_explosion_on_kill(target.global_position, dealt)
 
 	if killed or overkill > 0:
 		_release_holy_wave(target.global_position, maxi(1, overkill), depth)
@@ -154,6 +156,8 @@ func _release_holy_wave(origin: Vector2, wave_damage: int, depth: int) -> void:
 			continue
 		if en.has_method("take_damage"):
 			en.take_damage(wave_damage, false, damage_type, false, get_ailment_effect_multiplier())
+			if en.has_method("has_died") and en.has_died():
+				apply_explosion_on_kill(en.global_position, wave_damage)
 			if condemn:
 				_condemned.append(en)
 			# Holy Chain: a wave that kills an enemy triggers another Smite.
