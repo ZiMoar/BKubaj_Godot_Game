@@ -98,7 +98,9 @@ func fire() -> void:
 	if enemies.is_empty():
 		return
 	var origin: Vector2 = global_position
-	var strike_range: float = STRIKE_RANGE * get_area_multiplier()
+	# Range caps: keep bolts tight so they don't streak across the whole screen
+	# as the Area stat grows.
+	var strike_range: float = minf(STRIKE_RANGE * get_area_multiplier(), STRIKE_RANGE)
 
 	var in_range: Array[Node2D] = []
 	for e: Node in enemies:
@@ -117,7 +119,7 @@ func fire() -> void:
 
 	var target_count: int = get_effective_projectile_count(BASE_TARGETS)
 	var chain_extra: int = get_effective_chain_count(0)
-	var chain_rng: float = CHAIN_RANGE * get_area_multiplier()
+	var chain_rng: float = minf(CHAIN_RANGE * get_area_multiplier(), CHAIN_RANGE)
 	var hit_ids: Dictionary = {}
 	var strikes: Array[PackedVector2Array] = []
 	var strike_centers: Array[Vector2] = []

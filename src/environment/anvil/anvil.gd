@@ -50,7 +50,10 @@ func _on_body_entered(body: Node2D) -> void:
 		# used again. Defer the free decision until the upgrade menu closes.
 		var reuse: bool = body.has_method("has_artefact") and body.has_artefact("smiths_hammer") \
 			and randf() < 0.10
-		if reuse and hud.has_method("anvil_upgrade_menu") and hud.anvil_upgrade_menu != null:
+		# `anvil_upgrade_menu` is a property on the HUD, not a method — checking it
+		# with has_method() returned false and the reuse connection was never made,
+		# so the anvil stayed "collected" and could never be picked up again.
+		if reuse and hud.anvil_upgrade_menu != null:
 			hud.anvil_upgrade_menu.menu_closed.connect(_on_menu_closed, CONNECT_ONE_SHOT)
 		hud.show_anvil_upgrade(is_golden, anvil_kind)
 		if not reuse:

@@ -19,7 +19,7 @@ var STAT_POOL: Array[Dictionary] = [
 	{
 		"id": "projectile_count",
 		"title": "Projectile Count",
-		"description": "+{value}% chance of an extra projectile (100% = guaranteed).",
+		"description": "+{value}% chance of an extra projectile.",
 		"value": 25,
 		"weight": 1.0,
 		"apply": func(w: Weapon) -> void: w.projectile_extra_chance += 0.25,
@@ -246,6 +246,9 @@ var rng := RandomNumberGenerator.new()
 var _current_player: Player = null
 var _selected_weapon: Weapon = null
 var _current_stats: Array[Dictionary] = []
+## CHa0s relic: the window still opens but shows a single random stat (repeated
+## across all three slots) for a random weapon, tripled on apply.
+var _chaos: bool = false
 var _rerolls_done: int = 0
 ## Golden anvils (5% of spawns) guarantee at least one signature upgrade choice.
 var _is_golden: bool = false
@@ -342,14 +345,18 @@ func _bind_buttons() -> void:
 		reroll_button.pressed.connect(_on_reroll_pressed)
 
 
-func open_menu(golden: bool = false, kind: int = AnvilKind.STANDARD) -> void:
+func open_menu(golden: bool = false, kind: int = AnvilKind.STANDARD, chaos: bool = false) -> void:
 	_current_player = get_tree().get_first_node_in_group("player") as Player
 	if _current_player == null:
 		return
 	_is_golden = golden
 	_anvil_kind = kind
+	_chaos = chaos
 	visible = true
-	_show_weapon_selection()
+	if chaos:
+		_show_chaos_selection()
+	else:
+		_show_weapon_selection()
 
 
 func close_menu() -> void:
@@ -357,37 +364,6 @@ func close_menu() -> void:
 	_selected_weapon = null
 	_current_stats = []
 	menu_closed.emit()
-
-
-## CHa0s relic: bypasses the menu entirely — a random weapon and a random stat
-## are rolled and applied with the effect tripled. Emits upgrade_applied so the
-## HUD's normal close/refresh flow runs.
-func apply_chaos(golden: bool = false, kind: int = AnvilKind.STANDARD) -> void:
-	_current_player = get_tree().get_first_node_in_group("player") as Player
-	if _current_player == null:
-		return
-	_is_golden = golden
-	_anvil_kind = kind
-	var weapons: Array[Weapon] = _get_player_weapons()
-	if weapons.is_empty():
-		return
-	var weapon: Weapon = weapons[rng.randi_range(0, weapons.size() - 1)]
-	_selected_weapon = weapon
-	var stats: Array[Dictionary] = _roll_stats(weapon)
-	if stats.is_empty():
-		_selected_weapon = null
-		return
-	var stat: Dictionary = stats[rng.randi_range(0, stats.size() - 1)]
-	if stat.has("id") and _is_signature_entry(stat):
-		weapon.apply_signature(stat)
-		upgrade_applied.emit(weapon, "signature:" + str(stat["id"]))
-		return
-	var apply: Callable = stat["apply"]
-	# CHa0s triples the effect of the random choice.
-	for i in 3:
-		apply.call(weapon)
-	weapon.anvil_upgrade_count += 1
-	upgrade_applied.emit(weapon, stat["id"] as String)
 
 
 func _get_player_weapons() -> Array[Weapon]:
@@ -511,6 +487,30 @@ func _show_stat_selection() -> void:
 	if stat_box:
 		stat_box.visible = true
 
+	_update_stat_buttons()
+	_update_reroll_ui()
+
+
+## CHa0s relic: pick a random weapon and show ONE random stat (repeated across
+## all three slots) so the player sees what they're getting. Tripled on apply.
+func _show_chaos_selection() -> void:
+	var weapons: Array[Weapon] = _get_player_weapons()
+	if weapons.is_empty():
+		return
+	_selected_weapon = weapons[randi() % weapons.size()]
+	var stats: Array[Dictionary] = _roll_stats(_selected_weapon)
+	if stats.is_empty():
+		return
+	var stat: Dictionary = stats[randi() % stats.size()]
+	_current_stats = [stat, stat, stat]
+	if subtitle_label:
+		subtitle_label.text = "CHa0s chose %s for you (tripled)." % _selected_weapon.weapon_name
+	if weapon_list:
+		weapon_list.visible = false
+	if weapon_scroll:
+		weapon_scroll.visible = false
+	if stat_box:
+		stat_box.visible = true
 	_update_stat_buttons()
 	_update_reroll_ui()
 
@@ -721,6 +721,10 @@ func _on_reroll_pressed() -> void:
 func _update_reroll_ui() -> void:
 	if reroll_button == null:
 		return
+	if _chaos:
+		# CHa0s: no rerolling — the choice is already decided for you.
+		reroll_button.disabled = true
+		return
 	var cost: int = get_current_reroll_cost()
 	if cost == 0:
 		reroll_button.text = "Reroll (free)"
@@ -803,7 +807,10 @@ func _on_stat_pressed(index: int) -> void:
 		upgrade_applied.emit(_selected_weapon, "signature:" + str(stat["id"]))
 		return
 	var apply: Callable = stat["apply"] as Callable
-	apply.call(_selected_weapon)
+	# CHa0s relic triples the effect of the (random) chosen stat.
+	var times: int = 3 if _chaos else 1
+	for i: int in range(times):
+		apply.call(_selected_weapon)
 	_selected_weapon.anvil_upgrade_count += 1
 	upgrade_applied.emit(_selected_weapon, stat["id"] as String)
 

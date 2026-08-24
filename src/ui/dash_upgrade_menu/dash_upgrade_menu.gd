@@ -31,6 +31,11 @@ const UPGRADES: Array[Dictionary] = [
 @onready var choice_2: Button = get_node_or_null("CenterContainer/Panel/Vertical/Choice2") as Button
 @onready var choice_3: Button = get_node_or_null("CenterContainer/Panel/Vertical/Choice3") as Button
 
+## CHa0s relic: the window still opens, but every slot shows the same random
+## dash upgrade so the player sees what they're getting. Effect tripled on apply.
+var _chaos: bool = false
+var _chaos_pick: Dictionary = {}
+
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -48,7 +53,8 @@ func _bind_buttons() -> void:
 		choice_3.pressed.connect(_on_choice_pressed.bind(2))
 
 
-func open_menu() -> void:
+func open_menu(chaos: bool = false) -> void:
+	_chaos = chaos
 	visible = true
 	_update_labels()
 	_update_buttons()
@@ -62,11 +68,17 @@ func _update_labels() -> void:
 	if title_label:
 		title_label.text = "Winged Boots!"
 	if subtitle_label:
-		subtitle_label.text = "Choose a dash upgrade."
+		if _chaos:
+			subtitle_label.text = "CHa0s chose your dash upgrade for you (tripled)."
+		else:
+			subtitle_label.text = "Choose a dash upgrade."
 
 
 func _update_buttons() -> void:
 	var buttons: Array[Button] = [choice_1, choice_2, choice_3]
+	# CHa0s: roll one random upgrade and show it in every slot.
+	if _chaos:
+		_chaos_pick = UPGRADES[randi() % UPGRADES.size()] as Dictionary
 	for i: int in range(buttons.size()):
 		var button: Button = buttons[i]
 		if button == null:
@@ -75,13 +87,17 @@ func _update_buttons() -> void:
 			button.text = "-"
 			button.disabled = true
 			continue
-		var u: Dictionary = UPGRADES[i]
+		var u: Dictionary = _chaos_pick if _chaos else UPGRADES[i]
 		button.text = "%s\n%s" % [u["title"], u["desc"]]
 		button.disabled = false
 		button.modulate = Color(0.7, 0.85, 1.0)
 
 
 func _on_choice_pressed(index: int) -> void:
+	if _chaos:
+		if not _chaos_pick.is_empty():
+			upgrade_selected.emit(_chaos_pick["id"] as String)
+		return
 	if index < 0 or index >= UPGRADES.size():
 		return
 	upgrade_selected.emit(UPGRADES[index]["id"] as String)

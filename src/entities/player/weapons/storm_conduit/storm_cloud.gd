@@ -48,7 +48,8 @@ func _strike() -> void:
 	for d: Node in get_tree().get_nodes_in_group("destructibles"):
 		enemies.append(d)
 	var origin: Vector2 = global_position
-	var srange: float = strike_range * weapon.get_area_multiplier()
+	# Cap so the Area stat can't make bolts streak across the whole screen.
+	var srange: float = minf(strike_range * weapon.get_area_multiplier(), strike_range)
 	var in_range: Array[Node2D] = []
 	for e: Node in enemies:
 		if not is_instance_valid(e):
@@ -61,7 +62,7 @@ func _strike() -> void:
 
 	var count: int = weapon.get_effective_projectile_count(1)
 	var chain_extra: int = weapon.get_effective_chain_count(0)
-	var crange: float = chain_range * weapon.get_area_multiplier()
+	var crange: float = minf(chain_range * weapon.get_area_multiplier(), chain_range)
 	var hit_ids: Dictionary = {}
 	for i in range(count):
 		var pick: Array[Node2D] = []

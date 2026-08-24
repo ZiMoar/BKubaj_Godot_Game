@@ -5,7 +5,7 @@ extends Weapon
 ## is released as a wave of holy damage around the target, damaging nearby foes.
 
 const SMITE_RANGE: float = 300.0
-const BASE_DAMAGE: int = 55
+const BASE_DAMAGE: int = 70
 const WAVE_RADIUS: float = 150.0
 const WAVE_DAMAGE_RATIO: float = 1.0   # the wave deals the full overkill amount
 const COOLDOWN: float = 2.5

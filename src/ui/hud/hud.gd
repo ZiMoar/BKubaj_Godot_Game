@@ -352,19 +352,10 @@ func _show_level_up_menu(new_level: int) -> void:
 
 	level_up_menu_open = true
 	PauseCoord.begin_block()
-	# CHa0s relic: the player no longer chooses — a random upgrade is applied
-	# (tripled) and no choice menu is shown. Relic/ascension picks stay manual.
-	if current_player.has_artefact("cha0s"):
-		_apply_chaos_level_up()
-		return
-	level_up_menu.open_for_player(current_player, new_level)
-
-func _apply_chaos_level_up() -> void:
-	var choice: Dictionary = level_up_menu.roll_random_upgrade(current_player)
-	if choice.is_empty():
-		_close_level_up_menu()
-		return
-	_on_upgrade_selected(str(choice["id"]), int(choice.get("rolled_rarity", 0)))
+	# CHa0s relic: the choice window still opens, but every slot shows the same
+	# random upgrade (tripled on apply) so the player sees what they're getting
+	# and the pause block stays balanced for co-op. Relic/ascension stay manual.
+	level_up_menu.open_for_player(current_player, new_level, current_player.has_artefact("cha0s"))
 
 func _on_upgrade_selected(upgrade_id: String, rarity: int) -> void:
 	if current_player and current_player.has_method("apply_upgrade"):
@@ -389,11 +380,8 @@ func _reopen_level_up_menu() -> void:
 		if current_player == null:
 			return
 
-	# CHa0s relic: auto-apply a random (tripled) upgrade on reopened level-ups too.
-	if current_player.has_artefact("cha0s"):
-		_apply_chaos_level_up()
-		return
-	level_up_menu.open_for_player(current_player, current_level_number)
+	# CHa0s relic: reopened level-ups also show the single random (tripled) choice.
+	level_up_menu.open_for_player(current_player, current_level_number, current_player.has_artefact("cha0s"))
 
 func _close_level_up_menu() -> void:
 	level_up_menu_open = false
@@ -429,11 +417,8 @@ func show_anvil_upgrade(golden: bool = false, kind: int = 0) -> void:
 	if anvil_upgrade_menu.visible:
 		return
 	PauseCoord.begin_block()
-	# CHa0s relic: no choice — a random weapon/stat is upgraded (tripled).
-	if current_player.has_artefact("cha0s"):
-		anvil_upgrade_menu.apply_chaos(golden, kind)
-		return
-	anvil_upgrade_menu.open_menu(golden, kind)
+	# CHa0s relic: still opens the window, but shows a single random stat (tripled).
+	anvil_upgrade_menu.open_menu(golden, kind, current_player.has_artefact("cha0s"))
 
 
 func _on_anvil_upgrade_applied(_weapon: Weapon, _stat_id: String) -> void:
@@ -456,15 +441,8 @@ func show_dash_upgrade() -> void:
 	if dash_upgrade_menu.visible:
 		return
 	PauseCoord.begin_block()
-	# CHa0s relic: no choice — a random dash upgrade is applied (tripled).
-	if current_player.has_artefact("cha0s"):
-		var choices: Array = dash_upgrade_menu.UPGRADES
-		var pick: Dictionary = choices[randi() % choices.size()] as Dictionary
-		_apply_dash_upgrade(str(pick["id"]), 3)
-		dash_upgrade_menu.close_menu()
-		PauseCoord.end_block()
-		return
-	dash_upgrade_menu.open_menu()
+	# CHa0s relic: still opens the window, but shows a single random dash upgrade.
+	dash_upgrade_menu.open_menu(current_player.has_artefact("cha0s"))
 
 
 func _apply_dash_upgrade(upgrade_id: String, times: int) -> void:
@@ -485,7 +463,9 @@ func _on_dash_upgrade_selected(upgrade_id: String) -> void:
 		dash_upgrade_menu.close_menu()
 		PauseCoord.end_block()
 		return
-	_apply_dash_upgrade(upgrade_id, 1)
+	# CHa0s relic triples the effect of the random dash upgrade.
+	var times: int = 3 if current_player.has_artefact("cha0s") else 1
+	_apply_dash_upgrade(upgrade_id, times)
 	dash_upgrade_menu.close_menu()
 	PauseCoord.end_block()
 

@@ -8,7 +8,7 @@ const BlackHoleScene: PackedScene = preload("res://src/entities/player/weapons/b
 
 const BASE_RADIUS: float = 110.0
 const TICK_INTERVAL: float = 0.5
-const BASE_TICK_DAMAGE: int = 12
+const BASE_TICK_DAMAGE: int = 18
 const BASE_DURATION: float = 5.0
 const PULL_SPEED: float = 70.0
 const PLACE_DISTANCE: float = 200.0

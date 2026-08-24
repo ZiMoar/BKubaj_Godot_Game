@@ -54,7 +54,7 @@ const UPGRADE_POOL: Array[Dictionary] = [
 	{"id": "armor",                "title": "Armor",         "description": "+{value} armor.",                           "min_rarity": Rarity.UNCOMMON,  "base_value": 20.0,  "value_scaling": 12.0},
 	{"id": "evasion",              "title": "Evasion",       "description": "+{value} evasion.",                     "min_rarity": Rarity.RARE,      "base_value": 20.0,  "value_scaling": 12.0},
 	{"id": "hp_regen",             "title": "HP Regen",      "description": "+{value} HP/sec.",                      "min_rarity": Rarity.COMMON,    "base_value": 1.0,   "value_scaling": 0.5},
-	{"id": "lifesteal",            "title": "Life Steal",    "description": "+{value} heal on hit.",                 "min_rarity": Rarity.UNCOMMON,  "base_value": 1.0,   "value_scaling": 0.5},
+	{"id": "lifesteal",            "title": "Life Steal",    "description": "+{value} heal on kill.",                 "min_rarity": Rarity.UNCOMMON,  "base_value": 1.0,   "value_scaling": 0.5},
 	{"id": "thorns",               "title": "Thorns",        "description": "+{value} reflected damage.",            "min_rarity": Rarity.COMMON,    "base_value": 8.0,   "value_scaling": 4.0},
 	{"id": "revive",               "title": "Revive",        "description": "+{value} revive charge(s).",            "min_rarity": Rarity.EPIC,      "base_value": 1.0,   "value_scaling": 1.0},
 	# --- Utility ---
@@ -77,6 +77,10 @@ const UPGRADE_POOL: Array[Dictionary] = [
 
 var rng := RandomNumberGenerator.new()
 var current_choices: Array[Dictionary] = []
+## CHa0s relic: the window still opens but every slot shows the same random
+## upgrade (rolled once), so the player sees what they're getting without being
+## able to choose. The effect is tripled by the HUD on apply.
+var _chaos: bool = false
 var _current_player: Player = null
 var _rerolls_done: int = 0
 
@@ -103,12 +107,22 @@ func _bind_buttons() -> void:
 		reroll_button.pressed.connect(_on_reroll_pressed)
 
 
-func open_for_player(player: Player, level_number: int) -> void:
+func open_for_player(player: Player, level_number: int, chaos: bool = false) -> void:
 	visible = true
 	_current_player = player
 	_rerolls_done = 0
-	current_choices = _pick_choices(player.luck)
-	_update_labels(level_number)
+	_chaos = chaos
+	if chaos:
+		# CHa0s: show the SAME random upgrade in all three slots so the player
+		# still sees what they're getting (and the pause block stays balanced).
+		var c: Dictionary = roll_random_upgrade(player)
+		current_choices = []
+		if not c.is_empty():
+			for i: int in range(3):
+				current_choices.append(c)
+	else:
+		current_choices = _pick_choices(player.luck)
+	_update_labels(level_number, chaos)
 	_update_buttons()
 	_update_reroll_ui()
 
@@ -117,8 +131,8 @@ func close_menu() -> void:
 	visible = false
 
 
-## CHa0s relic: returns one random upgrade roll without showing the menu, so the
-## caller can auto-apply a random choice (with the relic's tripled effect).
+## CHa0s relic: returns one random upgrade roll, used to show the same choice in
+## every slot of the (still-open) level-up window. The effect is tripled on apply.
 func roll_random_upgrade(player: Player) -> Dictionary:
 	if player == null:
 		return {}
@@ -223,11 +237,14 @@ func _get_eligible_upgrades(rarity: int, exclude_ids: Array[String]) -> Array[Di
 
 # --- UI ---
 
-func _update_labels(level_number: int) -> void:
+func _update_labels(level_number: int, chaos: bool = false) -> void:
 	if title_label:
 		title_label.text = "Level Up"
 	if subtitle_label:
-		subtitle_label.text = "Choose 1 of 3 upgrades for level %d." % level_number
+		if chaos:
+			subtitle_label.text = "CHa0s chose your upgrade for you (tripled) — level %d." % level_number
+		else:
+			subtitle_label.text = "Choose 1 of 3 upgrades for level %d." % level_number
 
 
 func _update_buttons() -> void:
@@ -292,10 +309,18 @@ func _on_reroll_pressed() -> void:
 		return
 
 	_rerolls_done += 1
-	var exclude: Array[String] = []
-	for c: Dictionary in current_choices:
-		exclude.append(c["id"] as String)
-	current_choices = _pick_choices(_current_player.luck, exclude)
+	if _chaos:
+		# CHa0s: rerolling re-rolls a fresh single random upgrade (all slots same).
+		var c: Dictionary = roll_random_upgrade(_current_player)
+		current_choices = []
+		if not c.is_empty():
+			for i: int in range(3):
+				current_choices.append(c)
+	else:
+		var exclude: Array[String] = []
+		for c: Dictionary in current_choices:
+			exclude.append(c["id"] as String)
+		current_choices = _pick_choices(_current_player.luck, exclude)
 	_update_buttons()
 	_update_reroll_ui()
 
