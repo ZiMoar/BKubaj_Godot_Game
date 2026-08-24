@@ -153,18 +153,16 @@ func _ensure_player(id: int, class_id: String) -> void:
 	# (gray screen) or collides with the host's (overlap lock).
 	p.position = _spawn_point + Vector2(_players.get_child_count() * 40, 0)
 	_players.add_child(p)
-	# Bind network authority while the node is IN the tree. Setting it before
-	# add_child (as done previously) left the SceneMultiplayer unaware of who owns
-	# the node, so the MultiplayerSynchronizer never swapped roles: every machine
-	# treated the OTHER player as a frozen replica of its spawn. The proven Ziva
-	# pattern assigns authority in _enter_tree (node already in-tree) — same idea.
+	# Bind network authority. The Player sets its own authority in _enter_tree
+	# (deriving the owner id from its "Player_<id>" name), which runs BEFORE the
+	# child MultiplayerSynchronizer enters the tree — so the synchronizer
+	# registers with the correct owner as its replication source and the owner's
+	# position replicates to everyone (fixes client->host movement sync). These
+	# explicit calls are idempotent safety re-asserts of the same value.
 	p.set_multiplayer_authority(id)
-	# The per-player MultiplayerSynchronizer inherits its authority the moment it
-	# enters the tree, which happened when the PLAYER was still default-authority
-	# (1) — so it bound to the host for EVERY player, not just the host's own.
-	# That silently broke client->host movement sync (only the host's player ever
-	# replicated). Pin the synchronizer to the same owner so the owning peer's
-	# position replicates and everyone else just renders the ghost.
+	# The per-player MultiplayerSynchronizer inherits its authority from the
+	# Player the moment it enters the tree (the player's _enter_tree already set
+	# it to the owner id). Re-pinning it here is a harmless no-op of the same id.
 	if sync:
 		sync.set_multiplayer_authority(id)
 

@@ -74,9 +74,7 @@ func fire() -> void:
 
 	# Co-op: broadcast a standalone visual of this swing so the other player sees
 	# it (their copy of this player's weapon isn't animating). Purely cosmetic.
-	var net: Node = get_node_or_null("/root/Net")
-	if net and net.has_method("sync_player_effect"):
-		net.sync_player_effect(slash_area, SwordSlashVisualScene, {
+	sync_effect(slash_area, SwordSlashVisualScene, {
 			"reach": reach * get_area_multiplier(),
 			"is_stab": is_stab,
 			"angle_deg": slash_angle_deg,

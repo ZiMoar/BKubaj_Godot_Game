@@ -16,6 +16,13 @@ const AUTO_WEAPON_POOL: Array[Dictionary] = [
 	{"scene": preload("res://src/entities/player/weapons/hungry_skull/hungry_skull_weapon.tscn"), "name": "Hungry Skull",    "cooldown": 3.5, "desc": "A homing skull that chews enemies with necrotic damage"},
 	{"scene": preload("res://src/entities/player/weapons/magic_pulse/magic_pulse_weapon.tscn"), "name": "Magic Pulse",     "cooldown": 2.2, "desc": "Cone of arcane energy that pushes enemies back"},
 	{"scene": preload("res://src/entities/player/weapons/explosive_charge/explosive_charge_weapon.tscn"), "name": "Explosive Charge", "cooldown": 3.0, "desc": "Drops a bomb that explodes with fire — longer fuze, bigger boom"},
+	{"scene": preload("res://src/entities/player/weapons/storm_conduit/storm_conduit_weapon.tscn"), "name": "Storm Conduit", "cooldown": 3.0, "desc": "Lightning from the storm strikes random enemies"},
+	{"scene": preload("res://src/entities/player/weapons/icicle/icicle_weapon.tscn"), "name": "Icicle", "cooldown": 2.0, "desc": "Icicles shatter into a cone of cold behind the target"},
+	{"scene": preload("res://src/entities/player/weapons/smite/smite_weapon.tscn"), "name": "Smite", "cooldown": 2.5, "desc": "Holy strike; overkill damage bursts as a holy wave"},
+	{"scene": preload("res://src/entities/player/weapons/bursting_plague/bursting_plague_weapon.tscn"), "name": "Bursting Plague", "cooldown": 4.0, "desc": "Ramping necrotic DoT that spreads on kill"},
+	{"scene": preload("res://src/entities/player/weapons/black_hole/black_hole_weapon.tscn"), "name": "Black Hole", "cooldown": 6.0, "desc": "Sucks enemies in and deals arcane damage"},
+	{"scene": preload("res://src/entities/player/weapons/caltrops/caltrops_weapon.tscn"), "name": "Caltrops", "cooldown": 5.0, "desc": "Scatters spikes that damage enemies that walk over them"},
+	{"scene": preload("res://src/entities/player/weapons/beehive/beehive_weapon.tscn"), "name": "Beehive", "cooldown": 7.0, "desc": "Bee swarms attach to enemies and chew them with poison"},
 ]
 
 @onready var title_label: Label = get_node_or_null("CenterContainer/Panel/Vertical/TitleLabel") as Label

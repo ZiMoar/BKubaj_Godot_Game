@@ -114,9 +114,7 @@ func _cast_nova_at(origin: Vector2) -> void:
 			ring.global_position = origin
 			ring.setup(eff_radius)
 			get_tree().current_scene.add_child(ring)
-			var net: Node = get_node_or_null("/root/Net")
-			if net and net.has_method("sync_player_effect"):
-				net.sync_player_effect(ring, frost_scene, {"radius": eff_radius})
+			sync_effect(ring, frost_scene, {"radius": eff_radius})
 
 
 ## Nearest-enemy direction for the Procession line (else a random direction).

@@ -25,12 +25,11 @@ func _ready() -> void:
 	doodle_color = Color(0.9, 0.8, 0.4)
 	doodle_size = 14.0
 	boss_display_name = "Skeleton General"
-	# Difficulty scaling is re-enabled: the boss grows with each combat room.
-	# The base stats below are chosen so the FIRST room (difficulty 5) matches the
-	# old fixed values exactly (4200 HP / 55 contact / 72 speed) — EnemyBase
-	# multiplies them by (1 + stat_scale_per_difficulty * difficulty), which at
-	# difficulty 5 and stat_scale_per_difficulty 0.06 is 1.30x for health/contact
-	# and 1.06x for speed (0.2 speed ratio).
+	# Difficulty scaling is re-enabled and the boss now gets a HEAVY HP-per-
+	# difficulty buff: it scales far more steeply with each combat room than the
+	# other enemies, so later-room bosses are real health sponges. The base stats
+	# are tuned so the FIRST room (difficulty 5) lands close to the original boss
+	# fight — EnemyBase multiplies by (1 + stat_scale_per_difficulty * difficulty).
 	max_health = 3231
 	speed = 68.0
 	contact_damage = 42
@@ -39,7 +38,7 @@ func _ready() -> void:
 	weight = 500.0
 	max_knockback_speed = 0.0
 	knockback_decay = 0.0
-	stat_scale_per_difficulty = 0.06
+	stat_scale_per_difficulty = 0.25
 	move_time = 1.4
 	collide_with_player = true  # the boss body-blocks the player
 

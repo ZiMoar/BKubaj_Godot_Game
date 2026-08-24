@@ -75,6 +75,4 @@ func fire() -> void:
 		if visual.has_method("setup"):
 			visual.setup(eff_radius)
 		get_tree().current_scene.add_child(visual)
-		var net: Node = get_node_or_null("/root/Net")
-		if net and net.has_method("sync_player_effect"):
-			net.sync_player_effect(visual, rain_visual_scene, {"radius": eff_radius})
+		sync_effect(visual, rain_visual_scene, {"radius": eff_radius})

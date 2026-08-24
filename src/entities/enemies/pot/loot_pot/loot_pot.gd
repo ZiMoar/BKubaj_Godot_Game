@@ -43,8 +43,36 @@ func die() -> void:
 	_is_dead = true
 	_spread_ailments_on_death()
 	_register_kill()
+	# Lifesteal is on-kill: breaking a pot leeches health to the player too.
+	_apply_kill_lifesteal()
+	# Co-op: a network-synced pot dies on the HOST. Roll its loot once here and
+	# broadcast so every machine spawns its OWN copy for its local player (mixing
+	# in the pot's special heal/xp/magnet/anvil table). Falls back to the local
+	# single-roll drop otherwise.
+	if _route_pot_loot():
+		queue_free()
+		return
 	_roll_loot()
 	queue_free()
+
+
+## Co-op: this is a host-authoritative networked pot and I am the host. Roll the
+## pot's loot once and broadcast it to every machine (including myself via
+## call_local) so each spawns its own copy. Returns true if routed this way (the
+## caller must NOT also roll locally, or the host would double-drop).
+func _route_pot_loot() -> bool:
+	var net: Node = get_node_or_null("/root/Net")
+	if _enemy_net_id < 0 or net == null or not net.active() or not multiplayer.is_server():
+		return false
+	var enemy_net: Node = get_tree().get_first_node_in_group("enemy_net")
+	if enemy_net == null or not enemy_net.has_method("spawn_pot_loot"):
+		return false
+	# Single authoritative loot roll mirroring _roll_loot's weighted table:
+	# <0.25 heal, <0.75 XP, <0.99 magnet, else anvil. (0 heal, 1 XP, 2 magnet, 3 anvil)
+	var r: float = randf()
+	var roll: int = 0 if r < 0.25 else (1 if r < 0.75 else (2 if r < 0.99 else 3))
+	enemy_net.rpc("spawn_pot_loot", global_position, roll)
+	return true
 
 
 ## Single loot-table roll: 25% heal, 50% purple XP, 24% magnet, 1% anvil.

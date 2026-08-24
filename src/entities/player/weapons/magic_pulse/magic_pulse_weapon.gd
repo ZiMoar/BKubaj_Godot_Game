@@ -83,9 +83,7 @@ func fire() -> void:
 			if concentrated:
 				pulse.half_angle = 0.175
 		get_tree().current_scene.add_child(pulse)
-		var net: Node = get_node_or_null("/root/Net")
-		if net and net.has_method("sync_player_effect"):
-			net.sync_player_effect(pulse, MagicPulseScene, {"dir": cone_dir, "rng": PULSE_RANGE * get_area_multiplier()})
+		sync_effect(pulse, MagicPulseScene, {"dir": cone_dir, "rng": PULSE_RANGE * get_area_multiplier()})
 
 
 func _nearest_enemy_dir() -> Vector2:

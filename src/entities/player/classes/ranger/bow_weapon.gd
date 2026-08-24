@@ -135,6 +135,4 @@ func fire() -> void:
 				arrow.set("homing_strength", 2.5)
 			arrow.scale *= get_area_multiplier()
 		get_tree().current_scene.add_child(arrow)
-		var net: Node = get_node_or_null("/root/Net")
-		if net and net.has_method("sync_player_projectile"):
-			net.sync_player_projectile(arrow, arrow_scene)
+		sync_projectile(arrow, arrow_scene)

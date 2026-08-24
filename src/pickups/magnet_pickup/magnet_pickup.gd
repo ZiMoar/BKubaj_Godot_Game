@@ -55,4 +55,7 @@ func _on_body_entered(body: Node2D) -> void:
 		for coin in tree.get_nodes_in_group("gold_pickups"):
 			if is_instance_valid(coin) and coin.has_method("start_attraction"):
 				coin.start_attraction(player)
+		for soul in tree.get_nodes_in_group("soul_pickups"):
+			if is_instance_valid(soul) and soul.has_method("start_attraction"):
+				soul.start_attraction(player)
 	queue_free()

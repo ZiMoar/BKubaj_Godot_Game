@@ -80,6 +80,10 @@ var _is_dead: bool = false
 ## Type of the most recent damaging hit received (PHYSICAL by default). Hook for
 ## a future ailment system that keys effects off the damage type dealt.
 var _last_damage_type: DamageType.Type = DamageType.Type.PHYSICAL
+## The player who dealt the most recent hit (set via take_damage's source_player).
+## Used for on-kill attribution (e.g. lifesteal) so the right player gets credit,
+## especially in co-op where the host resolves the kill.
+var _last_hit_by_player: Node = null
 
 # --- Ailments (status effects keyed off damage type) ----------------------
 # Each damaging hit rolls "ailment chance" (player stat); on success the alemment
@@ -694,13 +698,19 @@ func _process_status_dots(delta: float) -> void:
 		burn_dps = 0.0
 
 
-func take_damage(amount: int, is_critical: bool = false, damage_type: DamageType.Type = DamageType.Type.PHYSICAL, suppress_ailment: bool = false, ailment_multiplier: float = 1.0) -> void:
+func take_damage(amount: int, is_critical: bool = false, damage_type: DamageType.Type = DamageType.Type.PHYSICAL, suppress_ailment: bool = false, ailment_multiplier: float = 1.0, source_player: Node = null) -> void:
 	# Network replica: this machine does NOT own this enemy's hp. Forward the hit
 	# to the host's authoritative copy and show cosmetic feedback instead of
 	# committing the damage locally (the host's result replicates back out).
 	if _is_network_replica():
 		_forward_client_hit(amount, is_critical, damage_type, suppress_ailment, ailment_multiplier)
 		return
+
+	# Remember which player landed this hit, so on-kill effects (lifesteal) can
+	# credit the killer. In co-op, the host sets this from the sender peer when a
+	# client's forwarded hit arrives; locally it's passed straight from the weapon.
+	if source_player != null and is_instance_valid(source_player):
+		_last_hit_by_player = source_player
 
 	# IMPALE release: stored impale damage is added onto THIS next hit, then cleared.
 	var dealt: float = float(amount)
@@ -848,6 +858,8 @@ func die() -> void:
 	_is_dead = true
 	_spread_ailments_on_death()
 	_register_kill()
+	# Lifesteal is on-kill: a player-caused kill leeches health back to the player.
+	_apply_kill_lifesteal()
 	# In co-op, a network-synced enemy dies on the HOST. Its drops are broadcast
 	# to every machine (so each player collects their own copy) instead of being
 	# spawned only here. Falls back to plain local drops otherwise.
@@ -884,6 +896,9 @@ func _drop_soul() -> void:
 		return
 	if not is_instance_valid(get_tree()) or get_tree().current_scene == null:
 		return
+	# Soul Harvest nerf: souls now drop from only ~10% of kills, not every kill.
+	if randf() > 0.10:
+		return
 	var soul: Node2D = soul_pickup_scene.instantiate() as Node2D
 	var ang: float = randf() * TAU
 	soul.global_position = global_position + Vector2(cos(ang), sin(ang)) * DROP_SCATTER_RADIUS
@@ -918,6 +933,29 @@ func _register_kill() -> void:
 	var gs: Node = get_node_or_null("/root/GameState")
 	if gs and gs.has_method("register_enemy_kill"):
 		gs.register_enemy_kill()
+
+
+## Lifesteal triggers on kill: when this enemy dies from player damage, the
+## player who landed the killing blow leeches health. Falls back to this machine's
+## authoritative (locally-controlled) player, then any player, so single-player
+## and the host's own co-op kills are always attributed correctly.
+func _apply_kill_lifesteal() -> void:
+	var plr: Node = _find_kill_source_player()
+	if plr == null or not plr.has_method("apply_lifesteal_on_kill"):
+		return
+	plr.apply_lifesteal_on_kill()
+
+
+## The player credited with this enemy's death: the most recent player to hit it
+## (set from take_damage's source_player / the co-op host's sender-peer lookup),
+## otherwise this machine's authoritative player, otherwise the first player.
+func _find_kill_source_player() -> Node:
+	if _last_hit_by_player != null and is_instance_valid(_last_hit_by_player):
+		return _last_hit_by_player
+	for p: Node in get_tree().get_nodes_in_group("player"):
+		if is_instance_valid(p) and p.is_multiplayer_authority():
+			return p
+	return get_tree().get_first_node_in_group("player")
 
 
 ## Kills the enemy WITHOUT dropping any loot (XP or gold). Used when clearing a

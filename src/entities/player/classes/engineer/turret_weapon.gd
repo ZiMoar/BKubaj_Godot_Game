@@ -72,6 +72,4 @@ func fire() -> void:
 			eff_interval = maxf(0.1, eff_interval * 0.7)
 		turret.setup(GrenadeScene, eff_interval, eff_life, player, grenade, throw_speed)
 	get_tree().current_scene.add_child(turret)
-	var net: Node = get_node_or_null("/root/Net")
-	if net and net.has_method("sync_player_effect"):
-		net.sync_player_effect(turret, TurretScene, {"lifetime": eff_life})
+	sync_effect(turret, TurretScene, {"lifetime": eff_life})

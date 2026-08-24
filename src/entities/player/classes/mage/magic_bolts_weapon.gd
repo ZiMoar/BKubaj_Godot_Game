@@ -98,9 +98,7 @@ func _fire_bolt(index: int, aim: Vector2) -> void:
 			bolt.homing_ramp = 5.0
 		if "homing_ramp_time" in bolt:
 			bolt.homing_ramp_time = 0.5
-	var net: Node = get_node_or_null("/root/Net")
-	if net and net.has_method("sync_player_projectile"):
-		net.sync_player_projectile(bolt, bolt_scene)
+	sync_projectile(bolt, bolt_scene)
 
 
 func fire() -> void:
@@ -154,6 +152,4 @@ func _fire_anomaly(aim: Vector2) -> void:
 		bolt.setup(global_position, aim, eff_speed, anomaly_damage, is_crit, get_player(), self, 30)
 		bolt.scale *= get_area_multiplier()
 		bolt.scale *= 2.5
-	var net: Node = get_node_or_null("/root/Net")
-	if net and net.has_method("sync_player_projectile"):
-		net.sync_player_projectile(bolt, bolt_scene)
+	sync_projectile(bolt, bolt_scene)

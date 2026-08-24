@@ -106,6 +106,14 @@ func _fire_at_nearest() -> void:
 	var shot_dmg: int = dmg
 	if sapper and _shots % 3 == 0:
 		shot_dmg = int(round(float(dmg) * 2.0))
+	# "Nuke" (Grenade Launcher signature): projectile-count upgrades fold into a
+	# single oversized grenade (+100% damage & +50% blast per projectile) instead
+	# of spawning extras. Mirror the Grenade Launcher so the turret truly inherits
+	# this behavior too.
+	if source_grenade_weapon.has_signature("nuke") and volley > 1:
+		shot_dmg = int(round(float(shot_dmg) * float(volley)))
+		radius = radius * (1.0 + 0.5 * float(volley - 1))
+		volley = 1
 	for i in range(volley):
 		var grenade: Node = grenade_scene.instantiate()
 		grenade.name = "TurretGrenade"

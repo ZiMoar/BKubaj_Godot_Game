@@ -1,0 +1,7 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://src/entities/player/weapons/black_hole/black_hole_effect.gd" id="1_script"]
+
+[node name="BlackHole" type="Node2D"]
+z_index = 10
+script = ExtResource("1_script")

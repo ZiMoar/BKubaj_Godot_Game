@@ -82,9 +82,7 @@ func fire() -> void:
 		orb.bolt_interval = BOLT_INTERVAL
 		orb.bolt_range = 400.0
 		get_tree().current_scene.add_child(orb)
-		var net: Node = get_node_or_null("/root/Net")
-		if net and net.has_method("sync_player_projectile"):
-			net.sync_player_projectile(orb, ChromaticOrbScene)
+		sync_projectile(orb, ChromaticOrbScene)
 		return
 
 	# Aim the throw at the nearest enemy, else a random direction.
@@ -93,8 +91,10 @@ func fire() -> void:
 	# +Projectile scales the NUMBER OF ORBS thrown (the base projectile), not the
 	# number of bonus bolts per orb — bolt count stays fixed at its base.
 	var orb_count: int = get_effective_projectile_count(1)
-	# Fan the throw directions so multiple orbs spread out instead of stacking.
-	var spread_deg: float = 14.0
+	# Fan the throw directions WIDELY so multiple orbs fly outward on their own
+	# angles and never converge on the same spot as they decelerate (previously a
+	# narrow 14° fan had them all drift toward the same enemy and stack up).
+	var spread_deg: float = 90.0
 	for i in range(orb_count):
 		var t: float = 0.0
 		if orb_count > 1:
@@ -115,9 +115,7 @@ func fire() -> void:
 		orb.bolt_interval = BOLT_INTERVAL
 		orb.bolt_range = 150.0 * get_area_multiplier()
 		get_tree().current_scene.add_child(orb)
-		var net: Node = get_node_or_null("/root/Net")
-		if net and net.has_method("sync_player_projectile"):
-			net.sync_player_projectile(orb, ChromaticOrbScene)
+		sync_projectile(orb, ChromaticOrbScene)
 
 
 ## Nearest enemy direction for the throw (else a random direction).

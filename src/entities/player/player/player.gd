@@ -254,6 +254,26 @@ var cursed_artefact_ids: Array[String] = []
 @onready var magnet_shape: CollisionShape2D = get_node_or_null("MagnetArea/CollisionShape2D") as CollisionShape2D
 @onready var hp_value_label: Label = null
 
+## Co-op: assign this Player node's network authority from its own name
+## ("Player_<peerId>") HERE, in _enter_tree. _enter_tree runs BEFORE any child
+## MultiplayerSynchronizer enters the tree, so the synchronizer registers with
+## THIS peer as its replication source. Setting authority later (after
+## add_child) is too late: the synchronizer has already bound to the default
+## server authority (1), so it only ever replicates server -> client — the host
+## sees its own player move but never the joiner's (client -> host never sends).
+## Single-player / non-coop nodes are named "Player" (no prefix) or run with Net
+## inactive, so they fall through and keep the default authority unchanged.
+func _enter_tree() -> void:
+	if not str(name).begins_with("Player_"):
+		return
+	var net: Node = get_node_or_null("/root/Net")
+	if net == null or not net.active():
+		return
+	var owner_id: int = int(str(name).trim_prefix("Player_"))
+	if owner_id > 0:
+		set_multiplayer_authority(owner_id)
+
+
 func _ready() -> void:
 	# The player travels through ALL enemies (both ground mobs and flying ones).
 	# Contact damage is handled by the enemies' Hitbox areas, not physical
@@ -491,7 +511,16 @@ func drain_overload_cost() -> void:
 	health_changed.emit(current_health, current_max_health())
 	_update_hp_value_label()
 
+## Legacy per-hit lifesteal hook. Lifesteal now triggers on KILL (see
+## apply_lifesteal_on_kill), so landing hits no longer heals. This stub remains
+## only so older on-hit call sites compile harmlessly as no-ops.
 func apply_lifesteal() -> void:
+	pass
+
+## Lifesteal now procs on KILL: when an enemy dies from player damage, the player
+## leeches a chunk of health (lifesteal_flat * might), gated by a short cooldown
+## so rapid consecutive kills can't spam-heal.
+func apply_lifesteal_on_kill() -> void:
 	if lifesteal_flat <= 0.0 or current_health <= 0:
 		return
 	if _lifesteal_cooldown_remaining > 0.0:
@@ -1346,6 +1375,12 @@ func _class_primary_weapon() -> Weapon:
 func start_mobility_invincibility(duration: float) -> void:
 	_start_invincibility_effect(duration, Color(0.6, 0.8, 1.0, 0.7))
 
+## Extended invincibility granted by the Radiant Barrier (holy auto-weapon) when
+## it blocks a hit. Uses a golden "holy" flash to distinguish it from the brief
+## red/blue global i-frames.
+func start_barrier_invincibility(duration: float) -> void:
+	_start_invincibility_effect(duration, Color(1.0, 0.9, 0.5, 0.75))
+
 # Room a dash/teleport packs a little punch: shove nearby enemies back.
 func _apply_mobility_shove() -> void:
 	if _mobility_id == "dodge_roll":
@@ -1487,7 +1522,9 @@ func take_damage(amount: int, source: Node = null) -> void:
 	# this hit; it returns the damage that still gets through.
 	amount = _try_radiant_barrier(amount)
 	if amount <= 0:
-		trigger_invincibility()
+		# A Radiant Barrier fully absorbed this hit. It grants its own (extended)
+		# invincibility window, so skip the brief global trigger here — otherwise
+		# the 0.05s timer would overwrite the barrier's longer i-frames.
 		return
 
 	# Flat armor uses the same diminishing-returns formula as attack speed:

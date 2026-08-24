@@ -27,8 +27,15 @@ const XP_ORB_SCENE := preload("res://src/pickups/xp_orb/xp_orb.tscn")
 const GOLD_PICKUP_SCENE := preload("res://src/pickups/gold_pickup/gold_pickup.tscn")
 const SOUL_PICKUP_SCENE := preload("res://src/pickups/soul_pickup/soul_pickup.tscn")
 const ARTEFACT_PICKUP_SCENE := preload("res://src/pickups/artefact_pickup/artefact_pickup.tscn")
+# Loot Pot's special loot table. The pot rolls ONE item (heal / XP / magnet /
+# anvil); the HOST makes the roll and broadcasts the outcome so each machine
+# spawns its own copy for its local player. Heal + magnet + anvil need no further
+# setup; the XP orb mirrors a small tier-3 orb like a normal enemy drop.
+const POT_HEAL_SCENE := preload("res://src/pickups/heal_pickup/heal_25.tscn")
+const POT_XP_SCENE := preload("res://src/pickups/xp_orb/xp_orb.tscn")
+const POT_MAGNET_SCENE := preload("res://src/pickups/magnet_pickup/magnet_pickup.tscn")
+const POT_ANVIL_SCENE := preload("res://src/environment/anvil/anvil.tscn")
 const DROP_SCATTER_RADIUS := 28.0
-
 # Enemies spawned by the host before a joining client exists must be reachable
 # when the client later applies a hit, so we always route through this id space.
 var _enemies: Node2D = null
@@ -175,8 +182,20 @@ func apply_enemy_hit(enemy_net_id: int, amount: int, is_critical: bool, damage_t
 	var en: Node2D = _find_enemy(enemy_net_id)
 	if en == null or not is_instance_valid(en):
 		return
+	# Attribute the hit to the sending client's player so on-kill effects
+	# (lifesteal) credit the right player when this enemy dies.
+	var killer: Node = _player_for_peer(multiplayer.get_remote_sender_id())
 	if en.has_method("take_damage"):
-		en.call("take_damage", maxi(1, amount), is_critical, damage_type, suppress_ailment, ailment_multiplier)
+		en.call("take_damage", maxi(1, amount), is_critical, damage_type, suppress_ailment, ailment_multiplier, killer)
+
+
+## The locally-built player node owned by `peer_id` (they're named Player_<id>),
+## or null if that peer isn't in this machine's player group.
+func _player_for_peer(peer_id: int) -> Node:
+	for p: Node in get_tree().get_nodes_in_group("player"):
+		if is_instance_valid(p) and p.get_multiplayer_authority() == peer_id:
+			return p
+	return null
 
 
 ## HOST -> every machine: a networked enemy died at `pos` and its drops must be
@@ -230,6 +249,33 @@ func spawn_boss_relic(pos: Vector2) -> void:
 	scene.add_child(pickup)
 
 
+## HOST -> every machine: a Loot Pot died. `roll` is the pot's rolled loot (0
+## heal / 1 XP / 2 magnet / 3 anvil), decided by the HOST so all machines agree.
+## Each machine spawns its OWN copy for its local player — same per-machine
+## progression model as xp/gold drops.
+@rpc("authority", "reliable", "call_local")
+func spawn_pot_loot(pos: Vector2, roll: int) -> void:
+	var scene: Node = get_tree().current_scene
+	if scene == null:
+		return
+	var pickup: Node2D = null
+	match roll:
+		0:
+			pickup = POT_HEAL_SCENE.instantiate()
+		1:
+			pickup = POT_XP_SCENE.instantiate()
+			if pickup.has_method("setup"):
+				pickup.setup(8, 3)  # a modest tier-3 purple orb
+		2:
+			pickup = POT_MAGNET_SCENE.instantiate()
+		3:
+			pickup = POT_ANVIL_SCENE.instantiate()
+		_:
+			return
+	pickup.global_position = pos + _scatter()
+	scene.add_child(pickup)
+
+
 ## Soul drops are per-machine: only spawn one if THIS machine's player holds the
 ## Soul Harvest relic (mirrors enemy_base._drop_soul).
 func _spawn_soul(pos: Vector2) -> void:
@@ -237,6 +283,9 @@ func _spawn_soul(pos: Vector2) -> void:
 	if plr == null or not plr.has_method("has_artefact") or not plr.has_artefact("soul_harvest"):
 		return
 	if get_tree().current_scene == null:
+		return
+	# Soul Harvest nerf: souls now drop from only ~10% of kills (mirrors enemy_base).
+	if randf() > 0.10:
 		return
 	var soul: Node = SOUL_PICKUP_SCENE.instantiate()
 	if soul == null:

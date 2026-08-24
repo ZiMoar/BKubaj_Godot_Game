@@ -10,7 +10,7 @@ func _ready() -> void:
 	class_ability_id = "spin_dash"
 	# Starting stats: a bruiser — beefy and strong, but slower.
 	starting_stats = {
-		"max_health": 135,
+		"max_health": 130,
 		"speed": 185.0,
 		"might_percent_bonus": 0.1,
 	}

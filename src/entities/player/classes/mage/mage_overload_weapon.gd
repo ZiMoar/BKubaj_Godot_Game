@@ -69,7 +69,7 @@ func _activate() -> void:
 	if net and net.has_method("sync_player_effect") and net.active() and p:
 		var visual: Node2D = OverloadAuraVisualScene.instantiate()
 		visual.global_position = global_position
-		net.sync_player_effect(visual, OverloadAuraVisualScene, {
+		sync_effect(visual, OverloadAuraVisualScene, {
 			"player_name": p.name,
 			"life": buff_duration,
 		})

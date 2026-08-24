@@ -2,7 +2,7 @@ extends Weapon
 
 const AuraFieldVisualScene: PackedScene = preload("res://src/entities/player/weapons/aura/aura_field_visual.tscn")
 
-@export var aura_radius: float = 144.0
+@export var aura_radius: float = 108.0
 @export var base_damage: int = 9
 
 @onready var aura_area: Area2D = $AuraArea
@@ -73,7 +73,7 @@ func _sync_aura_visual() -> void:
 		return
 	var visual: Node2D = AuraFieldVisualScene.instantiate()
 	visual.global_position = global_position
-	net.sync_player_effect(visual, AuraFieldVisualScene, {
+	sync_effect(visual, AuraFieldVisualScene, {
 		"player_name": _pl.name,
 		"radius": aura_radius * get_area_multiplier(),
 	})

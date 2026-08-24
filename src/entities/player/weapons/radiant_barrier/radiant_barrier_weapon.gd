@@ -9,11 +9,22 @@ const ExplosionEffectScene: PackedScene = preload("res://src/effects/explosion_e
 
 const BLOCK_FULL: bool = true   # barrier fully absorbs the next hit
 
-const COOLDOWN: float = 7.0
+# Cooldown raised from 7.0 -> 9.0 to offset the new defensive payoff: blocking a
+# hit now also grants an extended period of invincibility (see BARRIER_IFRAMES).
+const COOLDOWN: float = 9.0
 const BARRIER_DURATION: float = 3.0   # how long the barrier waits for a hit
 const WAVE_DAMAGE: int = 40
 const WAVE_RADIUS: float = 130.0
 const WAVE_KNOCKBACK: float = 120.0
+
+## Extended invincibility granted when the barrier blocks a hit (seconds).
+const BARRIER_IFRAMES: float = 1.5
+## I-frames are capped at this fraction of the barrier's effective cooldown, so
+## no build (even extreme attack speed / cooldown reduction) can ever make the
+## i-frames reach the re-arm cooldown and chain permanent invincibility. The
+## block always leaves a guaranteed vulnerable gap of at least (1 - fraction) of
+## the cooldown between consecutive blocks.
+const IFRAME_SAFETY_FRACTION: float = 0.85
 
 var _barrier_active: bool = false
 var _barrier_timer: float = 0.0
@@ -101,7 +112,22 @@ func block_hit(amount: int) -> int:
 	_barrier_active = false
 	_wave_pulse = 0.35
 	_release_holy_wave(amount)
+	_grant_block_invincibility()
 	return 0
+
+
+## Grants the extended invincibility window after a successful block. The window
+## is clamped to a safe fraction of the barrier's current effective cooldown so
+## that faster re-arms can never outpace the i-frames and produce permanent
+## invincibility: i-frames are always strictly shorter than the time it takes the
+## barrier to re-arm and be able to block again.
+func _grant_block_invincibility() -> void:
+	var player: Node = get_player()
+	if player == null or not player.has_method("start_barrier_invincibility"):
+		return
+	var eff_cd: float = get_effective_cooldown()
+	var frames: float = minf(BARRIER_IFRAMES, eff_cd * IFRAME_SAFETY_FRACTION)
+	player.start_barrier_invincibility(maxf(0.01, frames))
 
 
 func _release_holy_wave(blocked_damage: int) -> void:
@@ -147,13 +173,11 @@ func _release_holy_wave(blocked_damage: int) -> void:
 		fx.set("_duration", 0.5)
 		get_tree().current_scene.add_child(fx)
 		# Co-op: broadcast the wave so the other player sees the barrier pop.
-		var net: Node = get_node_or_null("/root/Net")
-		if net and net.has_method("sync_player_effect"):
-			net.sync_player_effect(fx, ExplosionEffectScene, {
-				"max_radius": eff_radius * 1.2,
-				"color": Color(1.0, 0.9, 0.5, 1.0),
-				"_duration": 0.5,
-			})
+		sync_effect(fx, ExplosionEffectScene, {
+			"max_radius": eff_radius * 1.2,
+			"color": Color(1.0, 0.9, 0.5, 1.0),
+			"_duration": 0.5,
+		})
 		# Second, inner bright flash that fills and fades even faster.
 		var fx2: Node2D = ExplosionEffectScript.new()
 		fx2.name = "RadiantFlashFX"
@@ -162,12 +186,11 @@ func _release_holy_wave(blocked_damage: int) -> void:
 		fx2.set("color", Color(1.0, 1.0, 0.85, 1.0))
 		fx2.set("_duration", 0.25)
 		get_tree().current_scene.add_child(fx2)
-		if net and net.has_method("sync_player_effect"):
-			net.sync_player_effect(fx2, ExplosionEffectScene, {
-				"max_radius": eff_radius * 0.7,
-				"color": Color(1.0, 1.0, 0.85, 1.0),
-				"_duration": 0.25,
-			})
+		sync_effect(fx2, ExplosionEffectScene, {
+			"max_radius": eff_radius * 0.7,
+			"color": Color(1.0, 1.0, 0.85, 1.0),
+			"_duration": 0.25,
+		})
 
 
 func _draw() -> void:

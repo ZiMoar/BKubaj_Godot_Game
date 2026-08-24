@@ -1,0 +1,138 @@
+[gd_scene format=3 uid="uid://cxx0f0a3ejcqp"]
+
+[ext_resource type="PackedScene" uid="uid://ch71iywhtq2is" path="res://src/entities/player/player/player.tscn" id="1_u6xee"]
+[ext_resource type="PackedScene" path="res://src/entities/enemies/spawners/skeleton_spawner/skeleton_spawner.tscn" id="2_skel_spawner"]
+[ext_resource type="PackedScene" uid="uid://6axic314dm5n" path="res://src/ui/hud/hud.tscn" id="4_hud"]
+[ext_resource type="Script" uid="uid://dwd47lt1h3cpo" path="res://src/environment/grid_background.gd" id="5_grid"]
+[ext_resource type="Script" uid="uid://byx0vv2w1j4cr" path="res://src/managers/xp_orb_spatial_manager.gd" id="6_xp_orb_spatial"]
+[ext_resource type="PackedScene" path="res://src/entities/enemies/spawners/skeleton_brute_spawner/skeleton_brute_spawner.tscn" id="7_brute_spawner"]
+[ext_resource type="PackedScene" path="res://src/ui/pointers/chest_pointer/chest_pointer.tscn" id="9_chest_pointer"]
+[ext_resource type="PackedScene" uid="uid://cwydwctisc1um" path="res://src/entities/enemies/spawners/skeleton_archer_spawner/skeleton_archer_spawner.tscn" id="19_archer_spawner"]
+[ext_resource type="PackedScene" uid="uid://chmoaais0rcay" path="res://src/entities/enemies/spawners/boss_spawner/boss_spawner.tscn" id="29_boss_spawner"]
+[ext_resource type="PackedScene" path="res://src/entities/enemies/spawners/bomber_skeleton_spawner/bomber_skeleton_spawner.tscn" id="30_bomber_spawner"]
+[ext_resource type="PackedScene" path="res://src/entities/enemies/spawners/skeleton_necromancer_spawner/skeleton_necromancer_spawner.tscn" id="31_necromancer_spawner"]
+[ext_resource type="PackedScene" path="res://src/entities/enemies/spawners/bat_spawner/bat_spawner.tscn" id="32_bat_spawner"]
+[ext_resource type="PackedScene" path="res://src/managers/team_xp_manager/team_xp_manager.tscn" id="33_team_xp"]
+[ext_resource type="PackedScene" path="res://src/environment/chest_spawner/chest_spawner.tscn" id="34_chest_spawner"]
+[ext_resource type="PackedScene" path="res://src/environment/obstacles/pillar/pillar.tscn" id="35_pillar"]
+[ext_resource type="PackedScene" path="res://src/environment/obstacles/crumbling_pillar/crumbling_pillar.tscn" id="36_crumble"]
+[ext_resource type="PackedScene" path="res://src/environment/obstacles/spikes/spikes.tscn" id="37_spikes"]
+[ext_resource type="PackedScene" path="res://src/environment/anvil_spawner/anvil_spawner.tscn" id="38_anvil_spawner"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_horiz"]
+size = Vector2(2100, 32)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_vert"]
+size = Vector2(32, 1140)
+
+[node name="TestArena" type="Node2D" unique_id=543670752]
+
+[node name="ChestPointer" parent="." unique_id=1400000001 instance=ExtResource("9_chest_pointer")]
+
+[node name="SkeletonArcherSpawner" parent="." unique_id=1500000002 instance=ExtResource("19_archer_spawner")]
+enemy_scene = null
+spawn_interval = 1.5
+
+[node name="BossSpawner" parent="." unique_id=1600000001 instance=ExtResource("29_boss_spawner")]
+trigger_time = 300.0
+
+[node name="SkeletonBruteSpawner" parent="." unique_id=1110920454 instance=ExtResource("7_brute_spawner")]
+enemy_scene = null
+spawn_interval = 1.5
+
+[node name="BomberSkeletonSpawner" parent="." unique_id=1961393874 instance=ExtResource("30_bomber_spawner")]
+
+[node name="SkeletonNecromancerSpawner" parent="." unique_id=1844481739 instance=ExtResource("31_necromancer_spawner")]
+
+[node name="BatSpawner" parent="." unique_id=1529980191 instance=ExtResource("32_bat_spawner")]
+
+[node name="XPOrbSpatialManager" type="Node" parent="." unique_id=1929542861]
+script = ExtResource("6_xp_orb_spatial")
+
+[node name="TeamXPManager" parent="." unique_id=1356545253 instance=ExtResource("33_team_xp")]
+
+[node name="ChestSpawner" parent="." unique_id=191087171 instance=ExtResource("34_chest_spawner")]
+
+[node name="AnvilSpawner" parent="." unique_id=1891122328 instance=ExtResource("38_anvil_spawner")]
+
+[node name="HUD" parent="." unique_id=1246096469 instance=ExtResource("4_hud")]
+
+[node name="Floor" type="Node2D" parent="." unique_id=84918118]
+z_index = -1
+script = ExtResource("5_grid")
+
+[node name="Walls" type="StaticBody2D" parent="." unique_id=1172629549]
+
+[node name="TopWall" type="CollisionShape2D" parent="Walls" unique_id=1499703622]
+position = Vector2(960, -16)
+shape = SubResource("RectangleShape2D_horiz")
+
+[node name="BottomWall" type="CollisionShape2D" parent="Walls" unique_id=1170593845]
+position = Vector2(960, 1096)
+shape = SubResource("RectangleShape2D_horiz")
+
+[node name="LeftWall" type="CollisionShape2D" parent="Walls" unique_id=1996623934]
+position = Vector2(-16, 540)
+shape = SubResource("RectangleShape2D_vert")
+
+[node name="RightWall" type="CollisionShape2D" parent="Walls" unique_id=215338129]
+position = Vector2(1936, 540)
+shape = SubResource("RectangleShape2D_vert")
+
+[node name="Pillar" parent="." unique_id=1429030725 instance=ExtResource("35_pillar")]
+position = Vector2(620, 340)
+
+[node name="Pillar2" parent="." unique_id=1733799084 instance=ExtResource("35_pillar")]
+position = Vector2(1320, 420)
+
+[node name="CrumblingPillar" parent="." unique_id=883245759 instance=ExtResource("36_crumble")]
+position = Vector2(780, 720)
+
+[node name="Spikes" parent="." unique_id=1098103409 instance=ExtResource("37_spikes")]
+position = Vector2(1120, 760)
+
+[node name="Player" parent="." unique_id=738018314 instance=ExtResource("1_u6xee")]
+position = Vector2(960, 540)
+might_flat_bonus = null
+might_percent_bonus = null
+attack_speed_bonus = null
+critical_hit_chance = null
+critical_hit_damage_multiplier = null
+area_bonus = null
+projectile_speed_bonus = null
+duration_bonus = null
+amount_bonus = null
+armor_penetration_flat_bonus = null
+armor_penetration_percent_bonus = null
+ailment_chance = null
+max_health = null
+max_health_bonus = null
+hp_regen_per_second = null
+armor = null
+evasion_chance = null
+lifesteal_flat = null
+revive_count = null
+revive_health_percent = null
+thorns_flat = null
+shield_capacity = null
+speed = null
+move_speed_percent_bonus = null
+magnet_enabled = null
+magnet_range = null
+dash_charges = null
+dash_cooldown = null
+dash_range_bonus = null
+invincibility_duration = null
+invincibility_frame_bonus = null
+growth_percent_bonus = null
+greed_percent_bonus = null
+luck = null
+gold = null
+rerolls = null
+banish_count = null
+difficulty = null
+difficulty_runtime_per_minute = null
+pierce_bonus = null
+shield_placeholder = null
+
+[node name="SkeletonSpawner" parent="." unique_id=1211971611 instance=ExtResource("2_skel_spawner")]

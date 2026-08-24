@@ -621,8 +621,10 @@ func _weapon_supports(weapon: Weapon, stat_id: String) -> bool:
 		"chain_down":
 			return weapon.supports_chain()
 		"explosion_on_kill":
-			# Explosion on Kill works on any weapon that can land a kill.
-			return true
+			# Explosion on Kill works on any weapon that can land a kill — EXCEPT
+			# ailment-only weapons like Poison Spray, which deal no direct damage
+			# and would never trigger it. Each weapon opts in/out here.
+			return weapon.supports_explosion_on_kill()
 		"knockback":
 			return weapon.supports_knockback()
 		"ailment_effect":

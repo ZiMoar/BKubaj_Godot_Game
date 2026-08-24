@@ -14,7 +14,7 @@ const PuffScript: Script = preload("res://src/entities/projectiles/poison_puff/p
 var source_weapon: Node = null
 var duration: float = 2.0
 var release_interval: float = 0.18
-var range_px: float = 190.0
+var range_px: float = 270.0
 var half_angle: float = 0.22
 var hit_value: int = 20
 ## Name of the player this visual copy follows (a teammate's replica on this

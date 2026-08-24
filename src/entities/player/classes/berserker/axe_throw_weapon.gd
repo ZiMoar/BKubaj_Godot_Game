@@ -70,6 +70,4 @@ func fire() -> void:
 		if axe.has_method("setup"):
 			axe.setup(global_position, dmg, crit, get_effective_projectile_speed(axe_speed), get_player(), self, get_effective_duration(lifetime))
 		get_tree().current_scene.add_child(axe)
-		var net: Node = get_node_or_null("/root/Net")
-		if net and net.has_method("sync_player_projectile"):
-			net.sync_player_projectile(axe, BouncingAxeScene)
+		sync_projectile(axe, BouncingAxeScene)

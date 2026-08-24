@@ -12,7 +12,7 @@ const PoisonSprayScene: PackedScene = preload("res://src/entities/projectiles/po
 const BASE_HIT_VALUE: int = 12
 const SPRAY_DURATION: float = 2.4
 const TICK_INTERVAL: float = 0.18
-const SPRAY_RANGE: float = 190.0
+const SPRAY_RANGE: float = 270.0
 const HALF_ANGLE: float = 0.22   # narrow cone (~12.6 deg each side)
 const COOLDOWN: float = 3.2
 
@@ -31,6 +31,12 @@ func supports_area() -> bool:
 
 func supports_duration() -> bool:
 	return true
+
+## Poison Spray deals no direct damage — it only inflicts the POISON ailment, and
+## ailments "kill" on their own tick (not via this weapon's damage). An on-kill
+## explosion would never fire, so it's excluded from the anvil's Explosion on Kill.
+func supports_explosion_on_kill() -> bool:
+	return false
 
 
 ## Poison Spray's signature upgrades (granted by the rare golden anvil).
@@ -81,17 +87,15 @@ func fire() -> void:
 			HALF_ANGLE
 		)
 	get_tree().current_scene.add_child(spray)
-	var net: Node = get_node_or_null("/root/Net")
-	if net and net.has_method("sync_player_effect"):
-		var _pl: Node = get_player()
-		net.sync_player_effect(spray, PoisonSprayScene, {
-			"dur": get_effective_duration(SPRAY_DURATION),
-			"interval": TICK_INTERVAL,
-			"rng": SPRAY_RANGE * get_area_multiplier(),
-			"half_angle": HALF_ANGLE,
-			"val": hit_value,
-			"player_name": _pl.name if _pl else "",
-		})
+	var _pl: Node = get_player()
+	sync_effect(spray, PoisonSprayScene, {
+		"dur": get_effective_duration(SPRAY_DURATION),
+		"interval": TICK_INTERVAL,
+		"rng": SPRAY_RANGE * get_area_multiplier(),
+		"half_angle": HALF_ANGLE,
+		"val": hit_value,
+		"player_name": _pl.name if _pl else "",
+	})
 
 
 func _nearest_enemy_dir() -> Vector2:

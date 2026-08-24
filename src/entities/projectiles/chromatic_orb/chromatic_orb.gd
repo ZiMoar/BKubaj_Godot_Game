@@ -76,15 +76,13 @@ func _physics_process(delta: float) -> void:
 		_fire_volley()
 
 
-## The base bolt_interval shortened by the player's attack-speed multiplier
-## (lower = faster). Ensures a sane minimum so it can never tick faster than 20Hz.
+## The orb's bolt firing interval. NOTE: this does NOT scale with attack speed —
+## attack speed only speeds up the throw cooldown (the weapon side), so stacking
+## it doesn't multiply the bolt rate on top of that (removes the old quadratic
+## scaling where it shortened BOTH the cooldown and the bolt interval). Ensures a
+## sane minimum so it can never tick faster than 20Hz.
 func _get_effective_bolt_interval() -> float:
-	var interval: float = bolt_interval
-	if is_instance_valid(source_weapon) and source_weapon.has_method("get_player"):
-		var player: Node = source_weapon.get_player()
-		if player != null and player.has_method("get_attack_speed_multiplier"):
-			interval *= float(player.get_attack_speed_multiplier())
-	return maxf(0.05, interval)
+	return maxf(0.05, bolt_interval)
 
 
 func _fire_volley() -> void:

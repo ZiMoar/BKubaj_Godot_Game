@@ -64,9 +64,12 @@ func _apply() -> void:
 				en.apply_corrosive()
 			if source_weapon and source_weapon.has_method("apply_lifesteal"):
 				source_weapon.apply_lifesteal()
-			# Stinging Gas: the wave itself also deals direct poison damage.
+			# Stinging Gas: the wave itself also deals a little direct poison damage
+			# (~1/10 of the hit value, which already runs high because of the
+			# guaranteed-infliction ailment scaling). The poison DOT itself is the
+			# real damage; this is just a light sting on top.
 			if source_weapon and source_weapon.has_method("has_signature") and source_weapon.has_signature("stinging_gas") and en.has_method("take_damage"):
-				en.take_damage(maxi(1, hit_value), false, DamageType.Type.POISON, true, 1.0)
+				en.take_damage(maxi(1, hit_value / 10), false, DamageType.Type.POISON, true, 1.0)
 
 
 func _in_cone(target: Vector2) -> bool:

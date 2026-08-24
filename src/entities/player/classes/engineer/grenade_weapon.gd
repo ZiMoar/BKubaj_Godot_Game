@@ -7,8 +7,8 @@ extends Weapon
 
 const GrenadeScene: PackedScene = preload("res://src/entities/projectiles/grenade_projectile/grenade_projectile.tscn")
 
-@export var damage: int = 22
-@export var blast_radius: float = 80.0
+@export var damage: int = 20
+@export var blast_radius: float = 40.0
 @export var throw_speed: float = 430.0
 @export var fuse: float = 0.55
 
@@ -95,6 +95,4 @@ func fire() -> void:
 		if grenade.has_method("setup"):
 			grenade.setup(global_position, target, get_effective_projectile_speed(throw_speed), dmg, crit, blast, get_player(), self)
 		get_tree().current_scene.add_child(grenade)
-		var net: Node = get_node_or_null("/root/Net")
-		if net and net.has_method("sync_player_projectile"):
-			net.sync_player_projectile(grenade, GrenadeScene)
+		sync_projectile(grenade, GrenadeScene)

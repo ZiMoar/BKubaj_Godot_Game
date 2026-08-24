@@ -176,6 +176,4 @@ func _spawn_lightning(origin: Vector2, local_points: PackedVector2Array, crit: b
 	bolt.global_position = origin
 	bolt.setup(local_points, Color(1.0, 0.85, 0.3, 1.0) if not crit else Color(1.0, 0.4, 0.9, 1.0))
 	get_tree().current_scene.add_child(bolt)
-	var net: Node = get_node_or_null("/root/Net")
-	if net and net.has_method("sync_player_effect"):
-		net.sync_player_effect(bolt, lightning_scene, {"poly": local_points, "color": Color(1.0, 0.85, 0.3, 1.0) if not crit else Color(1.0, 0.4, 0.9, 1.0)})
+	sync_effect(bolt, lightning_scene, {"poly": local_points, "color": Color(1.0, 0.85, 0.3, 1.0) if not crit else Color(1.0, 0.4, 0.9, 1.0)})

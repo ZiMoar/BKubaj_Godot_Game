@@ -131,6 +131,41 @@ func _fire_with_repeat() -> void:
 func fire() -> void:
 	pass
 
+# --- Co-op synchronization (FUTURE-PROOF) -------------------------------------
+# Every weapon that spawns a travel projectile or a standalone visual effect
+# must broadcast a collision-disabled copy to the other machine(s) so teammates
+# can SEE it (each machine only simulates its OWN player's projectiles). Route
+# EVERY such spawn through the two helpers below instead of talking to Net
+# directly: they centralize the null/active checks and are inherited by any new
+# weapon built on Weapon, so a future weapon gets correct co-op sync for free by
+# just calling sync_projectile() / sync_effect() after adding its node.
+#
+#   var proj: Node = MyScene.instantiate()
+#   get_tree().current_scene.add_child(proj)
+#   sync_projectile(proj, MyScene)          # <-- teammates now see it
+#
+#   var fx: Node = FxScene.instantiate()
+#   get_tree().current_scene.add_child(fx)
+#   sync_effect(fx, FxScene, {"radius": r})  # extra carries render params
+
+## Broadcast a travel projectile to the other machine(s) as a visual copy.
+func sync_projectile(proj: Node, scene: PackedScene) -> void:
+	if proj == null or scene == null:
+		return
+	var net: Node = get_node_or_null("/root/Net")
+	if net and net.has_method("sync_player_projectile"):
+		net.sync_player_projectile(proj, scene)
+
+## Broadcast a standalone effect (AoE / beam / ground telegraph / aura) to the
+## other machine(s) as an inert visual copy. `extra` carries the effect's render
+## params (radius, fuse, polygon, direction...).
+func sync_effect(effect: Node, scene: PackedScene, extra: Dictionary = {}) -> void:
+	if effect == null or scene == null:
+		return
+	var net: Node = get_node_or_null("/root/Net")
+	if net and net.has_method("sync_player_effect"):
+		net.sync_player_effect(effect, scene, extra)
+
 func get_player() -> Player:
 	return get_tree().get_first_node_in_group("player") as Player
 

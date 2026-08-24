@@ -10,6 +10,6 @@ func _ready() -> void:
 	class_ability_id = "shield_charge"
 	# Starting stats: a tanky front-liner — more HP and a little armor.
 	starting_stats = {
-		"max_health": 130,
+		"max_health": 135,
 		"armor": 5.0,
 	}

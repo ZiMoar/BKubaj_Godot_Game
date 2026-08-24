@@ -80,9 +80,7 @@ func fire() -> void:
 		if skull.has_method("setup"):
 			skull.setup(global_position + Vector2(randf_range(-6, 6), randf_range(-6, 6)), dmg, crit, get_player(), self, SKULL_SPEED, get_effective_duration(SKULL_LIFETIME))
 		get_tree().current_scene.add_child(skull)
-		var net: Node = get_node_or_null("/root/Net")
-		if net and net.has_method("sync_player_projectile"):
-			net.sync_player_projectile(skull, HungrySkullScene)
+		sync_projectile(skull, HungrySkullScene)
 
 
 func _nearest_enemy(enemies: Array) -> Node2D:

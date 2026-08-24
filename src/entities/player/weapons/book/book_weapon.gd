@@ -104,14 +104,12 @@ func fire() -> void:
 			spawned_book.source_weapon = self
 			spawned_book.target_radius *= get_area_multiplier()
 			spawned_book.scale *= get_area_multiplier()
-			var net: Node = get_node_or_null("/root/Net")
-			if net and net.has_method("sync_player_effect"):
-				var _pl: Node = get_player()
-				net.sync_player_effect(spawned_book, book_scene, {
-					"angle": initial_angle,
-					"target_radius": spawned_book.target_radius,
-					"player_name": _pl.name if _pl else "",
-				})
+			var _pl: Node = get_player()
+			sync_effect(spawned_book, book_scene, {
+				"angle": initial_angle,
+				"target_radius": spawned_book.target_radius,
+				"player_name": _pl.name if _pl else "",
+			})
 
 		active_books.append(spawned_book)
 
@@ -147,9 +145,7 @@ func _fire_tome_volleys() -> void:
 			continue
 		var shot: Node = TomeBoltScene.instantiate()
 		get_tree().current_scene.add_child(shot)
-		var net: Node = get_node_or_null("/root/Net")
-		if net and net.has_method("sync_player_projectile"):
-			net.sync_player_projectile(shot, TomeBoltScene)
+		sync_projectile(shot, TomeBoltScene)
 		if shot.has_method("setup"):
 			var to: Vector2 = (nearest.global_position - book.global_position).normalized()
 			if to == Vector2.ZERO:
