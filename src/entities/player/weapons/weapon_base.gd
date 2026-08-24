@@ -36,6 +36,10 @@ var autofire_owner: Player = null
 # Per-weapon stat bonuses granted by the Anvil. These are independent of the
 # player's global stats, so each weapon scales on its own.
 var projectile_count_bonus: int = 0
+## Extra-projectile chance granted by anvil "Projectile Count" upgrades (each
+## adds +25%). Repeat-style: every full 100% is one guaranteed extra projectile,
+## the leftover percent is a chance of one more.
+var projectile_extra_chance: float = 0.0
 var pierce_bonus: int = 0
 var chain_count_bonus: int = 0
 var area_bonus: float = 0.0
@@ -201,9 +205,15 @@ func get_knockback(base_force: float) -> float:
 func get_ailment_effect_multiplier() -> float:
 	return maxf(0.25, 1.0 + ailment_effect_bonus)
 
-# Effective projectile count (base + anvil bonus).
+# Effective projectile count (base + guaranteed anvil bonus + repeat-style
+# chance from anvil Projectile Count upgrades).
 func get_effective_projectile_count(base: int) -> int:
-	return maxi(1, base + projectile_count_bonus)
+	var count: int = maxi(1, base + projectile_count_bonus)
+	var chance: float = maxf(0.0, projectile_extra_chance)
+	count += int(floor(chance))
+	if chance - float(floor(chance)) > 0.0 and randf() < chance - float(floor(chance)):
+		count += 1
+	return count
 
 # Effective pierce count (base + anvil bonus).
 func get_effective_pierce(base: int) -> int:
@@ -320,7 +330,7 @@ func roll_critical_hit() -> bool:
 func get_critical_multiplier() -> float:
 	var player = get_player()
 	if player == null:
-		return 2.0
+		return 1.5
 
 	return player.get_critical_multiplier()
 

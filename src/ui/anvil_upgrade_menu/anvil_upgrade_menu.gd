@@ -16,10 +16,10 @@ var STAT_POOL: Array[Dictionary] = [
 	{
 		"id": "projectile_count",
 		"title": "Projectile Count",
-		"description": "+{value} projectile(s).",
-		"value": 1,
+		"description": "+{value}% chance of an extra projectile (100% = guaranteed).",
+		"value": 25,
 		"weight": 1.0,
-		"apply": func(w: Weapon) -> void: w.projectile_count_bonus += 1,
+		"apply": func(w: Weapon) -> void: w.projectile_extra_chance += 0.25,
 	},
 	{
 		"id": "pierce",

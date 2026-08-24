@@ -222,7 +222,8 @@ func _add_weapon_block(weapon: Node) -> void:
 		_add_stat("Type", DamageType.display_name(int(weapon.get("damage_type"))))
 
 	var specs: Array = [
-		["Projectiles", "projectile_count_bonus", false],
+		["Proj. count", "projectile_count_bonus", false],
+		["Proj. chance", "projectile_extra_chance", true],
 		["Pierce", "pierce_bonus", false],
 		["Chain", "chain_count_bonus", false],
 		["Area", "area_bonus", true],

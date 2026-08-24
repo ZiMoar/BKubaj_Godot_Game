@@ -43,11 +43,11 @@ const LUCK_REDISTRIBUTION: Array[float] = [0.0, 0.35, 0.30, 0.20, 0.15]
 
 const UPGRADE_POOL: Array[Dictionary] = [
 	# --- Offense ---
-	{"id": "might_flat",           "title": "Power",         "description": "+{value} damage.",                     "min_rarity": Rarity.COMMON,    "base_value": 1.0,   "value_scaling": 0.5},
+	{"id": "might_flat",           "title": "Power",         "description": "+{value} damage.",                     "min_rarity": Rarity.COMMON,    "base_value": 3.0,   "value_scaling": 1.5},
 	{"id": "might_percent",        "title": "Might %",       "description": "+{value}% total damage.",               "min_rarity": Rarity.COMMON,    "base_value": 0.10,  "value_scaling": 0.05},
 	{"id": "attack_speed",         "title": "Attack Speed",  "description": "+{value} attack speed.",               "min_rarity": Rarity.COMMON,    "base_value": 20.0,  "value_scaling": 10.0},
 	{"id": "crit_chance",          "title": "Crit Chance",   "description": "+{value}% crit chance.",                "min_rarity": Rarity.UNCOMMON,  "base_value": 0.05,  "value_scaling": 0.025},
-	{"id": "crit_damage",          "title": "Crit Damage",   "description": "+{value}x crit multiplier.",             "min_rarity": Rarity.UNCOMMON,  "base_value": 0.25,  "value_scaling": 0.15},
+	{"id": "crit_damage",          "title": "Crit Damage",   "description": "+{value}x crit multiplier.",             "min_rarity": Rarity.UNCOMMON,  "base_value": 0.15,  "value_scaling": 0.10},
 	{"id": "ailment_chance",       "title": "Ailment Chance","description": "+{value}% ailment chance.", "min_rarity": Rarity.UNCOMMON, "base_value": 0.10, "value_scaling": 0.05},
 	# --- Survival ---
 	{"id": "max_health",           "title": "Max Health",    "description": "+{value} max HP.",                      "min_rarity": Rarity.COMMON,    "base_value": 10.0,  "value_scaling": 5.0},
@@ -55,7 +55,7 @@ const UPGRADE_POOL: Array[Dictionary] = [
 	{"id": "evasion",              "title": "Evasion",       "description": "+{value} evasion.",                     "min_rarity": Rarity.RARE,      "base_value": 20.0,  "value_scaling": 12.0},
 	{"id": "hp_regen",             "title": "HP Regen",      "description": "+{value} HP/sec.",                      "min_rarity": Rarity.COMMON,    "base_value": 1.0,   "value_scaling": 0.5},
 	{"id": "lifesteal",            "title": "Life Steal",    "description": "+{value} heal on hit.",                 "min_rarity": Rarity.UNCOMMON,  "base_value": 1.0,   "value_scaling": 0.5},
-	{"id": "thorns",               "title": "Thorns",        "description": "+{value} reflected damage.",            "min_rarity": Rarity.COMMON,    "base_value": 5.0,   "value_scaling": 3.0},
+	{"id": "thorns",               "title": "Thorns",        "description": "+{value} reflected damage.",            "min_rarity": Rarity.COMMON,    "base_value": 8.0,   "value_scaling": 4.0},
 	{"id": "revive",               "title": "Revive",        "description": "+{value} revive charge(s).",            "min_rarity": Rarity.EPIC,      "base_value": 1.0,   "value_scaling": 1.0},
 	# --- Utility ---
 	{"id": "move_speed_percent",   "title": "Move Speed %",  "description": "+{value}% walk speed.",                 "min_rarity": Rarity.COMMON,    "base_value": 0.05,  "value_scaling": 0.03},

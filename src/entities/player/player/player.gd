@@ -16,7 +16,7 @@ const RadiusRingScene: PackedScene = preload("res://src/effects/radius_ring/radi
 @export var might_percent_bonus: float = 0.0
 @export var attack_speed_bonus: float = 0.0
 @export var critical_hit_chance: float = 0.0
-@export var critical_hit_damage_multiplier: float = 2.0
+@export var critical_hit_damage_multiplier: float = 1.5
 @export var area_bonus: float = 0.0
 @export var projectile_speed_bonus: float = 0.0
 @export var duration_bonus: float = 0.0
@@ -1753,6 +1753,7 @@ func capture_run_state() -> Dictionary:
 			weapons.append({
 				"path": path,
 				"projectile_count_bonus": w.projectile_count_bonus,
+				"projectile_extra_chance": w.projectile_extra_chance,
 				"pierce_bonus": w.pierce_bonus,
 				"chain_count_bonus": w.chain_count_bonus,
 				"area_bonus": w.area_bonus,
@@ -1790,6 +1791,7 @@ func restore_run_state(snap: Dictionary) -> void:
 			var weapon: Weapon = ws.instantiate() as Weapon
 			weapons_container.add_child(weapon)
 			weapon.projectile_count_bonus = wdata.get("projectile_count_bonus", 0)
+			weapon.projectile_extra_chance = float(wdata.get("projectile_extra_chance", 0.0))
 			weapon.pierce_bonus = wdata.get("pierce_bonus", 0)
 			weapon.chain_count_bonus = wdata.get("chain_count_bonus", 0)
 			weapon.area_bonus = wdata.get("area_bonus", 0.0)
