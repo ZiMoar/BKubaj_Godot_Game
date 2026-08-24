@@ -1,16 +1,16 @@
-[gd_scene format=3 uid="uid://b25mfdq07ayi0"]
+[gd_scene format=3 uid="uid://dvbekjrqng2fm"]
 
 [ext_resource type="PackedScene" uid="uid://ch71iywhtq2is" path="res://src/entities/player/player/player.tscn" id="1_player"]
 [ext_resource type="PackedScene" uid="uid://6axic314dm5n" path="res://src/ui/hud/hud.tscn" id="2_hud"]
 [ext_resource type="Script" uid="uid://dwd47lt1h3cpo" path="res://src/environment/grid_background.gd" id="3_grid"]
 [ext_resource type="Script" uid="uid://byx0vv2w1j4cr" path="res://src/managers/xp_orb_spatial_manager.gd" id="4_xp_spatial"]
 [ext_resource type="PackedScene" path="res://src/managers/team_xp_manager/team_xp_manager.tscn" id="5_team_xp"]
-[ext_resource type="PackedScene" path="res://src/entities/enemies/dummy_enemy/dummy_enemy.tscn" id="6_dummy"]
 [ext_resource type="Script" uid="uid://cp5xbt1thsfk3" path="res://src/environment/test_facilities/test_facilities.gd" id="7_facilities"]
 [ext_resource type="Script" uid="uid://3a4q8jkdsfse" path="res://src/environment/test_level_field/test_level_field.gd" id="8_level_field"]
 [ext_resource type="PackedScene" path="res://src/environment/test_map/test_map_door.tscn" id="9_door"]
 [ext_resource type="PackedScene" uid="uid://da263ckoicpjs" path="res://src/environment/obstacles/obstacle_spawner/obstacle_spawner.tscn" id="10_obstacle"]
 [ext_resource type="PackedScene" path="res://src/environment/obstacles/spikes/spikes.tscn" id="11_spikes"]
+[ext_resource type="PackedScene" path="res://src/environment/test_map/test_map_loop_door.tscn" id="12_loop_door"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_horiz"]
 size = Vector2(2300, 32)
@@ -21,109 +21,69 @@ size = Vector2(32, 1340)
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_lvl"]
 size = Vector2(70, 70)
 
-[node name="TestMapArena" type="Node2D" unique_id=2044116169]
+[node name="TestMapArena" type="Node2D" unique_id=381280610]
 
-[node name="XPOrbSpatialManager" type="Node" parent="." unique_id=468462345]
+[node name="XPOrbSpatialManager" type="Node" parent="." unique_id=1355478279]
 script = ExtResource("4_xp_spatial")
 
-[node name="TeamXPManager" parent="." unique_id=731361783 instance=ExtResource("5_team_xp")]
+[node name="TeamXPManager" parent="." unique_id=1238906834 instance=ExtResource("5_team_xp")]
 
-[node name="HUD" parent="." unique_id=1077423107 instance=ExtResource("2_hud")]
+[node name="HUD" parent="." unique_id=1335520194 instance=ExtResource("2_hud")]
 
-[node name="Floor" type="Node2D" parent="." unique_id=830376218]
+[node name="Floor" type="Node2D" parent="." unique_id=1047699535]
 z_index = -1
 script = ExtResource("3_grid")
 arena_center = Vector2(1100, 650)
 arena_size = Vector2(2200, 1300)
 
-[node name="Walls" type="StaticBody2D" parent="." unique_id=316924287]
+[node name="Walls" type="StaticBody2D" parent="." unique_id=126089608]
 
-[node name="TopWall" type="CollisionShape2D" parent="Walls" unique_id=133517740]
+[node name="TopWall" type="CollisionShape2D" parent="Walls" unique_id=400683668]
 position = Vector2(1100, -16)
 shape = SubResource("RectangleShape2D_horiz")
 
-[node name="BottomWall" type="CollisionShape2D" parent="Walls" unique_id=83464588]
+[node name="BottomWall" type="CollisionShape2D" parent="Walls" unique_id=2072866600]
 position = Vector2(1100, 1316)
 shape = SubResource("RectangleShape2D_horiz")
 
-[node name="LeftWall" type="CollisionShape2D" parent="Walls" unique_id=763816187]
+[node name="LeftWall" type="CollisionShape2D" parent="Walls" unique_id=728021754]
 position = Vector2(-16, 650)
 shape = SubResource("RectangleShape2D_vert")
 
-[node name="RightWall" type="CollisionShape2D" parent="Walls" unique_id=1339051611]
+[node name="RightWall" type="CollisionShape2D" parent="Walls" unique_id=1484424315]
 position = Vector2(2216, 650)
 shape = SubResource("RectangleShape2D_vert")
 
-[node name="DummyEnemy" parent="." unique_id=1137461105 instance=ExtResource("6_dummy")]
-position = Vector2(1100, 560)
-
-[node name="DummyEnemyNear" parent="." unique_id=1917351101 instance=ExtResource("6_dummy")]
-position = Vector2(1330, 560)
-
-[node name="DummyEnemyFar" parent="." unique_id=1917351102 instance=ExtResource("6_dummy")]
-position = Vector2(1620, 560)
-
-[node name="TestFacilities" type="Node2D" parent="." unique_id=1523276695]
+[node name="TestFacilities" type="Node2D" parent="." unique_id=427908640]
 position = Vector2(1100, 760)
 script = ExtResource("7_facilities")
 
-[node name="TestLevelField" type="Area2D" parent="." unique_id=794731939]
+[node name="TestLevelField" type="Area2D" parent="." unique_id=1783813402]
 position = Vector2(1100, 1000)
 script = ExtResource("8_level_field")
 radius = 42.0
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="TestLevelField" unique_id=1413588919]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="TestLevelField" unique_id=872176984]
 shape = SubResource("RectangleShape2D_lvl")
 
-[node name="StageDoor" parent="." unique_id=96865849 instance=ExtResource("9_door")]
+[node name="StageDoor" parent="." unique_id=2023756409 instance=ExtResource("9_door")]
 position = Vector2(1100, 70)
 
-[node name="ObstacleSpawner" parent="." unique_id=2133245729 instance=ExtResource("10_obstacle")]
+[node name="TrainingDoor" parent="." unique_id=1355396180 instance=ExtResource("12_loop_door")]
+position = Vector2(600, 70)
+target_path = "res://src/environment/training_ground/training_ground.tscn"
+caption = "TRAIN"
+
+[node name="DummyDoor" parent="." unique_id=521527658 instance=ExtResource("12_loop_door")]
+position = Vector2(1600, 70)
+target_path = "res://src/environment/dummy_range/dummy_range.tscn"
+caption = "DUMMIES"
+
+[node name="ObstacleSpawner" parent="." unique_id=1575691130 instance=ExtResource("10_obstacle")]
 enabled = false
 
-[node name="Spikes" parent="." unique_id=85026243 instance=ExtResource("11_spikes")]
+[node name="Spikes" parent="." unique_id=967629338 instance=ExtResource("11_spikes")]
 position = Vector2(1100, 1150)
 
-[node name="Player" parent="." unique_id=494284683 instance=ExtResource("1_player")]
+[node name="Player" parent="." unique_id=20703166 instance=ExtResource("1_player")]
 position = Vector2(1100, 900)
-might_flat_bonus = null
-might_percent_bonus = null
-attack_speed_bonus = null
-critical_hit_chance = null
-critical_hit_damage_multiplier = null
-area_bonus = null
-projectile_speed_bonus = null
-duration_bonus = null
-amount_bonus = null
-armor_penetration_flat_bonus = null
-armor_penetration_percent_bonus = null
-ailment_chance = null
-max_health = null
-max_health_bonus = null
-hp_regen_per_second = null
-armor = null
-evasion_chance = null
-lifesteal_flat = null
-revive_count = null
-revive_health_percent = null
-thorns_flat = null
-shield_capacity = null
-speed = null
-move_speed_percent_bonus = null
-magnet_enabled = null
-magnet_range = null
-dash_charges = null
-dash_cooldown = null
-dash_range_bonus = null
-invincibility_duration = null
-invincibility_frame_bonus = null
-growth_percent_bonus = null
-greed_percent_bonus = null
-luck = null
-gold = null
-rerolls = null
-banish_count = null
-difficulty = null
-difficulty_runtime_per_minute = null
-pierce_bonus = null
-shield_placeholder = null

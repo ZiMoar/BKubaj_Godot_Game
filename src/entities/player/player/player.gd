@@ -1863,6 +1863,9 @@ func restore_run_state(snap: Dictionary) -> void:
 			weapon.damage_percent_bonus = wdata.get("damage_percent_bonus", 0.0)
 			weapon.damage_type = int(wdata.get("damage_type", int(weapon.damage_type))) as DamageType.Type
 			weapon.signature_ids = (wdata.get("signature_ids", []) as Array).duplicate()
+			# The snapshot only stores the signature id list; re-apply the effect
+			# flags so signatures keep working after the player is rebuilt.
+			weapon.reapply_signatures()
 			if weapon.trigger_type == Weapon.TriggerType.AUTOMATIC:
 				weapon.call_deferred("try_fire")
 	weapons_changed.emit()

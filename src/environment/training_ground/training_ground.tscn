@@ -1,0 +1,122 @@
+[gd_scene format=3 uid="uid://ew3w7qiwb617"]
+
+[ext_resource type="Script" path="res://src/environment/training_ground/training_ground.gd" id="1_script"]
+[ext_resource type="PackedScene" uid="uid://ch71iywhtq2is" path="res://src/entities/player/player/player.tscn" id="2_player"]
+[ext_resource type="PackedScene" uid="uid://6axic314dm5n" path="res://src/ui/hud/hud.tscn" id="3_hud"]
+[ext_resource type="Script" uid="uid://dwd47lt1h3cpo" path="res://src/environment/grid_background.gd" id="4_grid"]
+[ext_resource type="Script" uid="uid://byx0vv2w1j4cr" path="res://src/managers/xp_orb_spatial_manager.gd" id="5_xp_spatial"]
+[ext_resource type="PackedScene" path="res://src/managers/team_xp_manager/team_xp_manager.tscn" id="6_team_xp"]
+[ext_resource type="PackedScene" uid="uid://da263ckoicpjs" path="res://src/environment/obstacles/obstacle_spawner/obstacle_spawner.tscn" id="7_obstacle"]
+[ext_resource type="PackedScene" path="res://src/entities/enemies/spawners/skeleton_spawner/skeleton_spawner.tscn" id="8_skel"]
+[ext_resource type="PackedScene" path="res://src/entities/enemies/spawners/skeleton_brute_spawner/skeleton_brute_spawner.tscn" id="9_brute"]
+[ext_resource type="PackedScene" uid="uid://cwydwctisc1um" path="res://src/entities/enemies/spawners/skeleton_archer_spawner/skeleton_archer_spawner.tscn" id="10_archer"]
+[ext_resource type="PackedScene" path="res://src/entities/enemies/spawners/bomber_skeleton_spawner/bomber_skeleton_spawner.tscn" id="11_bomber"]
+[ext_resource type="PackedScene" path="res://src/entities/enemies/spawners/skeleton_necromancer_spawner/skeleton_necromancer_spawner.tscn" id="12_necro"]
+[ext_resource type="PackedScene" path="res://src/entities/enemies/spawners/bat_spawner/bat_spawner.tscn" id="13_bat"]
+[ext_resource type="PackedScene" path="res://src/environment/test_map/test_map_loop_door.tscn" id="14_door"]
+[ext_resource type="PackedScene" path="res://src/environment/test_map/test_control_button.tscn" id="15_button"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_horiz"]
+size = Vector2(2300, 32)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_vert"]
+size = Vector2(32, 1340)
+
+[node name="TrainingGround" type="Node2D" unique_id=1002500073]
+script = ExtResource("1_script")
+
+[node name="XPOrbSpatialManager" type="Node" parent="." unique_id=1823348866]
+script = ExtResource("5_xp_spatial")
+
+[node name="TeamXPManager" parent="." unique_id=1649971522 instance=ExtResource("6_team_xp")]
+
+[node name="HUD" parent="." unique_id=2066894554 instance=ExtResource("3_hud")]
+
+[node name="Floor" type="Node2D" parent="." unique_id=753981234]
+z_index = -1
+script = ExtResource("4_grid")
+arena_center = Vector2(1100, 650)
+arena_size = Vector2(2200, 1300)
+
+[node name="Walls" type="StaticBody2D" parent="." unique_id=1470452045]
+
+[node name="TopWall" type="CollisionShape2D" parent="Walls" unique_id=2126097345]
+position = Vector2(1100, -16)
+shape = SubResource("RectangleShape2D_horiz")
+
+[node name="BottomWall" type="CollisionShape2D" parent="Walls" unique_id=881989996]
+position = Vector2(1100, 1316)
+shape = SubResource("RectangleShape2D_horiz")
+
+[node name="LeftWall" type="CollisionShape2D" parent="Walls" unique_id=979302385]
+position = Vector2(-16, 650)
+shape = SubResource("RectangleShape2D_vert")
+
+[node name="RightWall" type="CollisionShape2D" parent="Walls" unique_id=1305984105]
+position = Vector2(2216, 650)
+shape = SubResource("RectangleShape2D_vert")
+
+[node name="SkeletonSpawner" parent="." unique_id=744144084 instance=ExtResource("8_skel")]
+position = Vector2(500, 300)
+
+[node name="SkeletonBruteSpawner" parent="." unique_id=1951861207 instance=ExtResource("9_brute")]
+position = Vector2(1700, 300)
+
+[node name="SkeletonArcherSpawner" parent="." unique_id=183415516 instance=ExtResource("10_archer")]
+position = Vector2(500, 900)
+
+[node name="BomberSkeletonSpawner" parent="." unique_id=506324491 instance=ExtResource("11_bomber")]
+position = Vector2(1700, 900)
+
+[node name="SkeletonNecromancerSpawner" parent="." unique_id=1265038335 instance=ExtResource("12_necro")]
+position = Vector2(900, 500)
+
+[node name="BatSpawner" parent="." unique_id=772586217 instance=ExtResource("13_bat")]
+position = Vector2(1300, 500)
+
+[node name="ControlPanel" type="Node2D" parent="." unique_id=462585351]
+
+[node name="Diff1" parent="ControlPanel" unique_id=1209454354 instance=ExtResource("15_button")]
+position = Vector2(700, 1180)
+label_text = "+1 Diff"
+color = Color(0.45, 0.8, 0.5, 1)
+
+[node name="Diff10" parent="ControlPanel" unique_id=1859791609 instance=ExtResource("15_button")]
+position = Vector2(900, 1180)
+label_text = "+10 Diff"
+color = Color(0.7, 0.7, 0.4, 1)
+
+[node name="Diff100" parent="ControlPanel" unique_id=746236138 instance=ExtResource("15_button")]
+position = Vector2(1100, 1180)
+label_text = "+100 Diff"
+color = Color(0.85, 0.5, 0.4, 1)
+
+[node name="BossButton" parent="ControlPanel" unique_id=1957729659 instance=ExtResource("15_button")]
+position = Vector2(1340, 1180)
+label_text = "Spawn Boss"
+color = Color(0.9, 0.4, 0.4, 1)
+
+[node name="ToggleButton" parent="ControlPanel" unique_id=309574427 instance=ExtResource("15_button")]
+position = Vector2(1580, 1180)
+label_text = "Toggle Spawns"
+color = Color(0.5, 0.6, 0.95, 1)
+
+[node name="StatusLabel" type="Label" parent="ControlPanel" unique_id=1392057170]
+offset_left = -220.0
+offset_top = -18.0
+offset_right = 220.0
+offset_bottom = 2.0
+text = "Difficulty: 0   Enemy spawns: ON"
+horizontal_alignment = 1
+
+[node name="ObstacleSpawner" parent="." unique_id=9063381 instance=ExtResource("7_obstacle")]
+enabled = false
+
+[node name="StageDoor" parent="." unique_id=36794885 instance=ExtResource("14_door")]
+position = Vector2(1100, 70)
+target_path = "res://src/environment/test_map/test_map_arena.tscn"
+caption = "ARMORY"
+
+[node name="Player" parent="." unique_id=222949676 instance=ExtResource("2_player")]
+position = Vector2(1100, 820)
+difficulty_runtime_per_minute = 0.0

@@ -52,18 +52,21 @@ static func _weapons() -> Array[Dictionary]:
 		"subtitle": "Sword · primary · 0.7s",
 		"desc": "A broadsword with a 3-hit combo: two wide 100° slashes then a 1.5× stab. Physical damage.",
 		"color": gold,
+		"scene": preload("res://src/entities/player/classes/knight/sword_weapon.tscn"),
 	})
 	list.append({
 		"name": "Arcane Bolts",
 		"subtitle": "Magic · primary · 1.4s",
 		"desc": "Fires a 3-bolt volley toward your cursor with gentle homing. Arcane — hits make enemies crit-vulnerable.",
 		"color": gold,
+		"scene": preload("res://src/entities/player/classes/mage/magic_bolts_weapon.tscn"),
 	})
 	list.append({
 		"name": "Longbow",
 		"subtitle": "Bow · primary · 0.65s",
 		"desc": "A 3-step combo that cycles 1, then 2, then 3 arrows spread in a shallow fan. Arrows pierce and chain. Plus-Projectile anvil upgrades don't add bow arrows — instead they feed the Ranger's Rain of Arrows, making the volley hit harder. Physics damage.",
 		"color": gold,
+		"scene": preload("res://src/entities/player/classes/ranger/bow_weapon.tscn"),
 	})
 
 	# Class secondaries / abilities
@@ -72,18 +75,21 @@ static func _weapons() -> Array[Dictionary]:
 		"subtitle": "Defense · secondary · 4s",
 		"desc": "Raise a shield: blocks damage, grants armor and pushes enemies back. Knight's right-click ability.",
 		"color": gold,
+		"scene": preload("res://src/entities/player/classes/knight/knight_shield.tscn"),
 	})
 	list.append({
 		"name": "Mana Overload",
 		"subtitle": "Buff · secondary · 8s",
 		"desc": "Halves all cooldowns for a few seconds. Mage's right-click ability.",
 		"color": gold,
+		"scene": preload("res://src/entities/player/classes/mage/mage_overload_weapon.tscn"),
 	})
 	list.append({
 		"name": "Rain of Arrows",
 		"subtitle": "AoE · secondary · 4s",
 		"desc": "Rains arrows over a wide radius. Ranger's right-click ability. Scales with the Longbow's \"+Projectile\" upgrades: each extra projectile adds another arrow's worth of damage to the volley.",
 		"color": gold,
+		"scene": preload("res://src/entities/player/classes/ranger/ranger_rain_weapon.tscn"),
 	})
 
 	# Rogue loadout
@@ -92,12 +98,14 @@ static func _weapons() -> Array[Dictionary]:
 		"subtitle": "Dagger · primary · 0.55s",
 		"desc": "A fast dual stab — one at your cursor, one at the nearest enemy. Critical hits shorten your next cooldown. Physical damage.",
 		"color": gold,
+		"scene": preload("res://src/entities/player/classes/rogue/dagger_stab_weapon.tscn"),
 	})
 	list.append({
 		"name": "Smoke Bomb",
 		"subtitle": "Stealth · secondary · 10s",
 		"desc": "Drops a cloud of smoke that boosts your dodge chance and blinds enemies inside it.",
 		"color": gold,
+		"scene": preload("res://src/entities/player/classes/rogue/smoke_bomb_weapon.tscn"),
 	})
 
 	# Berserker loadout
@@ -106,12 +114,14 @@ static func _weapons() -> Array[Dictionary]:
 		"subtitle": "Melee · primary · 1.0s",
 		"desc": "Spins a great axe through a wide arc — the outer edge strikes for double damage.",
 		"color": gold,
+		"scene": preload("res://src/entities/player/classes/berserker/spin_axe_weapon.tscn"),
 	})
 	list.append({
 		"name": "Axe Throw",
 		"subtitle": "Thrown · secondary · 4s",
 		"desc": "Hurls a heavy bouncing axe. Its damage and element follow your Spin Axe.",
 		"color": gold,
+		"scene": preload("res://src/entities/player/classes/berserker/axe_throw_weapon.tscn"),
 	})
 
 	# Engineer loadout
@@ -120,12 +130,14 @@ static func _weapons() -> Array[Dictionary]:
 		"subtitle": "Ranged · primary · 0.85s",
 		"desc": "Lobs arcing grenades that explode for fire damage in an area.",
 		"color": gold,
+		"scene": preload("res://src/entities/player/classes/engineer/grenade_weapon.tscn"),
 	})
 	list.append({
 		"name": "Deploy Turret",
 		"subtitle": "Deploy · secondary · 6s",
 		"desc": "Deploys an auto-firing turret that lobs grenades for fire damage.",
 		"color": gold,
+		"scene": preload("res://src/entities/player/classes/engineer/turret_weapon.tscn"),
 	})
 
 	# Automatic weapons (from the chest pool)
@@ -137,6 +149,7 @@ static func _weapons() -> Array[Dictionary]:
 			# (kept off the in-game tooltip); fall back to the short desc.
 			"desc": (w["compendium_desc"] as String) if w.has("compendium_desc") else (w["desc"] as String),
 			"color": gold,
+			"scene": w["scene"] as PackedScene,
 		})
 	return list
 

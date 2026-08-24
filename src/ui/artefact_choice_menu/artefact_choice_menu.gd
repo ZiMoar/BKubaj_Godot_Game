@@ -12,9 +12,10 @@ enum Mode { CHOOSE, PROMPT, SACRIFICE }
 
 @onready var title_label: Label = get_node_or_null("CenterContainer/Panel/Vertical/TitleLabel") as Label
 @onready var subtitle_label: Label = get_node_or_null("CenterContainer/Panel/Vertical/SubtitleLabel") as Label
-@onready var button_1: Button = get_node_or_null("CenterContainer/Panel/Vertical/Choice1") as Button
-@onready var button_2: Button = get_node_or_null("CenterContainer/Panel/Vertical/Choice2") as Button
-@onready var button_3: Button = get_node_or_null("CenterContainer/Panel/Vertical/Choice3") as Button
+@onready var button_1: Button = get_node_or_null("CenterContainer/Panel/Vertical/ChoiceScroll/Choices/Choice1") as Button
+@onready var button_2: Button = get_node_or_null("CenterContainer/Panel/Vertical/ChoiceScroll/Choices/Choice2") as Button
+@onready var button_3: Button = get_node_or_null("CenterContainer/Panel/Vertical/ChoiceScroll/Choices/Choice3") as Button
+@onready var choice_scroll: ScrollContainer = get_node_or_null("CenterContainer/Panel/Vertical/ChoiceScroll") as ScrollContainer
 @onready var reroll_button: Button = get_node_or_null("CenterContainer/Panel/Vertical/RerollButton") as Button
 @onready var sacrifice_container: VBoxContainer = get_node_or_null("CenterContainer/Panel/Vertical/SacrificeScroll/SacrificeContainer") as VBoxContainer
 @onready var sacrifice_scroll: ScrollContainer = get_node_or_null("CenterContainer/Panel/Vertical/SacrificeScroll") as ScrollContainer
@@ -102,6 +103,8 @@ func _update_choose_ui() -> void:
 		sacrifice_container.visible = false
 	if sacrifice_scroll:
 		sacrifice_scroll.visible = false
+	if choice_scroll:
+		choice_scroll.visible = true
 	if reroll_button:
 		reroll_button.visible = true
 	_set_button_row_visible(true)
@@ -119,6 +122,8 @@ func _update_prompt_ui() -> void:
 		sacrifice_container.visible = false
 	if sacrifice_scroll:
 		sacrifice_scroll.visible = false
+	if choice_scroll:
+		choice_scroll.visible = true
 	if reroll_button:
 		reroll_button.visible = false
 	if button_1:
@@ -147,6 +152,8 @@ func _update_sacrifice_ui() -> void:
 	_set_button_row_visible(false)
 	if reroll_button:
 		reroll_button.visible = false
+	if choice_scroll:
+		choice_scroll.visible = false
 	if sacrifice_container == null:
 		close_menu()
 		return
@@ -197,6 +204,18 @@ func _set_rich_button_text(button: Button, text: String) -> void:
 	rtl.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, 6)
 	rtl.text = text
 	button.add_child(rtl)
+	# Buttons are not containers: an anchored child never grows them, so long
+	# descriptions would overflow into the next card. Measure the wrapped text
+	# once the container has assigned the button its width, then grow it to fit.
+	_fit_button_to_rtl.call_deferred(button, rtl)
+
+
+func _fit_button_to_rtl(button: Button, rtl: RichTextLabel) -> void:
+	if not is_instance_valid(button) or not is_instance_valid(rtl):
+		return
+	# get_content_height() wraps at the button's current width.
+	var needed: float = rtl.get_content_height()
+	button.custom_minimum_size = Vector2(0, maxf(50.0, needed + 8.0))
 
 
 # Restores a plain (non-BBCode) button label, removing any RichTextLabel child.

@@ -1,0 +1,62 @@
+[gd_scene format=3 uid="uid://bmf86nc0wh0sq"]
+
+[ext_resource type="Script" path="res://src/environment/dummy_range/dummy_range.gd" id="1_script"]
+[ext_resource type="PackedScene" uid="uid://ch71iywhtq2is" path="res://src/entities/player/player/player.tscn" id="2_player"]
+[ext_resource type="PackedScene" uid="uid://6axic314dm5n" path="res://src/ui/hud/hud.tscn" id="3_hud"]
+[ext_resource type="Script" uid="uid://dwd47lt1h3cpo" path="res://src/environment/grid_background.gd" id="4_grid"]
+[ext_resource type="Script" uid="uid://byx0vv2w1j4cr" path="res://src/managers/xp_orb_spatial_manager.gd" id="5_xp_spatial"]
+[ext_resource type="PackedScene" path="res://src/managers/team_xp_manager/team_xp_manager.tscn" id="6_team_xp"]
+[ext_resource type="PackedScene" uid="uid://da263ckoicpjs" path="res://src/environment/obstacles/obstacle_spawner/obstacle_spawner.tscn" id="7_obstacle"]
+[ext_resource type="PackedScene" path="res://src/environment/test_map/test_map_loop_door.tscn" id="8_door"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_horiz"]
+size = Vector2(2300, 32)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_vert"]
+size = Vector2(32, 1340)
+
+[node name="DummyRange" type="Node2D" unique_id=997321473]
+script = ExtResource("1_script")
+
+[node name="XPOrbSpatialManager" type="Node" parent="." unique_id=579455606]
+script = ExtResource("5_xp_spatial")
+
+[node name="TeamXPManager" parent="." unique_id=878014493 instance=ExtResource("6_team_xp")]
+
+[node name="HUD" parent="." unique_id=1451498918 instance=ExtResource("3_hud")]
+
+[node name="Floor" type="Node2D" parent="." unique_id=702548514]
+z_index = -1
+script = ExtResource("4_grid")
+arena_center = Vector2(1100, 650)
+arena_size = Vector2(2200, 1300)
+
+[node name="Walls" type="StaticBody2D" parent="." unique_id=1556513149]
+
+[node name="TopWall" type="CollisionShape2D" parent="Walls" unique_id=379288059]
+position = Vector2(1100, -16)
+shape = SubResource("RectangleShape2D_horiz")
+
+[node name="BottomWall" type="CollisionShape2D" parent="Walls" unique_id=1489370151]
+position = Vector2(1100, 1316)
+shape = SubResource("RectangleShape2D_horiz")
+
+[node name="LeftWall" type="CollisionShape2D" parent="Walls" unique_id=1805631212]
+position = Vector2(-16, 650)
+shape = SubResource("RectangleShape2D_vert")
+
+[node name="RightWall" type="CollisionShape2D" parent="Walls" unique_id=1075823500]
+position = Vector2(2216, 650)
+shape = SubResource("RectangleShape2D_vert")
+
+[node name="ObstacleSpawner" parent="." unique_id=1985261552 instance=ExtResource("7_obstacle")]
+enabled = false
+
+[node name="StageDoor" parent="." unique_id=1857157606 instance=ExtResource("8_door")]
+position = Vector2(1100, 70)
+target_path = "res://src/environment/test_map/test_map_arena.tscn"
+caption = "ARMORY"
+
+[node name="Player" parent="." unique_id=425854802 instance=ExtResource("2_player")]
+position = Vector2(1100, 820)
+difficulty_runtime_per_minute = 0.0

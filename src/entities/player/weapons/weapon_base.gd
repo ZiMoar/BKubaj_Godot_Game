@@ -312,6 +312,19 @@ func apply_signature(entry: Dictionary) -> void:
 	if apply.is_valid():
 		apply.call(self)
 
+## Re-applies the side-effect flag of every owned signature. Used when a weapon
+## is rebuilt from a run snapshot, which only persists the id list — without
+## this the behaviour flags (contagion, static_charge, etc.) silently reset to
+## false on every arena transition and the signature stops working.
+func reapply_signatures() -> void:
+	for sig_id: String in signature_ids:
+		for sig: Dictionary in get_signature_pool():
+			if sig.get("id", "") == sig_id:
+				var apply: Callable = sig.get("apply", Callable())
+				if apply.is_valid():
+					apply.call(self)
+				break
+
 func get_attack_damage(base_damage: float) -> int:
 	var player = get_player()
 	if player == null:

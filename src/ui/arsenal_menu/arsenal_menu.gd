@@ -87,7 +87,30 @@ func _on_entry_pressed(entry: Dictionary) -> void:
 		detail_subtitle.text = entry.get("subtitle", "") as String
 	if detail_desc:
 		# Colourise ailment / element keywords to match their element.
-		detail_desc.text = DamageType.colorize(entry.get("desc", "") as String)
+		detail_desc.text = DamageType.colorize((entry.get("desc", "") as String) + _signature_block(entry))
+
+
+## Builds a BBCode block listing a weapon's signature upgrades (read from its
+## scene's get_signature_pool), or "" if the entry has no scene / signatures.
+## Shows nothing for abilities like Tower Shield / Mana Overload that offer none.
+func _signature_block(entry: Dictionary) -> String:
+	var scene: PackedScene = entry.get("scene", null) as PackedScene
+	if scene == null:
+		return ""
+	var w: Node = scene.instantiate()
+	if w == null or not w.has_method("get_signature_pool"):
+		if w:
+			w.free()
+		return ""
+	var pool: Array = w.get_signature_pool()
+	w.free()
+	if pool.is_empty():
+		return ""
+	var gold := Color(0.95, 0.72, 0.22).to_html(false)
+	var lines: PackedStringArray = ["\n\n[b][color=%s]SIGNATURE UPGRADES[/color][/b]" % gold]
+	for sig: Dictionary in pool:
+		lines.append("• [color=%s]%s[/color] — %s" % [gold, sig.get("title", "?"), sig.get("description", "")])
+	return "\n".join(lines)
 
 
 func _clear_detail() -> void:

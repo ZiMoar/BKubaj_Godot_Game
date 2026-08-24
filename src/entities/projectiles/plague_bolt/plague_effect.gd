@@ -57,7 +57,8 @@ func setup(tgt: Node2D, w: Node, bd: int, interval: float, rm: float, life: floa
 	if weapon:
 		_pest_mult = weapon.PESTILENCE_START
 		_emit_timer = weapon.BLACK_DEATH_EMIT
-	_register_host()
+	# Host registration happens in _ready() when this node enters the tree; doing
+	# it here too would double-count the host, inflating the plague stack counter.
 
 
 ## Co-op: render an inert visual-only copy for the lifetime at a fixed spot.
@@ -218,7 +219,15 @@ func _draw() -> void:
 	var alpha: float = 1.0
 	if _visual_only:
 		alpha = clampf(1.0 - _age / lifetime, 0.0, 1.0)
+	# Grow with the number of plagues stacked on this host so re-infection (the
+	# Contagion signature) is clearly visible — a second application on the same
+	# enemy produces a larger, brighter ring instead of an identical overlapping one.
+	var stacks: int = 1
+	if not _visual_only and target and is_instance_valid(target):
+		stacks = maxi(1, int(target.get_meta("plague_hosts", 1)))
 	var wobble: float = sin(_age * 8.0) * 2.0
-	var r: float = 16.0 + wobble
-	draw_circle(Vector2.ZERO, r, Color(0.4, 0.85, 0.5, 0.35 * alpha))
-	draw_arc(Vector2.ZERO, r + 4.0, 0.0, TAU, 24, Color(0.3, 0.9, 0.4, 0.6 * alpha), 2.0)
+	var grow: float = 6.0 * float(stacks - 1)
+	var r: float = 16.0 + wobble + grow
+	var a: float = minf(0.8, 0.35 * alpha + 0.06 * float(stacks - 1))
+	draw_circle(Vector2.ZERO, r, Color(0.4, 0.85, 0.5, a))
+	draw_arc(Vector2.ZERO, r + 4.0, 0.0, TAU, 24, Color(0.3, 0.9, 0.4, minf(1.0, 0.6 * alpha + 0.08 * float(stacks - 1))), 2.0)

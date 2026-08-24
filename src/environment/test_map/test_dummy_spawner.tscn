@@ -1,0 +1,20 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/environment/test_map/test_dummy_spawner.gd" id="1_spawner"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_spot"]
+radius = 40.0
+
+[node name="TestDummySpawner" type="Area2D"]
+script = ExtResource("1_spawner")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_spot")
+
+[node name="HintLabel" type="Label" parent="."]
+offset_left = -30.0
+offset_top = 40.0
+offset_right = 30.0
+offset_bottom = 58.0
+text = "E"
+horizontal_alignment = 1

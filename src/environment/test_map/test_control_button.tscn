@@ -1,0 +1,20 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/environment/test_map/test_control_button.gd" id="1_button"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_btn"]
+size = Vector2(120, 48)
+
+[node name="TestControlButton" type="Area2D"]
+script = ExtResource("1_button")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_btn")
+
+[node name="HintLabel" type="Label" parent="."]
+offset_left = -60.0
+offset_top = 28.0
+offset_right = 60.0
+offset_bottom = 46.0
+text = "E"
+horizontal_alignment = 1

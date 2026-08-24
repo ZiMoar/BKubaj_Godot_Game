@@ -6,6 +6,6 @@
 [node name="TestMap" type="Node"]
 script = ExtResource("1_map_script")
 map_id = "test_map"
-display_name = "Test Map"
-description = "Tiny sandbox: dummy, infinite anvil/box, free-level field, loop door."
+display_name = "Armory"
+description = "Training hub: stat/anvil room, enemy training ground (+ buttons), and a dummy range."
 arena_scene = ExtResource("2_arena")

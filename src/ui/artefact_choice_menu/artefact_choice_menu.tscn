@@ -23,26 +23,29 @@ grow_vertical = 2
 mouse_filter = 1
 color = Color(0, 0, 0, 0.6)
 
-[node name="CenterContainer" type="CenterContainer" parent="." unique_id=1449441962]
+[node name="CenterContainer" type="MarginContainer" parent="." unique_id=1449441962]
 layout_mode = 1
-anchors_preset = 2
-anchor_top = 1.0
+anchors_preset = 15
+anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 10.0
-offset_top = -280.0
-offset_right = 430.0
-offset_bottom = -8.0
-grow_vertical = 0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 96
+theme_override_constants/margin_top = 44
+theme_override_constants/margin_right = 96
+theme_override_constants/margin_bottom = 44
 
 [node name="Panel" type="PanelContainer" parent="CenterContainer" unique_id=4909446]
 custom_minimum_size = Vector2(420, 260)
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
 mouse_filter = 1
 
 [node name="Vertical" type="VBoxContainer" parent="CenterContainer/Panel" unique_id=497946334]
 layout_mode = 2
 theme_override_constants/separation = 8
-alignment = 1
+alignment = 0
 
 [node name="TitleLabel" type="Label" parent="CenterContainer/Panel/Vertical" unique_id=636538259]
 layout_mode = 2
@@ -54,19 +57,30 @@ layout_mode = 2
 text = "Choose an artefact to equip."
 horizontal_alignment = 1
 
-[node name="Choice1" type="Button" parent="CenterContainer/Panel/Vertical" unique_id=1943695606]
+[node name="ChoiceScroll" type="ScrollContainer" parent="CenterContainer/Panel/Vertical"]
+layout_mode = 2
+size_flags_vertical = 3
+custom_minimum_size = Vector2(0, 120)
+horizontal_scroll_mode = 0
+
+[node name="Choices" type="VBoxContainer" parent="CenterContainer/Panel/Vertical/ChoiceScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="Choice1" type="Button" parent="CenterContainer/Panel/Vertical/ChoiceScroll/Choices" unique_id=1943695606]
 custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
 text = "Choice 1"
 autowrap_mode = 3
 
-[node name="Choice2" type="Button" parent="CenterContainer/Panel/Vertical" unique_id=1577513447]
+[node name="Choice2" type="Button" parent="CenterContainer/Panel/Vertical/ChoiceScroll/Choices" unique_id=1577513447]
 custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
 text = "Choice 2"
 autowrap_mode = 3
 
-[node name="Choice3" type="Button" parent="CenterContainer/Panel/Vertical" unique_id=629646026]
+[node name="Choice3" type="Button" parent="CenterContainer/Panel/Vertical/ChoiceScroll/Choices" unique_id=629646026]
 custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
 text = "Choice 3"

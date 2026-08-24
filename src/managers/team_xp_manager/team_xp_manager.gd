@@ -7,7 +7,7 @@ signal team_leveled_up(new_level: int)
 @export var team_level: int = 0
 @export var current_xp: int = 0
 @export var xp_to_next_level: int = 10
-@export var xp_growth_factor: float = 1.3
+@export var xp_growth_factor: float = 1.15
 
 ## Highest team level this machine has applied from the authoritative stream.
 ## Used on clients to detect a new level-up so the HUD opens the stat menu.
@@ -136,6 +136,6 @@ func restore_xp_state(snap: Dictionary) -> void:
 	team_level = int(snap.get("team_level", 0))
 	current_xp = int(snap.get("current_xp", 0))
 	xp_to_next_level = int(snap.get("xp_to_next_level", 10))
-	xp_growth_factor = float(snap.get("xp_growth_factor", 1.3))
+	xp_growth_factor = float(snap.get("xp_growth_factor", 1.15))
 	_synced_level = team_level
 	team_xp_changed.emit(current_xp, xp_to_next_level)
