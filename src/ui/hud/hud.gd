@@ -352,11 +352,24 @@ func _show_level_up_menu(new_level: int) -> void:
 
 	level_up_menu_open = true
 	PauseCoord.begin_block()
+	# CHa0s relic: the player no longer chooses — a random upgrade is applied
+	# (tripled) and no choice menu is shown. Relic/ascension picks stay manual.
+	if current_player.has_artefact("cha0s"):
+		_apply_chaos_level_up()
+		return
 	level_up_menu.open_for_player(current_player, new_level)
+
+func _apply_chaos_level_up() -> void:
+	var choice: Dictionary = level_up_menu.roll_random_upgrade(current_player)
+	if choice.is_empty():
+		_close_level_up_menu()
+		return
+	_on_upgrade_selected(str(choice["id"]), int(choice.get("rolled_rarity", 0)))
 
 func _on_upgrade_selected(upgrade_id: String, rarity: int) -> void:
 	if current_player and current_player.has_method("apply_upgrade"):
-		current_player.apply_upgrade(upgrade_id, rarity)
+		var mult: float = 3.0 if current_player.has_artefact("cha0s") else 1.0
+		current_player.apply_upgrade(upgrade_id, rarity, mult)
 		_update_difficulty_meter()
 
 	pending_level_up_rewards = max(0, pending_level_up_rewards - 1)
@@ -376,6 +389,10 @@ func _reopen_level_up_menu() -> void:
 		if current_player == null:
 			return
 
+	# CHa0s relic: auto-apply a random (tripled) upgrade on reopened level-ups too.
+	if current_player.has_artefact("cha0s"):
+		_apply_chaos_level_up()
+		return
 	level_up_menu.open_for_player(current_player, current_level_number)
 
 func _close_level_up_menu() -> void:
@@ -412,6 +429,10 @@ func show_anvil_upgrade(golden: bool = false, kind: int = 0) -> void:
 	if anvil_upgrade_menu.visible:
 		return
 	PauseCoord.begin_block()
+	# CHa0s relic: no choice — a random weapon/stat is upgraded (tripled).
+	if current_player.has_artefact("cha0s"):
+		anvil_upgrade_menu.apply_chaos(golden, kind)
+		return
 	anvil_upgrade_menu.open_menu(golden, kind)
 
 
@@ -435,7 +456,28 @@ func show_dash_upgrade() -> void:
 	if dash_upgrade_menu.visible:
 		return
 	PauseCoord.begin_block()
+	# CHa0s relic: no choice — a random dash upgrade is applied (tripled).
+	if current_player.has_artefact("cha0s"):
+		var choices: Array = dash_upgrade_menu.UPGRADES
+		var pick: Dictionary = choices[randi() % choices.size()] as Dictionary
+		_apply_dash_upgrade(str(pick["id"]), 3)
+		dash_upgrade_menu.close_menu()
+		PauseCoord.end_block()
+		return
 	dash_upgrade_menu.open_menu()
+
+
+func _apply_dash_upgrade(upgrade_id: String, times: int) -> void:
+	if current_player == null:
+		return
+	for i in times:
+		match upgrade_id:
+			"dash_charge":
+				current_player.add_dash_charge()
+			"dash_cooldown":
+				current_player.reduce_dash_cooldown(0.25)
+			"dash_range":
+				current_player.increase_dash_range(0.30)
 
 
 func _on_dash_upgrade_selected(upgrade_id: String) -> void:
@@ -443,13 +485,7 @@ func _on_dash_upgrade_selected(upgrade_id: String) -> void:
 		dash_upgrade_menu.close_menu()
 		PauseCoord.end_block()
 		return
-	match upgrade_id:
-		"dash_charge":
-			current_player.add_dash_charge()
-		"dash_cooldown":
-			current_player.reduce_dash_cooldown(0.25)
-		"dash_range":
-			current_player.increase_dash_range(0.30)
+	_apply_dash_upgrade(upgrade_id, 1)
 	dash_upgrade_menu.close_menu()
 	PauseCoord.end_block()
 

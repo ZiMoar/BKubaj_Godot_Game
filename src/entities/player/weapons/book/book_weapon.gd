@@ -105,10 +105,11 @@ func fire() -> void:
 			spawned_book.target_radius *= get_area_multiplier()
 			spawned_book.scale *= get_area_multiplier()
 			var _pl: Node = get_player()
+			var _pn: String = str(_pl.name) if _pl else ""
 			sync_effect(spawned_book, book_scene, {
 				"angle": initial_angle,
 				"target_radius": spawned_book.target_radius,
-				"player_name": _pl.name if _pl else "",
+				"player_name": _pn,
 			})
 
 		active_books.append(spawned_book)

@@ -162,7 +162,7 @@ func _update_sacrifice_ui() -> void:
 		b.custom_minimum_size = Vector2(0, 46)
 		b.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		var colour: Color = ARTEFACTS.get_display_color(id)
-		b.text = "%s\n%s" % [ARTEFACTS.get_display_name(id), ARTEFACTS.get_description(id)]
+		_set_rich_button_text(b, "%s\n%s" % [ARTEFACTS.get_display_name(id), ARTEFACTS.get_description(id)])
 		b.modulate = colour
 		b.pressed.connect(_on_sacrifice_pressed.bind(id))
 		sacrifice_container.add_child(b)
@@ -179,6 +179,35 @@ func _clear_sacrifice() -> void:
 		return
 	for child in sacrifice_container.get_children():
 		if is_instance_valid(child):
+			child.queue_free()
+
+
+# Buttons can't render BBCode, so a Button gets a RichTextLabel child that shows
+# the coloured text. The button keeps its own background/hover styling & clicks;
+# the label ignores mouse input so presses still hit the button.
+func _set_rich_button_text(button: Button, text: String) -> void:
+	button.text = ""
+	_remove_rich_children(button)
+	var rtl := RichTextLabel.new()
+	rtl.bbcode_enabled = true
+	rtl.fit_content = true
+	rtl.scroll_active = false
+	rtl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	rtl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	rtl.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, 6)
+	rtl.text = text
+	button.add_child(rtl)
+
+
+# Restores a plain (non-BBCode) button label, removing any RichTextLabel child.
+func _set_plain_button_text(button: Button, text: String) -> void:
+	_remove_rich_children(button)
+	button.text = text
+
+
+func _remove_rich_children(button: Button) -> void:
+	for child in button.get_children():
+		if child is RichTextLabel:
 			child.queue_free()
 
 
@@ -214,14 +243,14 @@ func _update_buttons() -> void:
 		if button == null:
 			continue
 		if i >= current_choices.size():
-			button.text = "-"
+			_set_plain_button_text(button, "-")
 			button.disabled = true
 			button.modulate = Color.WHITE
 			continue
 
 		var id: String = current_choices[i]
 		var colour: Color = ARTEFACTS.get_display_color(id)
-		button.text = "%s\n%s" % [ARTEFACTS.get_display_name(id), ARTEFACTS.get_description(id)]
+		_set_rich_button_text(button, "%s\n%s" % [ARTEFACTS.get_display_name(id), ARTEFACTS.get_description(id)])
 		button.disabled = false
 		button.modulate = colour
 

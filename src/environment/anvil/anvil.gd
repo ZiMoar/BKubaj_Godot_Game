@@ -46,5 +46,18 @@ func _on_body_entered(body: Node2D) -> void:
 		hud = root.get_node_or_null("HUD") as HUD
 
 	if hud and hud.has_method("show_anvil_upgrade"):
+		# Smith's Hammer relic: a 10% chance the anvil isn't consumed and can be
+		# used again. Defer the free decision until the upgrade menu closes.
+		var reuse: bool = body.has_method("has_artefact") and body.has_artefact("smiths_hammer") \
+			and randf() < 0.10
+		if reuse and hud.has_method("anvil_upgrade_menu") and hud.anvil_upgrade_menu != null:
+			hud.anvil_upgrade_menu.menu_closed.connect(_on_menu_closed, CONNECT_ONE_SHOT)
 		hud.show_anvil_upgrade(is_golden, anvil_kind)
-		queue_free()
+		if not reuse:
+			queue_free()
+
+
+## Smith's Hammer relic: the anvil was not consumed. Reusable the next time the
+## player walks onto it (must leave and re-enter to re-trigger).
+func _on_menu_closed() -> void:
+	_collected = false

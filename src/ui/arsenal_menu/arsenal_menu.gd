@@ -12,7 +12,7 @@ const MAIN_MENU_SCENE: String = "res://src/ui/main_menu/main_menu.tscn"
 @onready var list_box: VBoxContainer = get_node_or_null("Center/Panel/Vertical/Split/ListScroll/List") as VBoxContainer
 @onready var detail_name: Label = get_node_or_null("Center/Panel/Vertical/Split/DetailPanel/Detail/DetailName") as Label
 @onready var detail_subtitle: Label = get_node_or_null("Center/Panel/Vertical/Split/DetailPanel/Detail/DetailSubtitle") as Label
-@onready var detail_desc: Label = get_node_or_null("Center/Panel/Vertical/Split/DetailPanel/Detail/DetailDesc") as Label
+@onready var detail_desc: RichTextLabel = get_node_or_null("Center/Panel/Vertical/Split/DetailPanel/Detail/DetailDesc") as RichTextLabel
 @onready var back_button: Button = get_node_or_null("Center/Panel/Vertical/BackButton") as Button
 
 var _current_category: String = Arsenal.CATEGORY_WEAPONS
@@ -86,7 +86,8 @@ func _on_entry_pressed(entry: Dictionary) -> void:
 	if detail_subtitle:
 		detail_subtitle.text = entry.get("subtitle", "") as String
 	if detail_desc:
-		detail_desc.text = entry.get("desc", "") as String
+		# Colourise ailment / element keywords to match their element.
+		detail_desc.text = DamageType.colorize(entry.get("desc", "") as String)
 
 
 func _clear_detail() -> void:

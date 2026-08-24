@@ -206,7 +206,14 @@ func _on_block_body(body: Node2D) -> void:
 		if body.has_method("apply_knockback"):
 			body.apply_knockback(global_position, push_force)
 		if thorns_damage > 0.0 and body.has_method("take_damage"):
-			body.take_damage(max(1, int(round(thorns_damage))))
+			var block_thorns: int = max(1, int(round(thorns_damage)))
+			# Pointy Tips relic: shield thorns can critically strike too.
+			var owner_player: Node = get_player()
+			if owner_player != null and owner_player.has_method("has_artefact") and owner_player.has_artefact("pointy_tips") \
+					and owner_player.has_method("roll_critical_hit") and owner_player.roll_critical_hit():
+				var crit_mult: float = float(owner_player.get_critical_multiplier()) if owner_player.has_method("get_critical_multiplier") else 1.5
+				block_thorns = max(1, int(round(float(block_thorns) * crit_mult)))
+			body.take_damage(block_thorns)
 		# Enemies pushing against the shield also drain its HP (so it breaks).
 		var cd: float = 10.0
 		if body.get("contact_damage") != null:

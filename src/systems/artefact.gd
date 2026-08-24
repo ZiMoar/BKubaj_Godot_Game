@@ -16,9 +16,15 @@ const ARTEFACT_POOL: Array[Dictionary] = [
 		"color": Color(0.55, 0.82, 0.9),
 	},
 	{
+		"id": "pointy_tips",
+		"name": "Pointy Tips",
+		"desc": "Your Thorns damage can critically strike.",
+		"color": Color(0.75, 0.9, 0.5),
+	},
+	{
 		"id": "lifesteal_crit",
 		"name": "Vampiric Rage",
-		"desc": "Your Lifesteal heals can critically strike for double healing.",
+		"desc": "Your hits have a 5% chance to trigger Lifesteal.",
 		"color": Color(0.95, 0.35, 0.2),
 	},
 	{
@@ -54,7 +60,7 @@ const ARTEFACT_POOL: Array[Dictionary] = [
 	{
 		"id": "static_conduit",
 		"name": "Static Conduit",
-		"desc": "Your critical hits deal +50% damage to Shocked enemies.",
+		"desc": "Lightning chains to 2 nearby enemies instead of 1.",
 		"color": Color(0.95, 0.85, 0.2),
 	},
 	{
@@ -102,13 +108,13 @@ const ARTEFACT_POOL: Array[Dictionary] = [
 	{
 		"id": "unstable_mind",
 		"name": "Unstable Mind",
-		"desc": "Critically Vulnerable enemies have +50% chance to catch your ailments.",
+		"desc": "Against Critically Vulnerable enemies, your ailment chance is rolled twice (lucky re-roll), taking the better result.",
 		"color": Color(0.85, 0.6, 0.9),
 	},
 	{
 		"id": "soul_harvest",
 		"name": "Soul Harvest",
-		"desc": "Enemies leave behind souls. Collecting one grants a Shield equal to 5% of your Max Health.",
+		"desc": "Decaying enemies leave behind souls. Collecting one grants a Shield equal to 5% of your Max Health.",
 		"color": Color(0.45, 0.9, 0.75),
 	},
 	{
@@ -116,6 +122,31 @@ const ARTEFACT_POOL: Array[Dictionary] = [
 		"name": "Regen Overload",
 		"desc": "HP Regen that would heal you past full health instead grants Shield.",
 		"color": Color(0.5, 0.8, 1.0),
+	},
+	{
+		"id": "smiths_hammer",
+		"name": "Smith's Hammer",
+		"desc": "Anvils have a 10% chance to be usable again.",
+		"color": Color(0.85, 0.6, 0.35),
+	},
+	{
+		"id": "badge_of_mastery",
+		"name": "Badge of Mastery",
+		"desc": "Weapons can take a second signature upgrade.",
+		"color": Color(1.0, 0.85, 0.4),
+	},
+	{
+		"id": "zephyrs_pinion",
+		"name": "Zephyr's Pinion",
+		"desc": "Evasion also increases your movement speed.",
+		"color": Color(0.55, 0.9, 0.95),
+	},
+	{
+		"id": "cha0s",
+		"name": "CHa0s",
+		"desc": "You can no longer choose upgrades from level-ups, anvils, or Winged Boots — they are chosen at random, but their effects are tripled. Relic and ascension choices stay yours.",
+		"color": Color(0.9, 0.4, 0.9),
+		"cursed": true,
 	},
 	# --- Cursed relics (the seven sins). Strong bonuses with a real downside. ---
 	# They share the same 5-slot inventory as normal relics but only drop from
@@ -130,7 +161,7 @@ const ARTEFACT_POOL: Array[Dictionary] = [
 	{
 		"id": "avarice",
 		"name": "Avarice",
-		"desc": "Greed. 25% of XP becomes Gold instead.",
+		"desc": "Greed. +0.001% damage per gold held, but lose 10% of your gold whenever you take damage (once per second).",
 		"color": Color(1.0, 0.85, 0.2),
 		"cursed": true,
 	},
@@ -158,7 +189,7 @@ const ARTEFACT_POOL: Array[Dictionary] = [
 	{
 		"id": "burning_ire",
 		"name": "Burning Ire",
-		"desc": "Wrath. Crits +60% crit dmg; non-crits -30%.",
+		"desc": "Wrath. Crits +60% crit dmg; non-crits deal -95% damage.",
 		"color": Color(1.0, 0.45, 0.12),
 		"cursed": true,
 	},
@@ -190,7 +221,8 @@ static func get_description(artefact_id: String) -> String:
 	var def: Dictionary = get_def(artefact_id)
 	if def.is_empty():
 		return ""
-	return def["desc"] as String
+	# Colourise ailment / element keywords so their element is obvious at a glance.
+	return DamageType.colorize(def["desc"] as String)
 
 
 static func get_display_color(artefact_id: String) -> Color:

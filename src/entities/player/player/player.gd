@@ -108,11 +108,6 @@ var current_move_input: Vector2 = Vector2.ZERO
 var revive_remaining: int = 0
 var hp_regen_bank: float = 0.0
 var difficulty_runtime_bonus: float = 0.0
-# Re-entrancy guard: Enlightened Greed (gold->XP) and Avarice (XP->gold) each
-# trigger the other's conversion, which would otherwise cascade add_gold ->
-# add_xp -> add_gold -> ... forever. When true, freshly-converted gold does not
-# feed back into gold->XP again, breaking the loop after one pass.
-var _in_gold_to_xp_conversion: bool = false
 var _lifesteal_cooldown_remaining: float = 0.0
 const LIFESTEAL_COOLDOWN: float = 0.3
 
@@ -177,6 +172,8 @@ var _whirl_timer: float = 0.0
 var _dash_charges_ready: int = 1
 # Momentum relic: window (s) of +50% damage after a dash/teleport.
 var _momentum_timer: float = 0.0
+# Avarice relic: cooldown between gold-loss triggers on repeated hits.
+var _avarice_loss_cd: float = 0.0
 const MOMENTUM_WINDOW: float = 1.0
 const MOMENTUM_DAMAGE_MULT: float = 1.50
 
@@ -184,7 +181,12 @@ const MOMENTUM_DAMAGE_MULT: float = 1.50
 const MAX_ARTEFACT_SLOTS: int = 5
 # Artefact IDs (see Artefact class registry).
 const ARTEFACT_ARMOR_TO_THORNS: String = "armor_to_thorns"
+const ARTEFACT_POINTY_TIPS: String = "pointy_tips"
 const ARTEFACT_LIFESTEAL_CRIT: String = "lifesteal_crit"
+const ARTEFACT_SMITHS_HAMMER: String = "smiths_hammer"
+const ARTEFACT_BADGE_OF_MASTERY: String = "badge_of_mastery"
+const ARTEFACT_ZEPHYR_PINION: String = "zephyrs_pinion"
+const ARTEFACT_CHAOS: String = "cha0s"
 const ARTEFACT_LIFESTEAL_TO_DAMAGE: String = "lifesteal_to_damage"
 const ARTEFACT_MAXHP_TO_ARMOR: String = "maxhp_to_armor"
 const ARTEFACT_REGEN_TO_ATTACK_SPEED: String = "regen_to_attack_speed"
@@ -204,7 +206,6 @@ const THORNS_TO_DAMAGE_PER_UNIT: float = 0.02
 # --- Cursed relic (seven sins) scaling factors. ---
 const HUBRIS_BOSS_DAMAGE_MULT: float = 1.30
 const HUBRIS_BOSS_TAKEN_MULT: float = 1.20
-const AVARICE_XP_TO_GOLD_RATIO: float = 0.25
 const LUST_LIFESTEAL_MULT: float = 2.0
 const LUST_HEAL_REDUCTION: float = 0.60
 const ENVY_RADIUS: float = 600.0
@@ -216,6 +217,20 @@ const ENVY_NEARBY_TAKEN_MULT: float = 1.04
 const GLUTTONY_CHANCE: float = 0.20
 const GLUTTONY_FRACTION: float = 0.06
 const WRATH_CRIT_DAMAGE_BONUS: float = 0.60
+# Vampiric Rage relic: chance for any player hit to trigger a Lifesteal heal.
+const VAMPIRIC_RAGE_ON_HIT_CHANCE: float = 0.05
+# Avarice relic tuning: +damage per gold held and gold lost on taking damage.
+# AVARICE_GOLD_DAMAGE_PER_GOLD is 0.001% per gold (as a fraction: 0.00001).
+const AVARICE_GOLD_DAMAGE_PER_GOLD: float = 0.00001
+const AVARICE_GOLD_LOSS_PCT: float = 0.10
+# Minimum time between Avarice gold-loss triggers while taking repeated hits.
+const AVARICE_LOSS_COOLDOWN: float = 1.0
+# Zephyr's Pinion relic: move-speed multiplier gained per point of evasion.
+const ZEPHYR_EVASION_SPEED_RATIO: float = 0.0015
+# Smith's Hammer relic: chance an anvil is not consumed after use.
+const SMITHS_HAMMER_REUSE_CHANCE: float = 0.10
+# CHa0s relic: random choices apply at this magnitude instead of their base.
+const CHAOS_MULT: float = 3.0
 const WRATH_NONCRIT_PENALTY: float = 0.70
 const SLOTH_SPEED_MULT: float = 0.80
 const SLOTH_REGEN_MULT: float = 2.0
@@ -435,6 +450,9 @@ func get_attack_damage(base_damage: float) -> int:
 	# Cross-stat artefacts scale outgoing damage off defensive/utility stats.
 	if has_artefact(ARTEFACT_LIFESTEAL_TO_DAMAGE):
 		damage *= 1.0 + lifesteal_flat * LIFESTEAL_TO_DAMAGE_PER_UNIT
+	# Avarice relic: +0.001% damage per gold held (hoard gold to deal more).
+	if has_artefact(ARTEFACT_AVARICE) and gold > 0:
+		damage *= 1.0 + float(gold) * AVARICE_GOLD_DAMAGE_PER_GOLD
 	# Momentum relic: +50% damage while the post-dash window is active.
 	if has_artefact("momentum") and _momentum_timer > 0.0:
 		damage *= MOMENTUM_DAMAGE_MULT
@@ -516,16 +534,23 @@ func drain_overload_cost() -> void:
 	health_changed.emit(current_health, current_max_health())
 	_update_hp_value_label()
 
-## Legacy per-hit lifesteal hook. Lifesteal now triggers on KILL (see
-## apply_lifesteal_on_kill), so landing hits no longer heals. This stub remains
-## only so older on-hit call sites compile harmlessly as no-ops.
+## Per-hit lifesteal hook, called by weapons on every damaging hit. Base lifesteal
+## only procs on KILL (see apply_lifesteal_on_kill); this on-hit path is used by
+## the Vampiric Rage relic, which gives a small chance to trigger lifesteal on any
+## hit. A no-op otherwise so existing call sites stay harmless.
 func apply_lifesteal() -> void:
-	pass
+	if has_artefact(ARTEFACT_LIFESTEAL_CRIT) and randf() < VAMPIRIC_RAGE_ON_HIT_CHANCE:
+		_lifesteal_heal()
 
-## Lifesteal now procs on KILL: when an enemy dies from player damage, the player
+## Lifesteal procs on KILL: when an enemy dies from player damage, the player
 ## leeches a chunk of health (lifesteal_flat * might), gated by a short cooldown
 ## so rapid consecutive kills can't spam-heal.
 func apply_lifesteal_on_kill() -> void:
+	_lifesteal_heal()
+
+## Shared lifesteal heal: leeches lifesteal_flat * might, gated by a short
+## cooldown. Lust (Succubus's Embrace) doubles the amount.
+func _lifesteal_heal() -> void:
 	if lifesteal_flat <= 0.0 or current_health <= 0:
 		return
 	if _lifesteal_cooldown_remaining > 0.0:
@@ -536,9 +561,6 @@ func apply_lifesteal_on_kill() -> void:
 	# Lust (Succubus's Embrace): lifesteal is doubled.
 	if has_artefact(ARTEFACT_SUCCUBUS_EMBRACE):
 		heal_amount *= LUST_LIFESTEAL_MULT
-	# Vampiric Rage artefact: lifesteal heal can roll crit for double healing.
-	if has_artefact(ARTEFACT_LIFESTEAL_CRIT) and roll_critical_hit():
-		heal_amount *= get_critical_multiplier()
 	heal(heal_amount)
 
 func heal(amount: float) -> void:
@@ -864,6 +886,8 @@ func get_gold() -> int:
 
 func get_gold_multiplier() -> float:
 	var mult: float = 1.0 + maxf(0.0, greed_percent_bonus)
+	# Avarice no longer boosts gold gain — its power now scales with gold held
+	# (see get_attack_damage) and its downside is the gold lost on hit.
 	return mult
 
 
@@ -874,15 +898,10 @@ func add_gold(raw_amount: int) -> void:
 	gold += amount
 	gold_changed.emit(gold)
 	# Enlightened Greed artefact: gold gained also grants XP.
-	# Guarded so Avarice's XP->gold conversion (which calls add_gold again) does
-	# not feed straight back into gold->XP — without the guard the two relics
-	# combine into an infinite add_gold <-> add_xp loop.
-	if has_artefact("greed_to_xp") and not _in_gold_to_xp_conversion:
+	if has_artefact("greed_to_xp"):
 		var mgr: Node = get_tree().get_first_node_in_group("team_xp_manager")
 		if mgr and mgr.has_method("add_xp"):
-			_in_gold_to_xp_conversion = true
 			mgr.add_xp(max(1, int(round(float(amount) * 0.25))))
-			_in_gold_to_xp_conversion = false
 
 
 func can_afford(cost: int) -> bool:
@@ -898,8 +917,8 @@ func spend_gold(cost: int) -> bool:
 	gold_changed.emit(gold)
 	return true
 
-func apply_upgrade(upgrade_id: String, rarity: int = 0) -> void:
-	var value: float = LevelUpMenu.get_effective_value(upgrade_id, rarity)
+func apply_upgrade(upgrade_id: String, rarity: int = 0, mult: float = 1.0) -> void:
+	var value: float = LevelUpMenu.get_effective_value(upgrade_id, rarity) * mult
 
 	match upgrade_id:
 		"might_flat":
@@ -1023,6 +1042,9 @@ func _process(_delta: float) -> void:
 	# Rocketman (engineer ascension): count down the post-jump buff.
 	if _rocketman_buff_timer > 0.0:
 		_rocketman_buff_timer = maxf(0.0, _rocketman_buff_timer - _delta)
+	# Avarice relic: count down the gold-loss cooldown.
+	if _avarice_loss_cd > 0.0:
+		_avarice_loss_cd = maxf(0.0, _avarice_loss_cd - _delta)
 
 
 ## Rebuilds the HP/Shield bars from the replicated health fields on a ghost.
@@ -1095,6 +1117,9 @@ func current_move_speed() -> float:
 	# Sloth (Idle Fortitude): move speed -20%.
 	if has_artefact(ARTEFACT_IDLE_FORTITUDE):
 		base *= SLOTH_SPEED_MULT
+	# Zephyr's Pinion relic: each point of evasion also grants move speed.
+	if has_artefact(ARTEFACT_ZEPHYR_PINION):
+		base *= 1.0 + maxf(0.0, evasion_chance) * ZEPHYR_EVASION_SPEED_RATIO
 	# Rocketman (engineer ascension): +15% speed right after a Rocket Jump.
 	if is_subclass("rocketman") and _rocketman_buff_timer > 0.0:
 		base *= ROCKETMAN_BUFF_SPEED_MULT
@@ -1572,6 +1597,13 @@ func take_damage(amount: int, source: Node = null) -> void:
 		hp_bar.value = current_health
 	health_changed.emit(current_health, current_max_health())
 	_update_hp_value_label()
+	# Avarice (Greed): taking a hit costs a chunk of the player's gold, but only
+	# once per AVARICE_LOSS_COOLDOWN so rapid multi-hits don't drain it all.
+	if has_artefact(ARTEFACT_AVARICE) and gold > 0 and _avarice_loss_cd <= 0.0:
+		_avarice_loss_cd = AVARICE_LOSS_COOLDOWN
+		var lost: int = max(1, int(round(float(gold) * AVARICE_GOLD_LOSS_PCT)))
+		gold = max(0, gold - lost)
+		gold_changed.emit(gold)
 	print("Player took damage! Current HP: ", current_health)
 	
 	if current_health <= 0:

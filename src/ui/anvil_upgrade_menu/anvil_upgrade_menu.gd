@@ -8,6 +8,9 @@ extends Control
 ##      area). These stats are NOT available from level-ups.
 
 signal upgrade_applied(weapon: Weapon, stat_id: String)
+## Emitted whenever the menu closes (after an upgrade is applied). Used by the
+## Smith's Hammer relic to decide whether the anvil survives for reuse.
+signal menu_closed
 
 # The anvil stat pool. Each entry knows how to apply itself to a Weapon node.
 # "weight" governs how likely an entry is to be rolled vs others (higher = more
@@ -353,6 +356,38 @@ func close_menu() -> void:
 	visible = false
 	_selected_weapon = null
 	_current_stats = []
+	menu_closed.emit()
+
+
+## CHa0s relic: bypasses the menu entirely — a random weapon and a random stat
+## are rolled and applied with the effect tripled. Emits upgrade_applied so the
+## HUD's normal close/refresh flow runs.
+func apply_chaos(golden: bool = false, kind: int = AnvilKind.STANDARD) -> void:
+	_current_player = get_tree().get_first_node_in_group("player") as Player
+	if _current_player == null:
+		return
+	_is_golden = golden
+	_anvil_kind = kind
+	var weapons: Array[Weapon] = _get_player_weapons()
+	if weapons.is_empty():
+		return
+	var weapon: Weapon = weapons[rng.randi_range(0, weapons.size() - 1)]
+	_selected_weapon = weapon
+	var stats: Array[Dictionary] = _roll_stats(weapon)
+	if stats.is_empty():
+		_selected_weapon = null
+		return
+	var stat: Dictionary = stats[rng.randi_range(0, stats.size() - 1)]
+	if stat.has("id") and _is_signature_entry(stat):
+		weapon.apply_signature(stat)
+		upgrade_applied.emit(weapon, "signature:" + str(stat["id"]))
+		return
+	var apply: Callable = stat["apply"]
+	# CHa0s triples the effect of the random choice.
+	for i in 3:
+		apply.call(weapon)
+	weapon.anvil_upgrade_count += 1
+	upgrade_applied.emit(weapon, stat["id"] as String)
 
 
 func _get_player_weapons() -> Array[Weapon]:
@@ -380,13 +415,20 @@ func _get_max_anvil_level(weapons: Array[Weapon]) -> int:
 	var min_upgrades: int = 1 << 30
 	for w: Weapon in weapons:
 		min_upgrades = mini(min_upgrades, w.anvil_upgrade_count)
-	return (min_upgrades / 3) * 3 + 3
+	return int(min_upgrades / 3.0) * 3 + 3
 
 
 ## Special anvils (golden, elemental, inverted) ignore the 3-upgrade
 ## anti-stacking gate, so any weapon may be upgraded freely past a multiple of 3.
 func _is_special_anvil() -> bool:
 	return _is_golden or _anvil_kind != AnvilKind.STANDARD
+
+
+## Badge of Mastery relic: lets a weapon take a SECOND signature upgrade.
+func _has_badge_of_mastery() -> bool:
+	if _current_player == null:
+		return false
+	return _current_player.has_artefact("badge_of_mastery")
 
 
 # --- Phase 1: weapon selection -------------------------------------------
@@ -488,12 +530,17 @@ func _roll_stats(weapon: Weapon) -> Array[Dictionary]:
 	if _anvil_kind == AnvilKind.INVERTED:
 		return _roll_special(normal_pool, _filter_supported(weapon, INVERTED_STAT_POOL))
 
-	# Signatures are mutually exclusive per weapon: once a weapon owns ANY
-	# signature, none of its other signatures are offered (locked forever).
+	# Signatures are normally mutually exclusive per weapon: once a weapon owns ANY
+	# signature, its remaining signatures are no longer offered (locked forever).
+	# The Badge of Mastery relic lets a weapon take a SECOND signature, so only a
+	# weapon that has already reached its limit is locked out.
 	var sig_pool: Array[Dictionary] = []
-	var owns_any_sig: bool = not weapon.get_signature_ids_owned().is_empty()
-	if not owns_any_sig:
+	var owned: int = weapon.get_signature_ids_owned().size()
+	var sig_limit: int = 2 if _has_badge_of_mastery() else 1
+	if owned < sig_limit:
 		for sig: Dictionary in weapon.get_signature_pool():
+			if weapon.has_signature(sig.get("id", "")):
+				continue
 			var entry := sig.duplicate()
 			entry["weight"] = weapon.get_signature_weight()
 			sig_pool.append(entry)
@@ -697,6 +744,9 @@ func _update_stat_buttons() -> void:
 			_reset_choice_style(button)
 			continue
 		var stat: Dictionary = _current_stats[i]
+		# NOTE: not colourised here — the anvil buttons use clip_text/ellipsis and
+		# per-branch text styling that a BBCode RichTextLabel child can't mirror,
+		# and Button.text does not parse BBCode (tags would show literally).
 		var desc: String = (stat["description"] as String).replace("{value}", "%d" % int(stat["value"]))
 		var is_sig: bool = _is_signature_entry(stat)
 		var title_text: String = stat["title"] as String

@@ -96,7 +96,10 @@ func _hide_baked_player() -> void:
 	if baked == null:
 		print("[COOP] no baked player, spawn_point stays ", _spawn_point)
 		return
-	print("[COOP] hiding baked player at ", (baked as Node2D).global_position if baked is Node2D else "n/a")
+	var _pos_str: String = "n/a"
+	if baked is Node2D:
+		_pos_str = str((baked as Node2D).global_position)
+	print("[COOP] hiding baked player at ", _pos_str)
 	baked.visible = false
 	baked.set_process(false)
 	baked.set_physics_process(false)
@@ -132,12 +135,12 @@ func _ensure_players() -> void:
 
 
 func _ensure_player(id: int, class_id: String) -> void:
-	var name: String = "Player_%d" % id
-	if _players == null or _players.has_node(name):
+	var player_name: String = "Player_%d" % id
+	if _players == null or _players.has_node(player_name):
 		return
 	var net: Node = get_node_or_null("/root/Net")
 	var p: CharacterBody2D = PLAYER_SCENE.instantiate()
-	p.name = name
+	p.name = player_name
 	p.player_class_id = class_id
 
 	var sync: MultiplayerSynchronizer = _add_position_sync(p)

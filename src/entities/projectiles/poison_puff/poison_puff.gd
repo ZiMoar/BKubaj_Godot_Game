@@ -69,7 +69,7 @@ func _apply() -> void:
 			# guaranteed-infliction ailment scaling). The poison DOT itself is the
 			# real damage; this is just a light sting on top.
 			if source_weapon and source_weapon.has_method("has_signature") and source_weapon.has_signature("stinging_gas") and en.has_method("take_damage"):
-				en.take_damage(maxi(1, hit_value / 10), false, DamageType.Type.POISON, true, 1.0)
+				en.take_damage(maxi(1, int(hit_value / 10.0)), false, DamageType.Type.POISON, true, 1.0)
 
 
 func _in_cone(target: Vector2) -> bool:

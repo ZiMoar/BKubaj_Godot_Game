@@ -50,13 +50,6 @@ func _apply_player_modifiers(amount: int) -> int:
 		growth_bonus = maxf(0.0, float(player.get("growth_percent_bonus")))
 
 	var applied_amount := int(round(float(amount) * (1.0 + growth_bonus)))
-	# Avarice (Greed): the player converts 25% of XP gained into gold instead.
-	if player != null and player.has_method("has_artefact") and player.has_artefact("avarice"):
-		var converted: int = int(round(float(applied_amount) * 0.25))
-		if converted > 0:
-			applied_amount -= converted
-			if player.has_method("add_gold"):
-				player.add_gold(converted)
 	return applied_amount
 
 

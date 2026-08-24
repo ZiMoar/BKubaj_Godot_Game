@@ -625,23 +625,31 @@ func _apply_ailment(damage_type: DamageType.Type, hit_damage: int, effect_multip
 			pass
 
 
-# LIGHTNING -> Shock: zap a DIFFERENT nearby enemy for 50% of the hit damage.
+# LIGHTNING -> Shock: zap the NEAREST DIFFERENT enemies for 50% of the hit
+# damage. By default this chains to 1 enemy; the Static Conduit relic makes it
+# chain to 2 instead.
 func _apply_shock(hit_damage: float) -> void:
-	var best: Node2D = null
-	var best_d: float = INF
+	var plr: Node = get_tree().get_first_node_in_group("player")
+	var chain: int = 1
+	if plr != null and plr.has_method("has_artefact") and plr.has_artefact("static_conduit"):
+		chain = 2
+
+	var candidates: Array[Node2D] = []
 	for e: Node in get_tree().get_nodes_in_group("enemies"):
 		if not is_instance_valid(e) or e == self:
 			continue
-		var d: float = global_position.distance_squared_to((e as Node2D).global_position)
-		if d < best_d:
-			best_d = d
-			best = e as Node2D
-	if best != null and best.has_method("take_damage"):
-		best.take_damage(maxi(1, int(round(hit_damage * 0.5))), false, DamageType.Type.LIGHTNING, true)
-		# Mark the bounced target as Shocked (brief flag for Static Conduit relic:
-		# extra crit damage against enemies that were just shocked).
-		if best.has_method("mark_shocked"):
-			best.mark_shocked()
+		candidates.append(e as Node2D)
+	candidates.sort_custom(func(a: Node2D, b: Node2D) -> bool:
+		return global_position.distance_squared_to(a.global_position) < global_position.distance_squared_to(b.global_position))
+
+	var count: int = mini(chain, candidates.size())
+	for i in count:
+		var target: Node2D = candidates[i]
+		if target.has_method("take_damage"):
+			target.take_damage(maxi(1, int(round(hit_damage * 0.5))), false, DamageType.Type.LIGHTNING, true)
+			# Mark the bounced target as Shocked (counts as an active ailment).
+			if target.has_method("mark_shocked"):
+				target.mark_shocked()
 
 
 func get_effective_speed(delta: float) -> float:
@@ -673,6 +681,11 @@ func _process_status_dots(delta: float) -> void:
 			if poison_timer <= 0.0:
 				take_damage(maxi(1, int(round(poison_tick_dps))), false, DamageType.Type.POISON, true)
 				poison_timer = POISON_TICK_INTERVAL
+				# Corrosive Burst relic: poison usually KILLS the enemy before it
+				# naturally expires, so also release the burst on the killing tick
+				# — this is what makes the relic actually fire in practice.
+				if has_died():
+					_release_poison_burst()
 		if poison_duration <= 0.0:
 			if poison_stacks > 0 and _release_poison_burst():
 				pass  # Corrosive Burst relic handled the expiry explosion.
@@ -770,17 +783,14 @@ func take_damage(amount: int, is_critical: bool = false, damage_type: DamageType
 					dealt *= float(plr.get_critical_multiplier())
 				break
 
-	# Relic hooks: Cold Blooded (+30% vs slowed) and Static Conduit (+50% crit dmg
-	# vs shocked). Both read the player's current artefact loadout live.
+	# Relic hook: Cold Blooded (+30% vs slowed). Reads the player's live loadout.
 	if slow_timer > 0.0 and plr != null and plr.has_method("has_artefact") and plr.has_artefact("cold_blooded"):
 		dealt *= 1.30
-	if is_critical and shock_timer > 0.0 and plr != null and plr.has_method("has_artefact") and plr.has_artefact("static_conduit"):
-		dealt *= 1.50
 
-	# Wrath (Burning Ire): non-critical hits deal less. (Crit bonus is applied on
-	# the player side via get_critical_multiplier().)
+	# Wrath (Burning Ire): non-critical hits deal drastically less (-95%). (Crit
+	# bonus is applied on the player side via get_critical_multiplier().)
 	if not is_critical and plr != null and plr.has_method("has_artefact") and plr.has_artefact("burning_ire"):
-		dealt *= 0.70
+		dealt *= 0.05
 	# Pride (Hubris): the player deals +30% damage to bosses.
 	if is_in_group("bosses") and plr != null and plr.has_method("has_artefact") and plr.has_artefact("hubris"):
 		dealt *= 1.30
@@ -885,19 +895,21 @@ func _route_shared_drops() -> bool:
 		return false
 	# xp/gold values are computed here (host) so every machine agrees; the soul
 	# pickup is decided per-machine inside spawn_shared_drops.
-	enemy_net.rpc("spawn_shared_drops", global_position, _scaled_xp_value(), xp_orb_tier, _scaled_gold_value())
+	enemy_net.rpc("spawn_shared_drops", global_position, _scaled_xp_value(), xp_orb_tier, _scaled_gold_value(), decay_timer > 0.0)
 	return true
 
 
-## Soul Harvest relic: drop a soul pickup that grants the player Shield.
+## Soul Harvest relic: DECAYING enemies drop a soul pickup that grants the player
+## Shield. Keys the soul drop off the Decay ailment (necrotic), so it now has a
+## dedicated relic.
 func _drop_soul() -> void:
 	var plr: Node = get_tree().get_first_node_in_group("player")
 	if plr == null or not plr.has_method("has_artefact") or not plr.has_artefact("soul_harvest"):
 		return
 	if not is_instance_valid(get_tree()) or get_tree().current_scene == null:
 		return
-	# Soul Harvest nerf: souls now drop from only ~10% of kills, not every kill.
-	if randf() > 0.10:
+	# Only decaying enemies leave souls behind.
+	if decay_timer <= 0.0:
 		return
 	var soul: Node2D = soul_pickup_scene.instantiate() as Node2D
 	var ang: float = randf() * TAU
@@ -1137,7 +1149,13 @@ func _apply_thorns_to_attacker(attacker: Node) -> void:
 	if thorns_damage <= 0.0:
 		return
 
-	take_damage(max(1, int(round(thorns_damage))))
+	var final_thorns: int = max(1, int(round(thorns_damage)))
+	# Pointy Tips relic: thorns can critically strike.
+	if attacker.has_method("has_artefact") and attacker.has_artefact("pointy_tips") \
+			and attacker.has_method("roll_critical_hit") and attacker.roll_critical_hit():
+		var crit_mult: float = float(attacker.get_critical_multiplier()) if attacker.has_method("get_critical_multiplier") else 1.5
+		final_thorns = max(1, int(round(float(final_thorns) * crit_mult)))
+	take_damage(final_thorns)
 
 func _start_damage_cooldown() -> void:
 	can_deal_damage = false

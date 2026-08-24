@@ -47,7 +47,7 @@ const UPGRADE_POOL: Array[Dictionary] = [
 	{"id": "might_percent",        "title": "Might %",       "description": "+{value}% total damage.",               "min_rarity": Rarity.COMMON,    "base_value": 0.10,  "value_scaling": 0.05},
 	{"id": "attack_speed",         "title": "Attack Speed",  "description": "+{value} attack speed.",               "min_rarity": Rarity.COMMON,    "base_value": 20.0,  "value_scaling": 10.0},
 	{"id": "crit_chance",          "title": "Crit Chance",   "description": "+{value}% crit chance.",                "min_rarity": Rarity.UNCOMMON,  "base_value": 0.05,  "value_scaling": 0.025},
-	{"id": "crit_damage",          "title": "Crit Damage",   "description": "+{value}x crit multiplier.",             "min_rarity": Rarity.UNCOMMON,  "base_value": 0.15,  "value_scaling": 0.10},
+	{"id": "crit_damage",          "title": "Crit Damage",   "description": "+{value}x crit multiplier.",             "min_rarity": Rarity.UNCOMMON,  "base_value": 0.20,  "value_scaling": 0.10},
 	{"id": "ailment_chance",       "title": "Ailment Chance","description": "+{value}% ailment chance.", "min_rarity": Rarity.UNCOMMON, "base_value": 0.10, "value_scaling": 0.05},
 	# --- Survival ---
 	{"id": "max_health",           "title": "Max Health",    "description": "+{value} max HP.",                      "min_rarity": Rarity.COMMON,    "base_value": 10.0,  "value_scaling": 5.0},
@@ -115,6 +115,17 @@ func open_for_player(player: Player, level_number: int) -> void:
 
 func close_menu() -> void:
 	visible = false
+
+
+## CHa0s relic: returns one random upgrade roll without showing the menu, so the
+## caller can auto-apply a random choice (with the relic's tripled effect).
+func roll_random_upgrade(player: Player) -> Dictionary:
+	if player == null:
+		return {}
+	var choices: Array[Dictionary] = _pick_choices(player.luck)
+	if choices.is_empty():
+		return {}
+	return choices[rng.randi_range(0, choices.size() - 1)]
 
 
 # --- Public helpers ---

@@ -130,12 +130,14 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.7, 0.7, 0.78, 1)
 theme_override_font_sizes/font_size = 12
 
-[node name="DetailDesc" type="Label" parent="Center/Panel/Vertical/Split/DetailPanel/Detail" unique_id=1000000015]
+[node name="DetailDesc" type="RichTextLabel" parent="Center/Panel/Vertical/Split/DetailPanel/Detail" unique_id=1000000015]
 custom_minimum_size = Vector2(250, 0)
 layout_mode = 2
 size_flags_vertical = 3
-theme_override_colors/font_color = Color(0.85, 0.85, 0.9, 1)
-theme_override_font_sizes/font_size = 13
+theme_override_colors/default_color = Color(0.85, 0.85, 0.9, 1)
+theme_override_font_sizes/normal_font_size = 13
+bbcode_enabled = true
+fit_content = true
 autowrap_mode = 2
 
 [node name="BackButton" type="Button" parent="Center/Panel/Vertical" unique_id=1000000016]

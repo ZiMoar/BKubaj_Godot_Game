@@ -86,6 +86,48 @@ static func _weapons() -> Array[Dictionary]:
 		"color": gold,
 	})
 
+	# Rogue loadout
+	list.append({
+		"name": "Dual Stab",
+		"subtitle": "Dagger · primary · 0.55s",
+		"desc": "A fast dual stab — one at your cursor, one at the nearest enemy. Critical hits shorten your next cooldown. Physical damage.",
+		"color": gold,
+	})
+	list.append({
+		"name": "Smoke Bomb",
+		"subtitle": "Stealth · secondary · 10s",
+		"desc": "Drops a cloud of smoke that boosts your dodge chance and blinds enemies inside it.",
+		"color": gold,
+	})
+
+	# Berserker loadout
+	list.append({
+		"name": "Spin Axe",
+		"subtitle": "Melee · primary · 1.0s",
+		"desc": "Spins a great axe through a wide arc — the outer edge strikes for double damage.",
+		"color": gold,
+	})
+	list.append({
+		"name": "Axe Throw",
+		"subtitle": "Thrown · secondary · 4s",
+		"desc": "Hurls a heavy bouncing axe. Its damage and element follow your Spin Axe.",
+		"color": gold,
+	})
+
+	# Engineer loadout
+	list.append({
+		"name": "Grenade Launcher",
+		"subtitle": "Ranged · primary · 0.85s",
+		"desc": "Lobs arcing grenades that explode for fire damage in an area.",
+		"color": gold,
+	})
+	list.append({
+		"name": "Deploy Turret",
+		"subtitle": "Deploy · secondary · 6s",
+		"desc": "Deploys an auto-firing turret that lobs grenades for fire damage.",
+		"color": gold,
+	})
+
 	# Automatic weapons (from the chest pool)
 	for w: Dictionary in WeaponChoiceMenu.AUTO_WEAPON_POOL:
 		list.append({

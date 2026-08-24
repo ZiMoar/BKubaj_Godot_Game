@@ -286,12 +286,15 @@ func _add_relic_row(index: int, name_text: String, desc: String, colour: Color) 
 	name_row.add_child(nm)
 	stats_box.add_child(name_row)
 	if not desc.is_empty():
-		var desc_l := Label.new()
+		# RichTextLabel so ailment / element keywords can render in their colour.
+		var desc_l := RichTextLabel.new()
+		desc_l.bbcode_enabled = true
+		desc_l.fit_content = true
+		desc_l.scroll_active = false
 		desc_l.text = desc
 		desc_l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		desc_l.add_theme_color_override("font_color", Color(0.8, 0.8, 0.8))
-		desc_l.add_theme_font_size_override("font_size", 11)
-		desc_l.add_theme_constant_override("line_separation", 0)
+		desc_l.add_theme_color_override("default_color", Color(0.8, 0.8, 0.8))
+		desc_l.add_theme_font_size_override("normal_font_size", 11)
 		desc_l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		var indent := MarginContainer.new()
 		indent.add_theme_constant_override("margin_left", 24)

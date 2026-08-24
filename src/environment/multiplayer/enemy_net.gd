@@ -204,13 +204,13 @@ func _player_for_peer(peer_id: int) -> Node:
 ## pickup is decided per-machine because it depends on that player's Soul
 ## Harvest relic. Drop VALUES (xp/gold) come from the host so all machines agree.
 @rpc("authority", "reliable", "call_local")
-func spawn_shared_drops(pos: Vector2, xp_value: int, xp_tier: int, gold_value: int) -> void:
+func spawn_shared_drops(pos: Vector2, xp_value: int, xp_tier: int, gold_value: int, was_decaying: bool = false) -> void:
 	var scene: Node = get_tree().current_scene
 	if scene == null:
 		return
 	_spawn_xp_orb(pos, xp_value, xp_tier)
 	_spawn_gold_coin(pos, gold_value)
-	_spawn_soul(pos)
+	_spawn_soul(pos, was_decaying)
 
 
 func _spawn_xp_orb(pos: Vector2, value: int, tier: int) -> void:
@@ -278,14 +278,15 @@ func spawn_pot_loot(pos: Vector2, roll: int) -> void:
 
 ## Soul drops are per-machine: only spawn one if THIS machine's player holds the
 ## Soul Harvest relic (mirrors enemy_base._drop_soul).
-func _spawn_soul(pos: Vector2) -> void:
+func _spawn_soul(pos: Vector2, was_decaying: bool) -> void:
 	var plr: Node = get_tree().get_first_node_in_group("player")
 	if plr == null or not plr.has_method("has_artefact") or not plr.has_artefact("soul_harvest"):
 		return
 	if get_tree().current_scene == null:
 		return
-	# Soul Harvest nerf: souls now drop from only ~10% of kills (mirrors enemy_base).
-	if randf() > 0.10:
+	# Soul Harvest keys off the Decay ailment: only decaying enemies drop souls
+	# (mirrors enemy_base._drop_soul).
+	if not was_decaying:
 		return
 	var soul: Node = SOUL_PICKUP_SCENE.instantiate()
 	if soul == null:

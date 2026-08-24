@@ -172,7 +172,14 @@ func _on_slash_hit(node: Node) -> void:
 			if p and p.has_method("is_subclass") and p.is_subclass("retaliator") and p.has_method("get_thorns_damage"):
 				var th: float = p.get_thorns_damage()
 				if th > 0.0:
-					target.take_damage(maxi(1, int(round(th))), false, damage_type, false, get_ailment_effect_multiplier())
+					var th_dmg: int = maxi(1, int(round(th)))
+					# Pointy Tips relic: thorns can critically strike.
+					var th_crit: bool = p.has_method("has_artefact") and p.has_artefact("pointy_tips") \
+						and p.has_method("roll_critical_hit") and p.roll_critical_hit()
+					if th_crit:
+						var th_cm: float = float(p.get_critical_multiplier()) if p.has_method("get_critical_multiplier") else 1.5
+						th_dmg = maxi(1, int(round(float(th_dmg) * th_cm)))
+					target.take_damage(th_dmg, th_crit, damage_type, false, get_ailment_effect_multiplier())
 			if target.has_method("apply_knockback"):
 				target.apply_knockback(global_position, get_knockback(knockback_force))
 			apply_lifesteal()

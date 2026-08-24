@@ -94,7 +94,7 @@ func fire() -> void:
 		"rng": SPRAY_RANGE * get_area_multiplier(),
 		"half_angle": HALF_ANGLE,
 		"val": hit_value,
-		"player_name": _pl.name if _pl else "",
+		"player_name": str(_pl.name) if _pl else "",
 	})
 
 
